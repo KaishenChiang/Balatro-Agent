@@ -12,6 +12,8 @@ from .settings import Settings
 from .transport import GameClient, ReaderError
 from .compact import present, VIEWS
 from .polling import poll_delay
+from .io_diagnostics import io_failure
+from .file_io import open_file
 from .public_changes import PublicChanges, PROTOCOL as CHANGES_PROTOCOL
 
 ERRORS = {
@@ -98,7 +100,7 @@ class Reader:
         # intermediate polling snapshots that the model did not receive.
         self.settings.log_dir.mkdir(parents=True, exist_ok=True)
         row = {"kind": "construction_read", "client_context": self.settings.client_context, "tool": tool, "delivered_utc": datetime.now(timezone.utc).isoformat(), "result": result}
-        with self._log_file.open("a", encoding="utf-8") as handle:
+        with open_file(self._log_file, "a", encoding="utf-8") as handle:
             handle.write(canonical(row) + "\n")
 
     def remember_observation(self, observation):
@@ -127,11 +129,11 @@ class Reader:
         result = present(result, view)
         try:
             self._record_delivered(tool, result)
-        except OSError:
+        except OSError as exc:
             self.public_changes.reset()
             # Filesystem error messages may include arbitrary path contents.
             # Fail closed rather than hand back an unrecorded observation.
-            failure = error_result("log_unavailable")
+            failure = {**error_result("log_unavailable"), 'io_failure': io_failure(exc, 'delivery')}
             self.activity.delivered(tool, failure)
             return failure
         self.public_changes.commit(prepared)

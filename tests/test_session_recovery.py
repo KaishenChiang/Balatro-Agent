@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+from fixture_io import write_text
 
 from balatro_agent.executor import Executor
 from balatro_agent.reader import Reader
@@ -19,7 +20,7 @@ OBS = 'obs-' + NEW + '-3'
 def recovery_case(settings, public_envelope):
     registration = json.loads(settings.profile_file.read_text())
     registration['profile'] = 2
-    settings.profile_file.write_text(json.dumps(registration))
+    write_text(settings.profile_file, json.dumps(registration))
     envelope = copy.deepcopy(public_envelope)
     envelope['profile'] = 2
     methods = []
@@ -198,3 +199,88 @@ async def test_additional_fail_closed_gates(recovery_case, gate):
     assert result['state'] == 'REJECTED' and result['reason'] == expected
     assert not (r.root/'recover-1.json').exists()
     assert calls == []
+
+
+@pytest.fixture
+def missing_history_case(recovery_case):
+    r, e, calls, envelope, wire = recovery_case
+    e.pending = e.input_pending = None
+    e._save()
+    old_status = {**wire, 'game_session': OLD, 'submitted': None, 'read_only': True,
+                  'private': 'SECRET_HISTORY_MUST_NOT_ESCAPE'}
+    e._record('delivered_action_status', old_status)
+    return r, e, calls, envelope, wire, old_status
+
+
+async def test_untracked_lost_status_can_be_archived_without_proving_non_submission(missing_history_case):
+    r, e, calls, _, _, _ = missing_history_case
+    before = e.checkpoint.read_bytes()
+    result = await r.recover('lost-select', OBS, 'recover-host')
+    assert result['state'] == 'RETIRED' and result['original_action_state'] == 'UNKNOWN'
+    assert result['normal_game_completed'] is False and result['game_action_submitted'] is False
+    assert e.pending is e.input_pending is None and e.checkpoint.read_bytes() == before
+    record = json.loads((r.root / 'recover-host.json').read_text(encoding='utf-8'))
+    assert record['retirement_basis'] == 'delivered_status_history'
+    assert record['checkpoint_before'] == {'pending': None, 'input_pending': None}
+    assert record['original_status_history']['game_session'] == OLD
+    assert 'SECRET' not in json.dumps(record)
+    assert calls == ['action_status', 'reader_snapshot']
+    after = list(calls)
+    duplicate = await SessionRecovery(Executor(e.reader)).recover('lost-select', OBS, 'recover-host')
+    assert duplicate == {**result, 'duplicate': True} and calls == after
+
+
+@pytest.mark.parametrize('change,expected', [
+    ('same_session', 'pending_action_mismatch'), ('other_input', 'pending_action_mismatch'),
+    ('intent', 'pending_action_mismatch'), ('known_submission', 'pending_action_mismatch'),
+    ('ambiguous', 'pending_action_mismatch'), ('foreign_context', 'pending_action_mismatch'),
+    ('not_delivered', 'pending_action_mismatch'), ('malformed', 'journal_unavailable'),
+    ('stale', 'stale_observation'), ('unready', 'not_ready'),
+    ('different_wire_session', 'session_loss_unconfirmed'),
+    ('different_wire_id', 'session_loss_unconfirmed'), ('running', 'session_loss_unconfirmed'),
+])
+async def test_untracked_history_cannot_release_unknown_without_all_gates(missing_history_case, change, expected):
+    r, e, calls, envelope, wire, old = missing_history_case
+    observation_id = OBS
+    if change == 'same_session': observation_id = 'obs-' + OLD + '-3'
+    elif change == 'other_input':
+        e.input_pending = {'action_id': 'other-input'}
+        e._save()
+    elif change == 'intent': e._record('intent', {'request': {'action_id': 'lost-select'}})
+    elif change == 'known_submission': e._record('confirmed_feedback', {**old, 'submitted': True})
+    elif change == 'ambiguous': e._record('delivered_action_status', {**old, 'game_session': 'aaaaaaaaaaaaaaaa'})
+    elif change in ('foreign_context', 'not_delivered'):
+        row = json.loads(e.log.read_text(encoding='utf-8'))
+        row['client_context' if change == 'foreign_context' else 'kind'] = 'unrecognized'
+        e.log.write_text(json.dumps(row), encoding='utf-8')
+    elif change == 'malformed':
+        with e.log.open('a', encoding='utf-8') as stream: stream.write('{"unfinished":')
+    elif change == 'stale': observation_id = 'obs-' + NEW + '-2'
+    elif change == 'unready':
+        envelope['ready'] = envelope['public']['ready'] = False
+        envelope['ready_reason'] = envelope['public']['ready_reason'] = 'controller_locked'
+    elif change == 'different_wire_session': wire['game_session'] = 'bbbbbbbbbbbbbbbb'
+    elif change == 'different_wire_id': wire['action_id'] = 'other-action'
+    elif change == 'running': wire.update(state='RUNNING', submitted=True, reason='accepted')
+    before = {'pending': e.pending, 'input_pending': e.input_pending}
+    result = await r.recover('lost-select', observation_id, 'recover-host')
+    assert result['state'] == 'REJECTED' and result['reason'] == expected
+    assert {'pending': e.pending, 'input_pending': e.input_pending} == before
+    assert not (r.root / 'recover-host.json').exists() and 'act_submit' not in calls
+
+
+async def test_untracked_invalid_history_filename_fails_closed(missing_history_case):
+    r, e, calls, _, _, _ = missing_history_case
+    (e.root / 'actions-unrecognized.jsonl').write_text('{}\n', encoding='utf-8')
+    result = await r.recover('lost-select', OBS, 'recover-host')
+    assert result['reason'] == 'journal_unavailable' and calls == []
+    assert not (r.root / 'recover-host.json').exists()
+
+
+async def test_untracked_history_cannot_bypass_independent_checkpoint_guard(missing_history_case, monkeypatch):
+    r, e, calls, _, _, _ = missing_history_case
+    def unavailable(): raise OSError('SECRET_INDEPENDENT_CHECKPOINT')
+    monkeypatch.setattr(e.registration, 'check', unavailable)
+    result = await r.recover('lost-select', OBS, 'recover-host')
+    assert result['reason'] == 'journal_unavailable' and calls == []
+    assert not (r.root / 'recover-host.json').exists() and 'SECRET' not in json.dumps(result)

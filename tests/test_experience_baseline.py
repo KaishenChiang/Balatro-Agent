@@ -279,13 +279,13 @@ def test_shipped_baseline_contains_valid_complete_history_and_all_guides():
     root = Path(__file__).resolve().parents[1]
     store = NotesStore(root / 'experience')
     rows = store.read(view='content')['notes']
-    assert len(rows) == 12
+    assert len(rows) == 13
     count = 0
     for row in rows:
         for revision in range(1, row['revision'] + 1):
             assert store._revision('experience', row['note_id'], revision)['revision'] == revision
             count += 1
-    assert count == 61
+    assert count == 64
 
 
 def test_nested_baseline_and_local_roots_are_rejected_without_creating_files(tmp_path):

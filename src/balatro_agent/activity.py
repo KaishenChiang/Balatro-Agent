@@ -14,6 +14,7 @@ import uuid
 
 from .compact import expand
 from .local_audit import canonical, make_dir, safe_path
+from .file_io import open_file
 
 SCHEMA = 'activity-v1'
 ROOT = Path(__file__).resolve().parents[2]
@@ -69,7 +70,7 @@ class ActivityJournal:
                 return
             make_dir(self.root)
             path = safe_path(self.root, 'events-' + self.session + '.jsonl')
-            with path.open('a', encoding='utf-8') as stream:
+            with open_file(path, 'a', encoding='utf-8') as stream:
                 stream.write(encoded + '\n')
             self.sequence += 1
             self.last[key] = signature

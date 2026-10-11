@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import uuid
+from .file_io import open_file, replace_file
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -117,7 +118,7 @@ class NotesStore:
         safe_path(self.root, *path.relative_to(self.root).parts)
         if not path.is_file():
             raise NoteError('store_corrupt')
-        with path.open('rb') as stream:
+        with open_file(path, 'rb') as stream:
             data = stream.read(LIMIT_FILE_BYTES + 1)
         if len(data) > LIMIT_FILE_BYTES:
             raise NoteError('store_corrupt')
@@ -297,12 +298,12 @@ class NotesStore:
     def _atomic(self, path, data):
         temporary = safe_path(self.root, *path.parent.relative_to(self.root).parts, '.tmp-' + uuid.uuid4().hex)
         try:
-            with temporary.open('xb') as stream:
+            with open_file(temporary, 'xb') as stream:
                 stream.write(data)
                 stream.flush()
                 os.fsync(stream.fileno())
             safe_path(self.root, *path.relative_to(self.root).parts)
-            os.replace(temporary, path)
+            replace_file(temporary, path)
         finally:
             if temporary.exists():
                 safe_path(self.root, *temporary.relative_to(self.root).parts)

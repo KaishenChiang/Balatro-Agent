@@ -80,9 +80,9 @@ $env:UV_PYTHON_INSTALL_DIR = "$PWD/.tools/python"
 ## 源码交付
 
 ```powershell
-.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.2.json
-.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.2.json --output deliverables/github-ready-1.3.2
-.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.2.json
+.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.3.json
+.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.3.json --output deliverables/github-ready-1.3.3
+.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.3.json
 ```
 
 package要求本次源码检查、开发STDIO、内置固定发行包和最小Mod构建通过，源码哈希保持不变；不以历史游戏胜利作当前版本通过条件。它生成指定的deliverables/审核目录、deliverables/source/下的完整离线源码候选ZIP和逐文件清单，移除AGENTS中的本机操作者段落。自有EXE绑定可审查源码与构建收据，vendor只允许锁定的公开原始归档；不带本机运行环境、个人配置、游戏材料、存档、种子、TEST或备份。已有候选／review目录拒绝覆盖，先保全再重新构建。
@@ -91,11 +91,19 @@ package要求本次源码检查、开发STDIO、内置固定发行包和最小Mo
 
 verify-package在新目录用固定缓存离线初始化、重建Mod、核对全部候选文件哈希、运行公开检查和开发STDIO；公开副本缺少私人原生函数时按实际记录跳过。结果同时保留本机完整报告和源码包旁按版本命名的source-validation.json；source-manifest.json也按版本命名，旧版本附件保留。源码交付不证明当前版本真实游戏或其他电脑的完整首次安装。
 
-GitHub提交审核目录中的内容，或按[README](../../README.md#许可与源码提交)提交允许目录。不要上传整个本机工作区；.gitignore排除本机环境和记录，但无法替代逐文件发布检查。公开发布／推送须取得用户授权，已有明确授权时按其范围执行。
+公开候选的完整测试阶段允许300秒，其余阶段仍为120秒；超时保留阶段、部分输出和失败收据，停止后续阶段且不生成通过附件。这是开发核验预算，不改变游戏请求时限。准备替换候选前须保全已失败候选及报告。
+
+GitHub提交审核目录中的内容，按本节源码交付检查核对允许文件。不要上传整个本机工作区；.gitignore排除本机环境和记录，但无法替代逐文件发布检查。公开发布／推送须取得用户授权，已有明确授权时按其范围执行。
 
 ## 运行保护与恢复
 
 runs/live/中的动作检查点、历史UNKNOWN、生命周期记录，config中的本机配置，runs/checks/current-installation.json及.artifacts/backups/都是维护资料。保持原路径，不删作缓存。UNKNOWN只查询原ID和观察，按[恢复契约](reference.md#正常启动关闭与丢失会话)核验旧会话；不靠删文件、重启、更换ID或新开局绕过。
+
+diagnose的process.state=not_found只表示当前调用进程看不到Balatro；Windows沙箱可能只展示沙箱内的进程，不能据此认定游戏已关闭。进程枚举失败报告unverified，正常枚举未找到报告not_found；实际连接与会话使用MCP health／observe核验，诊断本身不读取游戏信息或授权启动、关窗。
+
+自动审批可因客户端网络错误在提交前中断。这与原生动作超时、项目日志写入失败分别调查；MCP超时设置不等于审批网络超时。保留客户端操作错误、原动作ID、项目意图与反馈记录；不关闭审批、改变destructive_hint或清除UNKNOWN来继续。[Codex自动审批说明](https://learn.chatgpt.com/docs/sandboxing/auto-review)、[MCP配置说明](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+
+Python本地HTTP修订由health的transport_policy="bounded-query-retry-v1"识别：默认超时、响应流及有限只读重试共用总预算；动作提交不重试。源码修改不表示已加载。客户端缺少MCP重载菜单时，可在保存本聊天检查点后由用户重启Codex；保持游戏窗口，不以重启游戏解除UNKNOWN。游戏Mod的翻面ready修订另需正常关窗、无未决动作、冻结哈希及备份后安装；当前要求保留窗口时只交付源码候选，不能热替换或冒称已实机验证。
 
 安装恢复核对备份Manifest、原路径和哈希，只恢复必要文件，保留后来无关修改；不解码存档。工作区精简的私人归档位置、移动清单和核验结果由.artifacts/archive.latest.local.json指向。按清单恢复所需成员，不整体覆盖当前进度。
 

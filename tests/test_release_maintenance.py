@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 import project
 import package_source
 import stdio_smoke
+import verify_source_candidate
 
 
 def source_ready():
@@ -87,3 +88,35 @@ def test_development_stdio_server_blocks_real_game_transport(monkeypatch):
         assert server.reader.settings.client_context == 'development'
     finally:
         asyncio.run(server.reader.client.close())
+
+
+def test_public_verification_timeout_preserves_evidence_and_stops_before_stdio(tmp_path, monkeypatch):
+    import subprocess
+    calls=[]
+    def run(command, **kwargs):
+        calls.append((command,kwargs['timeout']))
+        if command==['suite']:
+            raise subprocess.TimeoutExpired(command,kwargs['timeout'],
+                output=b'x'*4000+b'partial public progress',stderr=b'\xfftimeout evidence')
+        return subprocess.CompletedProcess(command,0,stdout='completed build',stderr='')
+    monkeypatch.setattr(verify_source_candidate.subprocess,'run',run)
+    report=verify_source_candidate.run_checks([
+        ('build',['build']),('public_synthetic',['suite']),('development_stdio',['stdio'])],tmp_path,{})
+    assert calls==[(['build'],120),(['suite'],300)]
+    assert report[0]['exit_code']==0 and report[1]['exit_code'] is None
+    assert report[1]['timed_out'] is True
+    assert report[1]['output'].endswith('partial public progress\ufffdtimeout evidence')
+    assert len(report[1]['output'])<=3500
+
+
+def test_public_verification_nonzero_exit_stops_without_retry_or_success_claim(tmp_path, monkeypatch):
+    import subprocess
+    calls=[]
+    def run(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command,7,stdout='real failure',stderr='')
+    monkeypatch.setattr(verify_source_candidate.subprocess,'run',run)
+    report=verify_source_candidate.run_checks([
+        ('build',['failed-build']),('public_synthetic',['suite']),('development_stdio',['stdio'])],tmp_path,{})
+    assert calls==[['failed-build']]
+    assert report==[{'kind':'build','exit_code':7,'output':'real failure'}]

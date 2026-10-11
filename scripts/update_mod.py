@@ -12,18 +12,20 @@ import tomllib
 import uuid
 
 from balatro_agent.local_audit import canonical, make_dir, no_links, safe_path
+from balatro_agent.file_io import open_file, replace_file
 from balatro_agent.windows_game import WindowsGame
 
 
 def digest(path):
     no_links(path)
-    with path.open('rb') as stream:
+    with open_file(path, 'rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
 def read_json(path):
     no_links(path)
-    return json.loads(path.read_text(encoding='utf-8-sig'))
+    with open_file(path, 'r', encoding='utf-8-sig') as stream:
+        return json.load(stream)
 
 
 def ensure_idle(root, backend):
@@ -134,12 +136,12 @@ def write_atomic(path, data):
     temporary = path.with_name('.' + uuid.uuid4().hex + '.tmp')
     no_links(temporary)
     try:
-        with temporary.open('xb') as stream:
+        with open_file(temporary, 'xb') as stream:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
         no_links(path)
-        os.replace(temporary, path)
+        replace_file(temporary, path)
     finally:
         if temporary.exists():
             no_links(temporary)

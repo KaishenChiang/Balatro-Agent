@@ -41,7 +41,7 @@
     },
     {
       "path": "reader/reader.lua",
-      "sha256": "cc15ea2be8c999c341cd9f5cf5cba2a03339af0cb37f16936e64c76b2155c62a"
+      "sha256": "803b0c8f651865fd17f0f3ba1e17fa72f376336ba3f4c951304f3217a9618600"
     },
     {
       "path": "reader/snapshot.lua",

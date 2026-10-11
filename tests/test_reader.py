@@ -107,6 +107,19 @@ async def test_log_write_failure_is_static_and_no_observation_is_delivered(setti
     assert 'observation' not in result and 'SECRET' not in canonical(result)
 
 
+async def test_reader_io_diagnostics_do_not_deliver_an_unrecorded_observation(settings,public_envelope,monkeypatch):
+    import errno
+    reader = Reader(settings, client_for(settings, lambda req: reply(req, public_envelope)))
+    error = OSError(errno.EACCES, 'SECRET_MESSAGE', 'SECRET_PATH')
+    error.winerror = 32
+    def fail(*args): raise error
+    monkeypatch.setattr(reader, '_record_delivered', fail)
+    result = await reader.observe()
+    assert result['status'] == 'log_unavailable' and 'observation' not in result
+    assert result['io_failure'] == {'stage': 'delivery', 'errno': errno.EACCES, 'winerror': 32}
+    assert reader.last_delivered_observation is None and 'SECRET' not in canonical(result)
+
+
 async def test_actual_lua_deck_menu_survives_final_output_validation(settings,lua_reader):
     lua,snapshot=lua_reader
     lua.execute("local a=area({card('Shown Ace'),card('Shown Ace')}); a.config.view_deck=true; G.OVERLAY_MENU=ui({}, {ui({object=a})})")

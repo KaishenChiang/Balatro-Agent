@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from fixture_io import remove_fixture
 
 from balatro_agent.local_audit import canonical
 
@@ -41,7 +42,7 @@ def test_committed_retirement_binds_archive_even_for_duplicate(tmp_path,duplicat
 @pytest.mark.parametrize('damage',['missing','request','checkpoint','query','completion'])
 def test_delivered_ack_without_consistent_archive_fails(tmp_path,damage):
     row,path,archive=case(tmp_path)
-    if damage=='missing':path.unlink()
+    if damage=='missing':remove_fixture(path, tmp_path)
     else:
         if damage=='request':archive['request']['action_id']='other'
         if damage=='checkpoint':archive['checkpoint_before']['pending']['action_id']='other'

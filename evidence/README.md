@@ -2,6 +2,8 @@
 
 [当前源码检查](validation.json)记录当前版本在打包时的合成检查、开发STDIO、固定依赖和构建范围，不代表该版本已经通过真实游戏或其他电脑的完整首用测试。`published:false`描述该核验记录产生时的状态，实际公开源码以[GitHub主分支](https://github.com/KaishenChiang/balatro-agent/commits/main/)和提交收据为准；推送源码不自动创建标签或GitHub Release。
 
+逐文件哈希统一保存在[源码清单](../SOURCE-MANIFEST.json)，验证报告引用该清单，不重复保存同一列表；本机完整检查收据仍保留检查前的源码快照。
+
 [历史记录索引](history.json)与[历史对局压缩包](historical-runs.zip)集中保存8份过滤后的实际MCP交付记录、胜负摘要、失败／UNKNOWN和经验读盘证明，共36个文件。索引列出各成员SHA-256；解压后保持原相对路径，按run_id和step追溯。所有JSONL保留原字节；独立读盘报告中的本机解释器路径已规范化，转换和原始哈希逐项注明。
 
 历史包含4个连续正常完成局（3胜1败）、两个单列恢复胜局，以及中断尝试。fresh-129-hangeduse的原结果仍为UNKNOWN，后续恢复胜利不能改写它。历史运行版本为0.3.1至0.6.1，不是当前版本的实机验收，不能推导稳定胜率、纯模型推理时间或模型排名。

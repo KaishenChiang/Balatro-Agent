@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 import pytest
+from fixture_io import write_bytes
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import update_mod as updater
@@ -44,9 +45,9 @@ def layout(tmp_path, monkeypatch):
         prepared = build / relative
         prepared.parent.mkdir(parents=True, exist_ok=True)
         prepared.write_bytes(data)
-    (build / 'reader/reader.lua').write_bytes(b'new reader')
-    (build / 'reader/executor.lua').write_bytes(b'new executor')
-    (build / 'reader-profile.json').write_bytes(b'{"native_ui_verified":false}')
+    write_bytes(build / 'reader/reader.lua', b'new reader')
+    write_bytes(build / 'reader/executor.lua', b'new executor')
+    write_bytes(build / 'reader-profile.json', b'{"native_ui_verified":false}')
     checks = root / 'runs/checks'
     checks.mkdir(parents=True)
     ledger = {'installed_files': [{'path': str(mod / relative), 'sha256': updater.digest(mod / relative), 'bytes': len(data)}

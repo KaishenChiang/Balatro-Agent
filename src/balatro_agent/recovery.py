@@ -9,6 +9,7 @@ import json
 import os
 import re
 import uuid
+from .file_io import open_file, replace_file
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
@@ -57,9 +58,66 @@ class SessionRecovery:
     def _archive(self, path, record):
         make_dir(self.root)
         temp = safe_path(self.root, uuid.uuid4().hex + '.tmp')
-        with temp.open('x', encoding='utf-8') as stream:
+        with open_file(temp, 'x', encoding='utf-8') as stream:
             stream.write(canonical(record)); stream.flush(); os.fsync(stream.fileno())
-        os.replace(temp, path)
+        replace_file(temp, path)
+
+    def _missing_status_history(self, action_id, current_session):
+        """Find a delivered missing-record status, never infer non-submission.
+
+        Host failures can leave no local intent. Their old session is usable
+        only when this service durably delivered the original status there.
+        A same-session absence, intent, terminal result or ambiguous history
+        cannot authorize retirement. Return bounded public status fields only.
+        """
+        paths = list(self.executor.root.glob('actions-*.jsonl'))
+        if len(paths) > 100:
+            raise ValueError('history_limit')
+        total, sessions = 0, {}
+        for item in paths:
+            if not re.fullmatch(r'actions-[a-f0-9]{32}\.jsonl', item.name):
+                raise ValueError('invalid_history')
+            path = safe_path(self.executor.root, item.name)
+            size = path.stat().st_size
+            total += size
+            if size > 16 * 1024 * 1024 or total > 32 * 1024 * 1024:
+                raise ValueError('history_limit')
+            with open_file(path, 'r', encoding='utf-8') as stream:
+                for line in stream:
+                    row = json.loads(line)
+                    if not isinstance(row, dict):
+                        raise ValueError('invalid_history')
+                    if row.get('client_context') != self.reader.settings.client_context:
+                        continue
+                    value = row.get('value')
+                    if not isinstance(value, dict):
+                        continue
+                    request = value.get('request')
+                    if (row.get('kind') == 'intent' and isinstance(request, dict)
+                            and request.get('action_id') == action_id):
+                        return None
+                    if value.get('action_id') != action_id:
+                        continue
+                    if (value.get('state') in ('RUNNING', 'AWAITING_INPUT', 'COMPLETED', 'REJECTED', 'RETIRED')
+                            or value.get('submitted') is True):
+                        return None
+                    session = value.get('game_session')
+                    if (row.get('kind') != 'delivered_action_status'
+                            or value.get('state') != 'UNKNOWN'
+                            or value.get('reason') != 'record_not_found'
+                            or value.get('read_only') is not True
+                            or value.get('callback_confirmed') is not False
+                            or value.get('related_events_complete') is not False
+                            or (value.get('submitted') is not None and value.get('submitted') is not False)
+                            or not isinstance(session, str)
+                            or not re.fullmatch(r'[a-f0-9]{16}', session)
+                            or session == current_session):
+                        continue
+                    sessions[session] = {'action_id': action_id, 'state': 'UNKNOWN',
+                                         'reason': 'record_not_found', 'game_session': session,
+                                         'read_only': True, 'submitted': value.get('submitted'),
+                                         'callback_confirmed': False, 'related_events_complete': False}
+        return next(iter(sessions.values())) if len(sessions) == 1 else None
 
     async def recover(self, action_id, observation_id, recovery_id):
         if not (isinstance(action_id, str) and ACTION_ID.fullmatch(action_id)
@@ -78,6 +136,7 @@ class SessionRecovery:
                 lifecycle = getattr(exe, 'lifecycle', None)
                 if lifecycle is not None and lifecycle.blocks_actions():
                     return self._reject('operation_busy', recovery_id)
+                exe.registration.check()
                 path = safe_path(self.root, recovery_id + '.json')
                 previous = None
                 if path.exists():
@@ -97,8 +156,19 @@ class SessionRecovery:
                         raise ValueError('invalid_receipt')
                     if exe.pending is None and exe.input_pending is None:
                         return self._reply({**response, 'duplicate': True})
-                if not exe.pending or exe.pending['action_id'] != action_id:
+                if exe.pending and exe.pending['action_id'] != action_id:
                     return self._reject('pending_action_mismatch', recovery_id)
+                current_session = OBS.fullmatch(observation_id)[1]
+                status_history = None
+                if exe.pending:
+                    old_session = exe.pending['observation_id'].split('-')[1]
+                else:
+                    if exe.input_pending is not None:
+                        return self._reject('pending_action_mismatch', recovery_id)
+                    status_history = self._missing_status_history(action_id, current_session)
+                    if status_history is None:
+                        return self._reject('pending_action_mismatch', recovery_id)
+                    old_session = status_history['game_session']
                 before = {'pending': exe.pending, 'input_pending': exe.input_pending}
                 if previous is not None and before != previous['checkpoint_before']:
                     return self._reject('checkpoint_changed', recovery_id)
@@ -106,8 +176,6 @@ class SessionRecovery:
                 checkpoint = safe_path(exe.root, 'checkpoint.json')
                 if json.loads(checkpoint.read_text(encoding='utf-8')) != before:
                     return self._reject('checkpoint_changed', recovery_id)
-                old_session = exe.pending['observation_id'].split('-')[1]
-                current_session = OBS.fullmatch(observation_id)[1]
                 if old_session == current_session:
                     return self._reject('session_not_lost', recovery_id)
                 status = await exe._query(action_id)  # Query only, no act_submit.
@@ -137,6 +205,8 @@ class SessionRecovery:
                           'utc': datetime.now(timezone.utc).isoformat(), 'request': request,
                           'checkpoint_before': before,
                           'checkpoint_sha256': hashlib.sha256(canonical(before).encode()).hexdigest(),
+                          'retirement_basis': 'pending_intent' if exe.pending else 'delivered_status_history',
+                          'original_status_history': status_history,
                           'queried_status': status, 'current_observation': observation,
                           'response': response}
                 if previous is None:

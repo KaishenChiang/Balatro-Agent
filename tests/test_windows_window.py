@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from balatro_agent.windows_game import GameProcessError, ProcessIdentity, WindowsGame
+from balatro_agent.windows_game import GameProcessError, ProcessEntry, ProcessIdentity, WindowsGame
 
 
 def backend(rows, enum_ok=True):
@@ -49,3 +49,53 @@ def test_window_ambiguity_or_enumeration_failure_refuses_close(rows,enum_ok):
     b,p=backend(rows,enum_ok)
     with pytest.raises(GameProcessError,match='game_window_unverified'):
         b._window(p)
+
+
+def process_backend(monkeypatch, rows, *, end_error=18, snapshot=33):
+    """Simulate process enumeration without querying the real computer."""
+    last_error = {'code': 0}
+    monkeypatch.setattr(ctypes, 'set_last_error', lambda value: last_error.update(code=value), raising=False)
+    monkeypatch.setattr(ctypes, 'get_last_error', lambda: last_error['code'], raising=False)
+    remaining = iter(rows)
+    closed = []
+
+    def step(handle, out):
+        row = next(remaining, None)
+        if row is None:
+            last_error['code'] = end_error
+            return False
+        entry = ctypes.cast(out, ctypes.POINTER(ProcessEntry)).contents
+        entry.exe, entry.pid = row
+        return True
+
+    b = WindowsGame(None)
+    b._init = lambda: None
+    b._identity = lambda pid: ProcessIdentity(pid, 1234)
+    b.k = SimpleNamespace(CreateToolhelp32Snapshot=lambda *_: snapshot,
+                          Process32FirstW=step, Process32NextW=step,
+                          CloseHandle=closed.append)
+    return b, closed
+
+
+@pytest.mark.parametrize('rows', [[], [('other.exe', 1)], [('Balatro.exe', 7116)]])
+def test_only_normal_enumeration_end_can_report_process_absence(monkeypatch, rows):
+    b, closed = process_backend(monkeypatch, rows)
+    assert b.find() == (ProcessIdentity(7116, 1234) if rows and rows[0][0] == 'Balatro.exe' else None)
+    assert closed == [33]
+
+
+@pytest.mark.parametrize('rows', [[], [('other.exe', 1)], [('Balatro.exe', 7116)]])
+@pytest.mark.parametrize('error', [0, 5, 6])
+def test_enumeration_failure_never_means_absent_or_verified(monkeypatch, rows, error):
+    b, closed = process_backend(monkeypatch, rows, end_error=error)
+    with pytest.raises(GameProcessError, match='process_unverified'):
+        b.find()
+    assert closed == [33]
+
+
+@pytest.mark.parametrize('snapshot', [None, 0, ctypes.c_void_p(-1).value])
+def test_invalid_process_snapshot_is_not_treated_as_absence(monkeypatch, snapshot):
+    b, closed = process_backend(monkeypatch, [], snapshot=snapshot)
+    with pytest.raises(GameProcessError, match='process_unverified'):
+        b.find()
+    assert closed == []

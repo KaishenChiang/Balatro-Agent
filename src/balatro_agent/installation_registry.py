@@ -10,6 +10,7 @@ from pathlib import Path
 import uuid
 
 from .local_audit import canonical, make_dir, no_links
+from .file_io import open_file, replace_file
 
 SCHEMA = 'balatro-installation-registry-1'
 TRACKING = 'checkpoint-mirror-v1'
@@ -26,10 +27,10 @@ def atomic_json(path, value):
     make_dir(path.parent)
     temporary = path.with_name('.' + uuid.uuid4().hex + '.tmp')
     try:
-        with temporary.open('x', encoding='utf-8') as stream:
+        with open_file(temporary, 'x', encoding='utf-8') as stream:
             stream.write(canonical(value)); stream.flush(); os.fsync(stream.fileno())
         no_links(path)
-        os.replace(temporary, path)
+        replace_file(temporary, path)
     finally:
         if temporary.exists():
             temporary.unlink()
@@ -45,7 +46,7 @@ class InstallationRegistry:
         make_dir(self.path.parent)
         lock_path = self.path.with_name('installation.lock')
         no_links(lock_path)
-        stream = lock_path.open('a+b')
+        stream = open_file(lock_path, 'a+b')
         locked = False
         try:
             stream.seek(0, os.SEEK_END)

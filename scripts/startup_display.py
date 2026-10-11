@@ -110,7 +110,10 @@ def diagnose(root, static_status, backend=None):
         display = {'status': 'preferences_unavailable', 'runtime_verified': False}
     try:
         backend = backend or WindowsGame(safe_path(root, 'config', 'game-lifecycle.local.json'))
-        process = {'state': 'running' if backend.find() is not None else 'stopped'}
+        # A sandbox may expose only its own processes. Not finding the game
+        # in this caller's process view does not confirm that it has exited.
+        process = ({'state': 'running'} if backend.find() is not None else
+                   {'state': 'not_found', 'reason': 'process_not_visible'})
     except GameProcessError as exc:
         known = {'windows_only', 'installation_unverified', 'process_unverified', 'multiple_game_processes'}
         process = {'state': 'unverified', 'reason': exc.code if exc.code in known else 'process_unverified'}

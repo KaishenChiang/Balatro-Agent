@@ -68,7 +68,8 @@ def test_render_is_deterministic_and_marker_drift_is_rejected():
 @pytest.mark.parametrize('running', [False, True])
 def test_diagnostics_process_metadata_never_reads_game_or_authorizes_actions(tmp_path, running):
     result = display.diagnose(tmp_path, {'live_game_verified': False}, Backend(running))
-    assert result['process']['state'] == ('running' if running else 'stopped')
+    assert result['process'] == ({'state': 'running'} if running else
+                                 {'state': 'not_found', 'reason': 'process_not_visible'})
     assert result['startup_stage'] == 'not_observed' and result['startup_duration_ms'] is None
     assert not result['game_information_read'] and not result['game_actions_submitted']
     assert result['checkpoints'] == {'executor': 'missing', 'lifecycle': 'missing'}

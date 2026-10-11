@@ -6,6 +6,7 @@ import sys
 from zipfile import ZipFile
 
 import pytest
+from fixture_io import write_text
 
 from test_setup import ROOT, run_helpers, uv_layout
 
@@ -66,9 +67,9 @@ def test_bundled_runtime_damage_refuses_before_other_extraction(tmp_path,damage)
         existing=tmp_path/'.artifacts/offline-runtime'/next(iter(files))
         existing.parent.mkdir(parents=True)
         existing.write_bytes(b'local modification retained')
-    (tmp_path/'config/runtime.lock.json').write_text(json.dumps(manifest),encoding='utf-8')
-    (tmp_path/'config/dependencies.lock.json').write_text(json.dumps({'offline_runtime':{
-        'manifest':'config/runtime.lock.json','sha256':digest((tmp_path/'config/runtime.lock.json').read_bytes())}}),encoding='utf-8')
+    write_text(tmp_path/'config/runtime.lock.json', json.dumps(manifest))
+    write_text(tmp_path/'config/dependencies.lock.json', json.dumps({'offline_runtime':{
+        'manifest':'config/runtime.lock.json','sha256':digest((tmp_path/'config/runtime.lock.json').read_bytes())}}))
     original=archive.read_bytes()
     result=run_helpers(tmp_path,{},'Install-LockedRuntime $root $true')
     assert result.returncode!=0

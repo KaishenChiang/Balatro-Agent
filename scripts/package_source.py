@@ -288,8 +288,7 @@ def main(argv=None):
         'bundled_distributions_verified':True,
         'current_version_real_game_verified':False,'historical_live_evidence':'history.json',
         'real_game_or_client_config_written':False,'published':False,
-        'source_snapshot':[{'path':p.relative_to(ROOT).as_posix(),
-                            'sha256':hashlib.sha256(candidate_bytes(p)).hexdigest()} for p in files],
+        'source_manifest':'../SOURCE-MANIFEST.json',
         'scope':'Local checks include private native-function fixtures; public checkout skips those when absent. Actual new-machine cold installation, client reload, other clients and model rankings remain unverified.'}
     (ROOT/'evidence/validation.json').write_text(json.dumps(validation,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     files=selected_files(ROOT)

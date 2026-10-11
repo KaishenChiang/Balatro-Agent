@@ -8,6 +8,7 @@ import re
 import time
 from typing import Literal
 import uuid
+from .file_io import open_file, replace_file
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,9 +76,9 @@ class LifecycleJournal:
     def _atomic(self, path, value):
         make_dir(self.root)
         temp = safe_path(self.root, uuid.uuid4().hex + '.tmp')
-        with temp.open('x', encoding='utf-8') as stream:
+        with open_file(temp, 'x', encoding='utf-8') as stream:
             stream.write(canonical(value)); stream.flush(); os.fsync(stream.fileno())
-        os.replace(temp, path)
+        replace_file(temp, path)
 
     def set_pending(self, value):
         checkpoint = {'pending': value}

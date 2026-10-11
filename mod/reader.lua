@@ -243,6 +243,26 @@ local region_fields = {
   {'hand','hand'}, {'play','play'}, {'jokers','jokers'}, {'consumables','consumeables'},
   {'shop_jokers','shop_jokers'}, {'shop_vouchers','shop_vouchers'}, {'shop_boosters','shop_booster'}, {'pack','pack_cards'}
 }
+local function allowed_region(name, phase)
+  return (name=='hand' and (phase=='hand' or phase=='pack')) or name=='jokers' or name=='consumables'
+    or (phase=='shop' and name:sub(1,5)=='shop_') or (phase=='pack' and name=='pack')
+end
+local function visible_card_flip(phase)
+  -- Native flipping flags persist after the animation. Only a mismatch of
+  -- the current rendered side and facing is a visual transition. A stable
+  -- back card stays actionable and masked; never inspect the deck or its ID.
+  for _, field in ipairs(region_fields) do
+    local name, area = field[1], G[field[2]]
+    if allowed_region(name, phase) and area and displayed(area) then
+      for _, card in ipairs(area.cards or {}) do
+        if displayed(card) and (card.facing=='front' or card.facing=='back')
+            and (card.sprite_facing=='front' or card.sprite_facing=='back')
+            and card.facing~=card.sprite_facing then return true end
+      end
+    end
+  end
+  return false
+end
 local action_map = {
   setup_run='open_run_setup', notify_then_setup_run='open_run_setup',
   run_select_start_run='start_run', run_select_quick_start='quick_start_run',
@@ -420,6 +440,9 @@ local function readiness(phase)
   if (G.GAME and G.GAME.STOP_USE and G.GAME.STOP_USE > 0) and phase ~= 'main_menu' and phase ~= 'menu' and phase ~= 'terminal' then return false, 'processing' end
   local root = root_for(phase)
   if not displayed(root) then return false, 'ui_not_displayed' end
+  if phase~='menu' and phase~='main_menu' and phase~='terminal' and visible_card_flip(phase) then
+    return false, 'processing'
+  end
   if phase == 'terminal' then
     local outcome, marker = terminal_marker(root)
     if not outcome then return false, 'unknown_readiness' end
@@ -774,7 +797,7 @@ function R.snapshot()
     if stable and phase ~= 'main_menu' and phase ~= 'terminal' then
       for _, field in ipairs(region_fields) do
         local name, area = field[1], G[field[2]]
-        local allowed = (name=='hand' and (phase=='hand' or phase=='pack')) or name=='jokers' or name=='consumables' or (phase=='shop' and name:sub(1,5)=='shop_') or (phase=='pack' and name=='pack')
+        local allowed = allowed_region(name, phase)
         if allowed and area and displayed(area) then
           local region = {name=name,capacity=area.config.card_limit,selection_limit=area.config.highlighted_limit or area.config.highlight_limit,cards=array()}
           for index, card in ipairs(area.cards or {}) do

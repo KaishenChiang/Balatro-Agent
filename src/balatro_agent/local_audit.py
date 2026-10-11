@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import stat
 import uuid
+from .file_io import open_file
 
 
 def canonical(value):
@@ -49,7 +50,7 @@ class LocalAudit:
         path = safe_path(self.root, self.name)
         row = {'tool': tool, 'kind': kind, 'client_context': self.context,
                'utc': datetime.now(timezone.utc).isoformat(), 'value': value}
-        with path.open('a', encoding='utf-8') as stream:
+        with open_file(path, 'a', encoding='utf-8') as stream:
             stream.write(canonical(row) + '\n')
             stream.flush()
             os.fsync(stream.fileno())

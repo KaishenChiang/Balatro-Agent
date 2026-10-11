@@ -10,6 +10,30 @@ from balatro_agent.settings import Settings
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture(scope='session', autouse=True)
+def windows_lua_filename_encoding():
+    """Lua 5.1 uses narrow CRT paths; align only the test process with UTF-8."""
+    import os
+    if os.name != 'nt':
+        yield
+        return
+    import ctypes
+    import locale
+    crt = ctypes.CDLL(str(Path(os.environ['SystemRoot']) / 'System32/ucrtbase.dll'))
+    crt._getmbcp.argtypes, crt._getmbcp.restype = [], ctypes.c_int
+    crt._setmbcp.argtypes, crt._setmbcp.restype = [ctypes.c_int], ctypes.c_int
+    previous_locale = locale.setlocale(locale.LC_CTYPE)
+    previous_codepage = crt._getmbcp()
+    try:
+        locale.setlocale(locale.LC_CTYPE, '.UTF8')
+        if crt._setmbcp(65001) != 0:
+            raise RuntimeError('Test CRT UTF-8 setup failed')
+        yield
+    finally:
+        locale.setlocale(locale.LC_CTYPE, previous_locale)
+        crt._setmbcp(previous_codepage)
+
+
 @pytest.fixture
 def public_envelope():
     return {"schema_version":SCHEMA_VERSION,"visibility_policy_version":POLICY_VERSION,"adapter_version":ADAPTER_VERSION,

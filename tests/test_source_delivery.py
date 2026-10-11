@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 import pytest
+from fixture_io import write_text
 
 scripts = Path(__file__).resolve().parents[1] / 'scripts'
 sys.path.insert(0, str(scripts))
@@ -32,12 +33,12 @@ def case(tmp_path):
                'gameplay_calls': 1, 'outcome': 'win', 'profile': 2}
     def save():
         log = directory / 'codex-mcp.jsonl'
-        log.write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
-        (directory / 'summary.json').write_text(json.dumps(summary), encoding='utf-8')
+        write_text(log, ''.join(json.dumps(row) + '\n' for row in rows))
+        write_text(directory / 'summary.json', json.dumps(summary))
         checks = tmp_path / 'runs/checks'
         checks.mkdir(exist_ok=True)
-        (checks / 'audit.json').write_text(json.dumps({'comparison_passed': True,
-            'actual_calls': sum('tool' in row for row in rows), 'sha256': hashlib.sha256(log.read_bytes()).hexdigest()}), encoding='utf-8')
+        write_text(checks / 'audit.json', json.dumps({'comparison_passed': True,
+            'actual_calls': sum('tool' in row for row in rows), 'sha256': hashlib.sha256(log.read_bytes()).hexdigest()}))
     save()
     return rows, summary, save
 

@@ -6,8 +6,15 @@ async function recordMcp(tool, parameters) {
   if (typeof ctx.workspaceRoot !== 'string' || /[\r\n]/.test(ctx.workspaceRoot)) throw Error('Missing workspace root');
   if (load('balatro_evidence_pending')) throw Error('Persist previous delivery before continuing');
   const allowed = ['health','observe','wait_until_ready','act','action_status','read_notes',
-    'write_note','calculate','launch_game','close_game','recover_lost_session'];
+    'write_note','run_plan','calculate','launch_game','close_game','recover_lost_session'];
   if (!allowed.includes(tool)) throw Error('Unsupported tool');
+  const uncertain = load('balatro_evidence_uncertain');
+  if (uncertain) {
+    const originalQuery = tool === 'action_status' && parameters.action_id === uncertain.actionId;
+    const recovery = tool === 'recover_lost_session' && parameters.action_id === uncertain.actionId;
+    if (tool !== 'observe' && !originalQuery && !recovery)
+      throw Error('Uncertain action: query the original ID and observe; never replay or advance');
+  }
   const method = 'mcp__balatro_agent__' + tool;
   if (typeof tools[method] !== 'function') throw Error('Actual MCP tool is not loaded');
   const started = Date.now();
@@ -17,14 +24,33 @@ async function recordMcp(tool, parameters) {
     raw = {isError:true}; // Host exception text is not a public game DTO.
   }
   const ended = Date.now();
-  let dto = raw.structuredContent;
-  if (!dto && Array.isArray(raw.content)) {
+  const isDto = value => value !== null && typeof value === 'object' &&
+    !Array.isArray(value) && Object.keys(value).length > 0;
+  const usable = isDto(raw) && raw.isError !== true;
+  let dto = usable ? raw.structuredContent : null;
+  if (!isDto(dto) && usable && Array.isArray(raw.content)) {
     const block = raw.content.find(value => value.type === 'text');
     if (block) { try { dto = JSON.parse(block.text); } catch (error) {} }
   }
-  if (!dto && !raw.content && !raw.isError) dto = raw;
-  const hostError = !dto;
+  if (!isDto(dto) && usable && !('content' in raw) &&
+      !('structuredContent' in raw) && !('isError' in raw)) dto = raw;
+  const hostError = !isDto(dto);
   if (hostError) dto = {status:'external_tool_error',isError:true};
+  if (tool === 'act' && (hostError || ['RUNNING','UNKNOWN'].includes(dto.state))) {
+    // A host error can occur before the server receives the intent. Preserve
+    // the caller's ID even when no structured result supplies one.
+    store('balatro_evidence_uncertain',{actionId:parameters.action_id,state:dto.state || 'UNKNOWN'});
+  } else if (uncertain && tool === 'action_status' && !hostError
+      && dto.action_id === uncertain.actionId
+      && (dto.state === 'COMPLETED' || dto.state === 'REJECTED' && dto.submitted === false
+          || dto.state === 'AWAITING_INPUT' && dto.required_action === 'close_menu')) {
+    // Native input is now confirmed; the server still protects its parent
+    // action and validates each fresh close_menu followed by the parent query.
+    store('balatro_evidence_uncertain',null);
+  } else if (uncertain && tool === 'recover_lost_session' && !hostError
+      && dto.action_id === uncertain.actionId && dto.state === 'RETIRED' && dto.write_state === 'COMMITTED') {
+    store('balatro_evidence_uncertain',null); // Original outcome remains UNKNOWN.
+  }
   const step = (ctx.step || 0) + 1;
   const row = {step,tool,parameters,result:dto,
     client_started_utc:new Date(started).toISOString(),client_finished_utc:new Date(ended).toISOString(),

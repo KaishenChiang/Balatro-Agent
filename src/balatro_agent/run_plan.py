@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import uuid
+from .file_io import open_file, replace_file
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -125,7 +126,7 @@ class RunPlans:
         return 'storage_unavailable'
 
     def _json(self, path):
-        with path.open('rb') as handle:
+        with open_file(path, 'rb') as handle:
             data = handle.read(MAX_FILE_BYTES + 1)
         if len(data) > MAX_FILE_BYTES:
             raise PlanError('store_corrupt')
@@ -138,12 +139,12 @@ class RunPlans:
         make_dir(self.root)
         temporary = safe_path(self.root, '.tmp-' + uuid.uuid4().hex)
         try:
-            with temporary.open('xb') as handle:
+            with open_file(temporary, 'xb') as handle:
                 handle.write(canonical(value).encode('utf-8'))
                 handle.flush()
                 os.fsync(handle.fileno())
             safe_path(self.root, path.name)
-            os.replace(temporary, path)
+            replace_file(temporary, path)
         finally:
             if temporary.exists():
                 safe_path(self.root, temporary.name).unlink()

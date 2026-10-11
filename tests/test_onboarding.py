@@ -245,8 +245,8 @@ def test_redownload_adopts_verified_installation_and_changes_only_client_paths(a
     assert result['prepared'] and result['reused_installation']
     assert result['stdio_tools_verified'] == len(onboarding.TOOLS) and not result['game_started']
     assert onboarding.client_ready(fresh, config)
-    expected = original.decode().replace(json.dumps(str(previous / '.venv/Scripts/python.exe')), json.dumps(str(fresh / '.venv/Scripts/python.exe'), ensure_ascii=False))
-    expected = expected.replace(json.dumps(str(previous)), json.dumps(str(fresh), ensure_ascii=False))
+    expected = original.decode().replace(json.dumps(str(previous / '.venv/Scripts/python.exe'), ensure_ascii=False), json.dumps(str(fresh / '.venv/Scripts/python.exe'), ensure_ascii=False))
+    expected = expected.replace(json.dumps(str(previous), ensure_ascii=False), json.dumps(str(fresh), ensure_ascii=False))
     assert config.read_bytes() == expected.encode()
     assert all(p.read_bytes() == data for p, data in protected.items())
     assert (previous / 'runs/checks/current-installation.json').read_bytes() == ledger_before
@@ -337,14 +337,15 @@ def test_client_relocation_preserves_comments_settings_and_rejects_unsupported_t
     elif style == 'quoted-header':
         before = before.replace(b'[mcp_servers.balatro-agent]', b'[mcp_servers."balatro-agent"] # keep heading')
     else:
-        value = json.dumps(str(previous))
+        value = json.dumps(str(previous), ensure_ascii=False)
+        assert ('cwd = ' + value).encode() in before
         before = before.replace(('cwd = ' + value).encode(), ('cwd = """' + str(previous).replace('\\', '\\\\') + '"""').encode())
         with pytest.raises(ValueError, match='safely'):
             onboarding.relocated_client_bytes(before, previous, fresh)
         return
     candidate = onboarding.relocated_client_bytes(before, previous, fresh)
-    expected = before.replace(json.dumps(str(previous / '.venv/Scripts/python.exe')).encode(), json.dumps(str(fresh / '.venv/Scripts/python.exe'), ensure_ascii=False).encode())
-    expected = expected.replace(json.dumps(str(previous)).encode(), json.dumps(str(fresh), ensure_ascii=False).encode())
+    expected = before.replace(json.dumps(str(previous / '.venv/Scripts/python.exe'), ensure_ascii=False).encode(), json.dumps(str(fresh / '.venv/Scripts/python.exe'), ensure_ascii=False).encode())
+    expected = expected.replace(json.dumps(str(previous), ensure_ascii=False).encode(), json.dumps(str(fresh), ensure_ascii=False).encode())
     assert candidate == expected
 
 
@@ -516,7 +517,12 @@ def test_automatic_bootstrap_orchestrates_one_prepare_and_reuses_early(tmp_path,
     # Also cover the real guard with a fake running-game result.
     process_result="[pscustomobject]@{ProcessName='Balatro'}" if game_running else '@()'
     overrides += "function Get-Process { [CmdletBinding()]param([string]$Name) "+process_result+" }\n"
-    overrides += "function Invoke-Checked([string]$Program,[string[]]$Arguments) { $Arguments | ConvertTo-Json -Compress | Add-Content -LiteralPath (Join-Path $PSScriptRoot '../requests.jsonl') -Encoding UTF8 }\n"
+    overrides += "function Invoke-Checked([string]$Program,[string[]]$Arguments) { "
+    overrides += "$recordPath=Join-Path $PSScriptRoot '../requests.jsonl'; "
+    overrides += "$stream=Invoke-BoundedFileAccess { [IO.File]::Open($recordPath,[IO.FileMode]::Append,[IO.FileAccess]::Write,[IO.FileShare]::Read) }; "
+    overrides += "$writer=$null; try { $writer=[IO.StreamWriter]::new($stream,[Text.UTF8Encoding]::new($false)); "
+    overrides += "$writer.WriteLine(($Arguments | ConvertTo-Json -Compress)); $writer.Flush() } "
+    overrides += "finally { if($writer){$writer.Dispose()} else {$stream.Dispose()} } }\n"
     assert marker in source
     source = source.replace(marker, overrides + marker, 1)
     entry = scripts / 'setup.ps1'; entry.write_text(source, encoding='utf-8-sig')
@@ -525,6 +531,7 @@ def test_automatic_bootstrap_orchestrates_one_prepare_and_reuses_early(tmp_path,
         '-File', str(entry), '-Install', '-Automatic', '-Offline', '-SteamDir', str(steam),
         '-LibraryDir', str(library), '-PreparationId', 'fixture'], capture_output=True,
         text=True, encoding='utf-8', errors='replace', timeout=30, env=environment)
+    assert (root / 'reuse-request.json').is_file(), result.stderr
     args = json.loads((root / 'reuse-request.json').read_text(encoding='utf-8'))
     assert args[0] == 'prepare' and '--reuse-only' in args and 'fixture' in args
     if reuse_exit == 1:

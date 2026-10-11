@@ -1,5 +1,7 @@
 # Installation, maintenance and recovery
 
+The transport hardening is identified by health.transport_policy="bounded-query-retry-v1" after the Python service is reloaded. Lock waits, response streaming and bounded retries of read-only queries share one deadline; act_submit is never retried. An approval-network error still requires the original action record and current observation, without disabling approval or clearing UNKNOWN. If the client has no MCP reload control, the user may restart Codex after saving the checkpoint and keeping the game window. The separate rendered-side readiness Mod patch requires normal closed-game, idle, backup and hash checks before installation; source changes and isolated tests do not prove it is installed or tested live.
+
 Use the complete project folder on Windows x64 with a legitimate Steam installation of Balatro. Run **Balatro Agent.exe** from that folder. Python, uv, locked dependencies and fixed Mod archives are bundled; do not download an EXE alone or move it out of the folder. Keep the folder in a permanent writable location.
 
 The interface follows the Windows display language (Chinese or English fallback) and also offers `Language / 语言`. Changing this selector changes labels and both prompt paths, preserves your deck/stake selection and does not restart preparation. It does not change Balatro's language or select a game profile. The optional launcher argument `--language en` or `--language zh-CN` chooses an interface language for that launch.
@@ -18,6 +20,10 @@ Back up and migrate `runs/local-experience/` separately. It contains personal re
 
 For a stopped/unresolved action, query its original ID and observe through MCP. Never replay an uncertain action or promote UNKNOWN to a loss. `recover_lost_session` is only for a confirmed lost old session under its contract. Normal wins/losses retain the game results window; closing the game requires a separate explicit request.
 
+If the local pending record is absent, retirement still requires the service's own durably delivered missing-record status from one verified old session, matching registration, independent checkpoints, current profile and fresh observation. Known submission history or ambiguous sessions block this path. RETIRED preserves the original UNKNOWN outcome; it never proves the action was unsubmitted, successful or a normal loss, and recovery submits no game action.
+
+Windows file opens and replacement of the same prepared file have at most four attempts with 170 ms cumulative backoff. Stream writes, flush, fsync, process-lock acquisition and game submission are not retried. Persistent access errors still fail; permissions and checkpoints are preserved. Fixed numeric I/O diagnostics aid future diagnosis without exposing paths or exception text. The optional `prompts/mcp-evidence.js` wrapper also keeps the original action ID after host errors or absent DTOs and blocks new actions until verified recovery; it protects only clients using that wrapper.
+
 The [activity viewer](activity.md) is separate from the preparation launcher. A new permitted MCP game launch requests it automatically; `Balatro Agent.exe --monitor` reopens it without installation. Closing it does not stop gameplay or discard records. The interface displays submitted rationale and plans; it cannot retrieve unsubmitted internal reasoning.
 
 ## Developer checks and source delivery
@@ -28,13 +34,15 @@ The [activity viewer](activity.md) is separate from the preparation launcher. A 
 .venv/Scripts/python.exe scripts/project.py status
 .venv/Scripts/python.exe scripts/project.py build
 .venv/Scripts/python.exe scripts/project.py build-launcher
-.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.2.json
-.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.2.json --output deliverables/github-ready-1.3.2
-.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.2.json
-.venv/Scripts/python.exe scripts/project.py verify-offline --output runs/checks/offline-preparation-1.3.2.json
+.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.3.json
+.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.3.json --output deliverables/github-ready-1.3.3
+.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.3.json
+.venv/Scripts/python.exe scripts/project.py verify-offline --output runs/checks/offline-preparation-1.3.3.json
 ```
 
 Use new report/candidate paths; do not overwrite old evidence. Source-only checks do not update the game. Independent rebuilds and offline checks operate in fresh project-local directories and block real game transport. Private native-function fixtures are excluded from public source, and corresponding public tests skip when absent.
+
+Public candidate verification allows 300 seconds for its full test suite and 120 seconds for each other stage. A timeout retains partial output and a failed report, stops later stages, and creates no successful validation companion. These limits apply to developer checks, separately from game-request deadlines. Preserve failed candidates and reports before preparing a replacement.
 
 Public source contains only selected code, documentation, fixed licensed distributions, immutable experience and selected historical evidence. Exclude personal configuration, environments, artifacts, live records, saves, seeds, keys, private game materials, TEST and backups. Verify each candidate member against its manifest before publication. Source checks, independent builds, offline preparation, client reload and real gameplay are separate evidence. Push only with explicit authorization; source publication does not automatically create a GitHub Release or tag.
 

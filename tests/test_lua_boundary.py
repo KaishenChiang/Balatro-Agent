@@ -57,6 +57,10 @@ def test_face_down_never_invokes_identity_tooltip(lua_reader):
 def test_sprite_not_yet_flipped_cannot_reveal(lua_reader):
     lua,snapshot=lua_reader
     lua.execute("G.hand.cards[1].sprite_facing='back'")
+    pending=public(snapshot)
+    assert pending['ready'] is False and pending['regions']==[]
+    assert 'Public effect' not in canonical(pending)
+    lua.execute("G.hand.cards[1].facing='back'")
     assert public(snapshot)['regions'][0]['cards'][0]['visibility']=='face_down'
 
 

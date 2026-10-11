@@ -14,6 +14,8 @@ from .transport import ReaderError
 from .installation_registry import RegistrationGuard
 from .compact import present, VIEWS
 from .polling import poll_delay
+from .io_diagnostics import io_failure
+from .file_io import open_file, replace_file
 
 
 def rejection(reason, action_id=None):
@@ -62,13 +64,13 @@ class Executor:
     def _save_local(self, checkpoint):
         self.root.mkdir(parents=True, exist_ok=True)
         temp = self.checkpoint.with_suffix('.'+uuid.uuid4().hex+'.tmp')
-        with temp.open('w', encoding='utf-8') as f:
+        with open_file(temp, 'w', encoding='utf-8') as f:
             f.write(canonical(checkpoint)); f.flush(); os.fsync(f.fileno())
-        os.replace(temp, self.checkpoint)
+        replace_file(temp, self.checkpoint)
 
     def _record(self, kind, value):
         self.root.mkdir(parents=True, exist_ok=True)
-        with self.log.open('a', encoding='utf-8') as f:
+        with open_file(self.log, 'a', encoding='utf-8') as f:
             row = {'kind': kind, 'client_context': self.reader.settings.client_context,
                    'utc': datetime.now(timezone.utc).isoformat(), 'value': value}
             f.write(canonical(row)+'\n'); f.flush(); os.fsync(f.fileno())
@@ -138,11 +140,13 @@ class Executor:
         result = present(result, view)
         try:
             self._record('delivered_'+tool, result)
-        except OSError:
+        except OSError as exc:
             if changes is not None:
                 changes.reset()
             if result.get('submitted') is False:
-                failure = {**rejection('log_unavailable', result.get('action_id')), 'read_only': result.get('read_only', False)}
+                failure = {**rejection('log_unavailable', result.get('action_id')),
+                           'read_only': result.get('read_only', False),
+                           'io_failure': io_failure(exc, 'delivery')}
                 self.reader.activity.delivered(tool, failure)
                 return failure
             recovery = restore_request or self.last_request
@@ -156,7 +160,8 @@ class Executor:
                 except OSError:
                     self.checkpoint_broken = True
             failure = {**self._unknown(result, 'log_unavailable'), 'submitted': result.get('submitted'),
-                       'read_only': result.get('read_only', False)}
+                       'read_only': result.get('read_only', False),
+                       'io_failure': io_failure(exc, 'delivery')}
             self.reader.activity.delivered(tool, failure)
             return failure
         if prepared is not None:
@@ -202,8 +207,9 @@ class Executor:
         async with self.reader._tool_lock:
             try:
                 self.registration.check()
-            except OSError:
-                return self._deliver('act', rejection('checkpoint_unavailable', req['action_id']))
+            except OSError as exc:
+                return self._deliver('act', {**rejection('checkpoint_unavailable', req['action_id']),
+                                            'io_failure': io_failure(exc, 'registration')})
             lifecycle = getattr(self, 'lifecycle', None)
             if lifecycle is not None and lifecycle.blocks_actions():
                 return self._deliver('act', rejection('action_busy', req['action_id']))
@@ -232,6 +238,7 @@ class Executor:
             expected_profile = self.reader.observed_profile(req['observation_id'])
             if expected_profile not in (1, 2, 3):
                 return self._deliver('act', rejection('stale_observation', req['action_id']))
+            io_stage = 'intent'
             try:
                 self._record('intent', {'request': req})
                 if continuation:
@@ -239,15 +246,18 @@ class Executor:
                 else:
                     self.pending = req
                 self.last_request = req
+                io_stage = 'checkpoint'
                 self._save()
-            except OSError:
+            except OSError as exc:
                 if continuation:
                     self.input_pending = None
                 else:
                     self.pending = None
                 self.checkpoint_broken = True
-                return self._deliver('act', rejection('journal_unavailable', req['action_id']))
+                return self._deliver('act', {**rejection('journal_unavailable', req['action_id']),
+                                            'io_failure': io_failure(exc, io_stage)})
             self.reader.activity.intent(req)
+            io_stage = 'transport'
             try:
                 transport_wait_ms, poll_count = 0.0, 0
                 transport_started = time.perf_counter()
@@ -281,14 +291,16 @@ class Executor:
                 result['timing'] = {**(result.get('timing') or {}),
                                     'transport_wait_ms': round(transport_wait_ms, 3), 'poll_count': poll_count}
                 # Log result before clearing the durable uncertain checkpoint.
+                io_stage = 'feedback'
                 self._record('confirmed_feedback', result)
+                io_stage = 'checkpoint'
                 self._settle(result)
             except ReaderError:
                 result = self._unknown(req)
             except (ValidationError, ValueError):
                 result = self._unknown(req, 'invalid_response')
-            except OSError:
-                result = self._unknown(req, 'log_unavailable')
+            except OSError as exc:
+                result = {**self._unknown(req, 'log_unavailable'), 'io_failure': io_failure(exc, io_stage)}
             except Exception:
                 result = self._unknown(req, 'service_error')
             return self._deliver('act', result, restore_request=req, restore_input=continuation, view=view)
@@ -296,6 +308,7 @@ class Executor:
     async def _status_locked(self, action_id, *, deliver=True, view='full'):
         known = next((r for r in (self.input_pending, self.pending) if r and action_id == r['action_id']), None)
         input_query = known is not None and known is self.input_pending
+        io_stage = 'transport'
         try:
             result = await self._query(action_id)
             if result['action_id'] != action_id:
@@ -305,18 +318,21 @@ class Executor:
                 if result['game_session'] != session:
                     result = self._unknown(known, 'session_changed')
                 else:
+                    io_stage = 'feedback'
                     if deliver:
                         self._record('recovered_feedback', result)
                     else:
                         self._record('continuation_guard', {key: result.get(key) for key in
                             ('action_id', 'state', 'reason', 'game_session', 'observation_id', 'callback_confirmed', 'required_action')})
+                    io_stage = 'checkpoint'
                     self._settle(result)
         except ReaderError:
             result = self._unknown(known or {'action_id': action_id, 'observation_id': None})
         except (ValidationError, ValueError):
             result = self._unknown(known or {'action_id': action_id, 'observation_id': None}, 'invalid_response')
-        except OSError:
-            result = self._unknown(known or {'action_id': action_id, 'observation_id': None}, 'log_unavailable')
+        except OSError as exc:
+            result = {**self._unknown(known or {'action_id': action_id, 'observation_id': None}, 'log_unavailable'),
+                      'io_failure': io_failure(exc, io_stage)}
         except Exception:
             result = self._unknown(known or {'action_id': action_id, 'observation_id': None}, 'service_error')
         result['read_only'] = True

@@ -15,6 +15,28 @@ from bootstrap_sources import no_links, digest, unpack
 ROOT=Path(__file__).resolve().parents[1]
 
 
+def run_checks(commands, target, environment):
+    """Bound verification stages and keep real failure evidence without retrying."""
+    results=[]
+    for kind,command in commands:
+        # Full public suites launch many isolated Windows processes. Their
+        # verification budget is separate from gameplay transport deadlines.
+        budget=300 if kind=='public_synthetic' else 120
+        try:
+            result=subprocess.run(command,cwd=target,env=environment,capture_output=True,text=True,
+                encoding='utf-8',errors='replace',timeout=budget)
+        except subprocess.TimeoutExpired as exc:
+            def decoded(value):
+                return value.decode('utf-8',errors='replace') if isinstance(value,bytes) else value or ''
+            results.append({'kind':kind,'exit_code':None,'timed_out':True,'timeout_s':budget,
+                'output':(decoded(exc.stdout)+decoded(exc.stderr))[-3500:]})
+            break
+        results.append({'kind':kind,'exit_code':result.returncode,
+            'output':(result.stdout+result.stderr)[-3500:]})
+        if result.returncode:break
+    return results
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--output',default='runs/checks/source-candidate-validation.json')
@@ -55,12 +77,7 @@ def main():
             '--basetemp='+str(target/'pytest-tmp'),'--junitxml='+str(target/'public-tests.xml')]),
         ('development_stdio',[sys.executable,str(target/'scripts/stdio_smoke.py'),'--output','runs/checks/public-stdio.json']),
     ]
-    results=[]
-    for kind,command in commands:
-        result=subprocess.run(command,cwd=target,env=environment,capture_output=True,text=True,
-            encoding='utf-8',errors='replace',timeout=120)
-        results.append({'kind':kind,'exit_code':result.returncode,'output':(result.stdout+result.stderr)[-3500:]})
-        if result.returncode:break
+    results=run_checks(commands,target,environment)
     original=json.loads((ROOT/'mod/build-manifest.json').read_text(encoding='utf-8'))
     rebuilt=target/'mod/build-manifest.json'
     match=rebuilt.is_file() and json.loads(rebuilt.read_text(encoding='utf-8'))==original

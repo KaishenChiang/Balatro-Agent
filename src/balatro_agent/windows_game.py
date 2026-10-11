@@ -167,19 +167,25 @@ class WindowsGame:
     def find(self):
         self._init()
         snap = self.k.CreateToolhelp32Snapshot(2, 0)
-        if snap == ctypes.c_void_p(-1).value:
+        if not snap or snap == ctypes.c_void_p(-1).value:
             raise GameProcessError('process_unverified')
         matches = []
         try:
             entry = ProcessEntry()
             entry.size = ctypes.sizeof(entry)
-            available = self.k.Process32FirstW(snap, ctypes.byref(entry))
-            while available:
+            first = True
+            while True:
+                ctypes.set_last_error(0)
+                step = self.k.Process32FirstW if first else self.k.Process32NextW
+                first = False
+                if not step(snap, ctypes.byref(entry)):
+                    if ctypes.get_last_error() != 18:  # ERROR_NO_MORE_FILES
+                        raise GameProcessError('process_unverified')
+                    break
                 if entry.exe.casefold() == 'balatro.exe':
                     # An inaccessible or differently installed Balatro is an
                     # ambiguity, never permission to start/close another one.
                     matches.append(self._identity(entry.pid))
-                available = self.k.Process32NextW(snap, ctypes.byref(entry))
         finally:
             self.k.CloseHandle(snap)
         if len(matches) > 1:

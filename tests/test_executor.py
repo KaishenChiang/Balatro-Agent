@@ -17,6 +17,61 @@ from balatro_agent.transport import GameClient
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.parametrize('stage', ['intent', 'feedback', 'checkpoint', 'delivery'])
+async def test_io_failure_stage_preserves_submission_boundary_and_query_only_recovery(settings,public_envelope,monkeypatch,stage):
+    """Public fixture only: no private native functions or live game calls."""
+    import errno
+    requests = []
+    current = copy.deepcopy(public_envelope)
+    def process(request):
+        payload = json.loads(request.content)
+        method = payload['method']
+        requests.append(method)
+        if method == 'reader_snapshot':
+            value = current
+        else:
+            value = {'state': 'COMPLETED', 'reason': 'completed', 'submitted': True,
+                     'action_id': 'synthetic-io-check', 'observation_id': current['observation_id'],
+                     'game_session': current['game_session'], 'execution_profile': current['profile'],
+                     'callback_confirmed': True, 'related_events_complete': True,
+                     'completion_signal': 'callback_events', 'snapshot': current}
+        return httpx.Response(200, json={'jsonrpc': '2.0', 'id': payload['id'], 'result': value})
+    reader = Reader(settings, GameClient(settings.url, 1, transport=httpx.MockTransport(process)))
+    observation = (await reader.observe())['observation']
+    exe = Executor(reader)
+    error = OSError(errno.ENOSPC, 'SECRET_MESSAGE', 'SECRET_PATH')
+    error.winerror = 112
+    original_record, original_settle = exe._record, exe._settle
+    def record(kind, value):
+        if kind == {'intent': 'intent', 'feedback': 'confirmed_feedback',
+                    'delivery': 'delivered_act'}.get(stage):
+            raise error
+        return original_record(kind, value)
+    def settle(value):
+        if stage == 'checkpoint': raise error
+        return original_settle(value)
+    monkeypatch.setattr(exe, '_record', record)
+    monkeypatch.setattr(exe, '_settle', settle)
+    payload = dict(action='select', parameters={'region': 'hand', 'positions': [0]},
+                   observation_id=observation['observation_id'], action_id='synthetic-io-check',
+                   reason='Synthetic boundary check', experience_refs=[])
+    result = await exe.act(**payload)
+    assert result['io_failure'] == {'stage': stage, 'errno': errno.ENOSPC, 'winerror': 112}
+    assert 'SECRET' not in canonical(result)
+    monkeypatch.setattr(exe, '_record', original_record)
+    monkeypatch.setattr(exe, '_settle', original_settle)
+    if stage == 'intent':
+        assert result['state'] == 'REJECTED' and result['submitted'] is False
+        assert requests == ['reader_snapshot']
+    else:
+        assert result['state'] == 'UNKNOWN' and exe.pending['action_id'] == payload['action_id']
+        assert json.loads(exe.checkpoint.read_text())['pending']['action_id'] == payload['action_id']
+        assert (await exe.act(**{**payload, 'action_id': 'synthetic-next'}))['reason'] == 'action_busy'
+        assert (await exe.action_status(payload['action_id']))['state'] == 'COMPLETED'
+        assert exe.pending is None and requests.count('act_submit') == 1
+        assert requests[-1] == 'action_status'
+
+
 @pytest.fixture
 def native_start_wrappers(request):
     return getattr(request, 'param', False)

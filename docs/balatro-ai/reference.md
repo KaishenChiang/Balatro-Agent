@@ -10,6 +10,10 @@ health声明public_changes_protocol="public-changes-v1"时，工具反馈可带�
 
 ## 观察与可见性
 
+health的transport_policy="bounded-query-retry-v1"仅声明当前Python服务已加载本地传输修订，不证明游戏Mod或客户端审批网络已更新。本地请求总预算涵盖锁等待和响应流；未显式指定时沿用配置超时。仅health、reader_snapshot及原ID的action_status可在传输异常时限次重试，最多三次请求、50／100毫秒退避，共用原总时限；非法返回与协议错误不重试。act_submit永不重试，响应超时仍保留意图和UNKNOWN，不能推断未提交。
+
+ready还检查已展示区域中牌的当前面与渲染面是否一致；翻面过渡返回processing，稳定背面牌仍保持遮蔽且不因此阻塞。不读取牌堆或等待原生长期保留的flipping标志，不将装饰动画或时间经过当作动作完成证明。
+
 observe对应游戏原生love.update处理后，更新线程内的一次公开快照。Lua先做玩家信息投影，Python再按嵌套白名单严格校验与遮蔽；不拼接多次原始状态。health／observe／wait_until_ready均只读，可识别1–3任一实际档位；未知实际档位明确报错。0.6.2以current-native-v1策略直接使用当前档位，不依赖人工登记。动作从实际交付的观察取得档位，提交处连续核对档位和observation_id；执行中档位变化保持UNKNOWN。旧登记和证据保留。
 
 | 字段 | 公开来源与范围 |
@@ -96,7 +100,15 @@ observe／wait_until_ready成功返回的server_time={utc,unix_s}是服务端墙
 
 Python请求等待上限20秒，游戏相关动作上限60秒；Python超时不取消游戏操作。RUNNING查原ID，UNKNOWN或响应丢失后只action_status／observe，不重发或继续下一动作。游戏记录之后确实完成才据证据恢复。意图日志失败不提交；提交后日志失败保持不明。目标准备事件只在游戏端记录已UNKNOWN时停止迟后点击，不能声称Python超时已取消动作。
 
+文件写入失败可带io_failure={stage,errno,winerror}，仅输出固定阶段和白名单数字错误码，未知码为null，不回显异常文字、路径或栈。它帮助区分意图、反馈、检查点及交付写入故障，不改变REJECTED／UNKNOWN、提交标记或恢复条件。历史日志没有这些错误码时，不能补猜具体写盘原因。
+
+Windows文件打开遇共享／锁冲突，或CRT仅返回EACCES时，最多尝试4次，退避延迟累计170毫秒（不包含文件操作本身耗时）；检查点替换只重试同一已准备文件，源文件消失即停止。已经打开后的write／flush／fsync、进程间锁获取、游戏请求和原UNKNOWN动作均不重试；持续错误仍按原保护拒绝或保持不明，不改权限或清记录。
+
+客户端的isError或自动审批中断可能发生在MCP处理器收到请求之前，属于外部调用故障。先保留完整工具返回，不假定structuredContent总存在；isError=true时不得将content中的JSON误作成功游戏反馈。原动作仍查原ID及观察，缺少意图或record_not_found不能单独解除不确定性。
+
 AWAITING_INPUT/native_unlock_input仅适用于已确认导航回调产生的当前真实解锁提示，保留原pending。重新observe，用新ID单次close_menu后查原导航；每张提示独立处理，最多一条input_pending，不连点或重新提交导航。
+
+recover_lost_session在旧会话确实丢失、当前原记录仍缺失、当前档位已知且观察新鲜可操作时，归档本地待定意图。审批层中断而没有本地意图时，仅在全部检查点清晰、服务曾在唯一旧会话实际交付该ID的UNKNOWN／record_not_found且没有同ID意图或已提交／正常结果时，可按该交付历史归档；同会话缺失、历史不明或歧义、其他未决动作仍拒绝。它不证明原动作未提交，原结果仍UNKNOWN，不重发、不计正常败局，不读取存档或替模型选择下一动作。
 
 ## 正常启动、关闭与丢失会话
 

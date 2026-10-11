@@ -27,9 +27,37 @@ function Assert-NoReparse([string]$Path) {
     }
 }
 
+function Invoke-BoundedFileAccess([scriptblock]$Operation, [string]$PreparedSource = '') {
+    # Only file opens and the same prepared atomic move/replace use this.
+    # Stream writes/flushes, downloads and native actions are never replayed.
+    $delays = @(0, 20, 50, 100)
+    for ($index = 0; $index -lt $delays.Count; $index++) {
+        if ($delays[$index]) { Start-Sleep -Milliseconds $delays[$index] }
+        try { return (& $Operation) }
+        catch {
+            $failure = $_.Exception.GetBaseException()
+            $code = $failure.HResult -band 0xFFFF
+            $retryable = $code -in @(32, 33) -or ($PreparedSource -and $code -eq 5)
+            if ($index -eq ($delays.Count - 1) -or -not $retryable -or
+                ($PreparedSource -and -not [IO.File]::Exists($PreparedSource))) { throw }
+        }
+    }
+}
+
+function Move-PreparedFile([string]$Source, [string]$Target, [bool]$Replace = $false) {
+    Assert-NoReparse $Source
+    Assert-NoReparse $Target
+    Invoke-BoundedFileAccess {
+        Assert-NoReparse $Source
+        Assert-NoReparse $Target
+        if ($Replace) { [IO.File]::Replace($Source, $Target, [NullString]::Value) }
+        else { [IO.File]::Move($Source, $Target) }
+    } $Source
+}
+
 function Get-Sha256([string]$Path) {
     Assert-NoReparse $Path
-    $stream = [IO.File]::OpenRead($Path)
+    $stream = Invoke-BoundedFileAccess { [IO.File]::OpenRead($Path) }
     $hash = [Security.Cryptography.SHA256]::Create()
     try { return [BitConverter]::ToString($hash.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
     finally { $stream.Dispose(); $hash.Dispose() }
@@ -45,9 +73,12 @@ function Write-PreparationProgress([string]$State, [string]$Component,
         received_bytes=$Received;total_bytes=$Total;bytes_per_second=$Speed;attempt=$Attempt;
         utc=[DateTime]::UtcNow.ToString('o')}
     $temporary = $progressPath + '.' + [Guid]::NewGuid().ToString('N') + '.tmp'
-    [IO.File]::WriteAllText($temporary, ($value | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-    if ([IO.File]::Exists($progressPath)) { [IO.File]::Replace($temporary, $progressPath, [NullString]::Value) }
-    else { [IO.File]::Move($temporary, $progressPath) }
+    Assert-NoReparse $temporary
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($value | ConvertTo-Json -Compress))
+    $stream = Invoke-BoundedFileAccess { [IO.File]::Open($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None) }
+    try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) }
+    finally { $stream.Dispose() }
+    Move-PreparedFile $temporary $progressPath ([IO.File]::Exists($progressPath))
 }
 
 function Receive-LockedArchive($Item, [string]$Path, [int]$TimeoutSeconds = 20, [int]$Retries = 1) {
@@ -77,7 +108,7 @@ function Receive-LockedArchive($Item, [string]$Path, [int]$TimeoutSeconds = 20, 
             [IO.File]::Copy($resume, $temporary, $false)
             $offset = (Get-Item -LiteralPath $temporary).Length
             if ((Get-Sha256 $temporary) -eq $Item.sha256) {
-                [IO.File]::Move($temporary, $Path)
+                Move-PreparedFile $temporary $Path
                 return
             }
         }
@@ -146,7 +177,7 @@ function Receive-LockedArchive($Item, [string]$Path, [int]$TimeoutSeconds = 20, 
             }
             Assert-NoReparse $Path
             if ([IO.File]::Exists($Path)) { throw 'Archive appeared during download; preserve it.' }
-            [IO.File]::Move($temporary, $Path)
+            Move-PreparedFile $temporary $Path
             return
         } catch {
             $failure = $_
