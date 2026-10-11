@@ -1,6 +1,6 @@
 {
   "type": "checked_local_source_candidate_not_published",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "files": [
     {
       "path": ".gitattributes",
@@ -19,22 +19,22 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "6037acb9034647e07844f2bef54970e665e3a1ed1e0994b7f42777eb9a8d47b0",
-      "bytes": 8018
+      "sha256": "3a0b29963e35e33f03f6890d316bf21cc223c58deec538301f0d880fc935eb89",
+      "bytes": 8325
     },
     {
       "path": "Balatro Agent.exe",
-      "sha256": "45a8793a36384cfde059ed04999c0c18d58a5e2e8401db11a86b5b12ba953548",
+      "sha256": "b1e78c91db62eebe1a1d09001508cd665072d60ddedc5013216123ac0df0b6dc",
       "bytes": 10240
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "ae4c40597a57c4de1e97699509b2824f4e5dd7354409212a269f7e4c427f6a79",
-      "bytes": 12390
+      "sha256": "cff0f2dc150c75804078b4600e907c8f555cf6e29deede180285ef258d75c99a",
+      "bytes": 13628
     },
     {
       "path": "config/dependencies.lock.json",
-      "sha256": "87f47660fd102fb892c7894a7f3c6991331cc37d904bdad30495adb11443d315",
+      "sha256": "8cdfd871b63d3c5367e8ee66274159d73b2eabd04e60b3daf97d932f9484ee5a",
       "bytes": 1961
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "path": "config/runtime.lock.json",
-      "sha256": "a964aadd49b2b3dec0ac12820fe766d8abe447e56129fda8fef9ab23f0734e9a",
+      "sha256": "d5c3d2a5a3ae3e2b700424e4e3c2c4e7b6c5a2b1ad3e4482b78dbff5de4b7522",
       "bytes": 22174
     },
     {
@@ -79,13 +79,13 @@
     },
     {
       "path": "docs/balatro-ai/maintenance.en.md",
-      "sha256": "cad5b3cb50579d7d35b7b34ddf181cd8ee6c48f1c51a2f0eaa43bdebfc8ac81f",
-      "bytes": 7918
+      "sha256": "3f7cd3d8ab6d480c26e0ae4152278dfde827dc63f632e015fd2714823753ab46",
+      "bytes": 8228
     },
     {
       "path": "docs/balatro-ai/maintenance.md",
-      "sha256": "24cb1b512596be313371b089692c91d8ce408622fc50d9960ae59f0a2e111e61",
-      "bytes": 16695
+      "sha256": "f348e41b2a37ddebd214098cde10bbc5e5ab2a2126cd28fc9611350e00a09b5d",
+      "bytes": 16850
     },
     {
       "path": "docs/balatro-ai/model-client.en.md",
@@ -96,6 +96,11 @@
       "path": "docs/balatro-ai/model-client.md",
       "sha256": "5bb1dad20de46c6866b7c012975e2bf86032cd9ba38e71b43df30253f744f58d",
       "bytes": 6991
+    },
+    {
+      "path": "docs/balatro-ai/network-recovery.md",
+      "sha256": "049250650d4dc748406c7dce37199216f21519ead8b01fc2668faee575f2a70e",
+      "bytes": 5756
     },
     {
       "path": "docs/balatro-ai/notes-schema.json",
@@ -119,8 +124,8 @@
     },
     {
       "path": "docs/balatro-ai/reference.md",
-      "sha256": "55b33839b85afa66e53c60a8441473c0e3189401e80c77cb0ca905398128e34c",
-      "bytes": 23899
+      "sha256": "743833c28860476331c1276e1b0ae58141eb95d5c19e85548478581c3e34471e",
+      "bytes": 24009
     },
     {
       "path": "docs/balatro-ai/run-plan-schema.json",
@@ -144,7 +149,7 @@
     },
     {
       "path": "evidence/validation.json",
-      "sha256": "3b108ffdc0954c0232eeafc37f08fd667ace7f100df13e08eda0aff88e169aed",
+      "sha256": "d3b9bb55a7a1a4626cefaf19eed7f0d0c7fa2e25b840a3d21d651983517d131b",
       "bytes": 813
     },
     {
@@ -614,18 +619,18 @@
     },
     {
       "path": "PROJECT.md",
-      "sha256": "cd115c5d7609225bf9c50d8d29ddab17fc6d16720c9d2163f429217444d4c19a",
-      "bytes": 7320
+      "sha256": "2e8e3f390bb705d0ce23278bc17c0a283b83eacebeb55f5bec3cae0878bd31e8",
+      "bytes": 7943
     },
     {
       "path": "prompts/bootstrap.en.md",
-      "sha256": "9f191d543565c1cae76b02b7d660c729775b3a432deab8f461864de4b8861273",
-      "bytes": 15545
+      "sha256": "ea6bd17de61e106d6c6e68943d19426038fc275ccf870d7d3120a4ac4a208af8",
+      "bytes": 18144
     },
     {
       "path": "prompts/bootstrap.md",
-      "sha256": "3ae5888f962780e673d04aa9a1ec3054faa966068701ee92ee65d6a18af7eefe",
-      "bytes": 15059
+      "sha256": "98bb5ca9853b2b323eb9894278f1088ba704c6d82d0c2d516a420e9408a5b3ba",
+      "bytes": 17318
     },
     {
       "path": "prompts/first-use.en.md",
@@ -639,12 +644,12 @@
     },
     {
       "path": "prompts/mcp-evidence.js",
-      "sha256": "ff1d9093f1d94a8944c06d417299e0ee6f5043f0096ba0250b5cfc7b9d187733",
-      "bytes": 4721
+      "sha256": "0070b2f9c1dde2ce3544fc2535a6ebf0b1a87d03abeedbda3fd512d7a41850e9",
+      "bytes": 10173
     },
     {
       "path": "pyproject.toml",
-      "sha256": "174ab6472bc8e55fb42ad912a0c0f3e31721eb0713c066cef74120837cd34850",
+      "sha256": "9aa9b9aa83ba100285dddbe82d09d1313cfce331d250e0c96f0ff14baced5018",
       "bytes": 555
     },
     {
@@ -729,8 +734,8 @@
     },
     {
       "path": "scripts/package_source.py",
-      "sha256": "732bebbc5558aa0a545a9bbbece6a75b1711c0140fd221847f61a3bfb3f99094",
-      "bytes": 20283
+      "sha256": "f476d97613c72b981cc905a8134290b367631e09cdc6bd224cc336289d02530a",
+      "bytes": 20305
     },
     {
       "path": "scripts/project.py",
@@ -759,13 +764,13 @@
     },
     {
       "path": "scripts/verify_offline.py",
-      "sha256": "035ec6fb92eac408f83b01485450077178a15804de3fca37b424cefad5b97eca",
-      "bytes": 5611
+      "sha256": "72dc7ae16ab3c0274aef74c0c92a5fd449a5b86c6f82127ee847d7e5556b8dc5",
+      "bytes": 5674
     },
     {
       "path": "scripts/verify_source_candidate.py",
-      "sha256": "a0e7bc0a0a6b411c5fc717134deef42d4c6e8f85be47dfccf229321ecdb81f8c",
-      "bytes": 5955
+      "sha256": "e8b596ff5aee9bc66435b45ce11932328b5a337f6310dafb7f32b3f9761ded48",
+      "bytes": 6097
     },
     {
       "path": "src/balatro_agent/__init__.py",
@@ -864,8 +869,8 @@
     },
     {
       "path": "src/balatro_agent/server.py",
-      "sha256": "101fd438a3e8977ed4c05713bc5a2b17eac08c61c56829b3def818b573d2a038",
-      "bytes": 14161
+      "sha256": "b65ad94e5ea1639dc53aac91456fe104240614637a1c5a22632bf7e29bccaced",
+      "bytes": 14560
     },
     {
       "path": "src/balatro_agent/settings.py",
@@ -1003,6 +1008,11 @@
       "bytes": 3233
     },
     {
+      "path": "tests/test_mcp_retry.py",
+      "sha256": "018ff21a1bfb31fab98b627bf982c14bbdf45434f8ca73dfc9281433d76cb541",
+      "bytes": 10327
+    },
+    {
       "path": "tests/test_mod_update.py",
       "sha256": "39bbe9e774d587b05ecd4f88e57bbe42974ce69b737f60e925465a9b4f7f399c",
       "bytes": 8326
@@ -1134,7 +1144,7 @@
     },
     {
       "path": "uv.lock",
-      "sha256": "79ad0f82d1662f1112da1ac3285b31c880efdb5341269f122788caf0a11e4d77",
+      "sha256": "0b017952c29c4dda3d2951a5b5e59f4a23ce431af1e749ee5c8d5362c36248a1",
       "bytes": 61065
     },
     {
@@ -1169,17 +1179,17 @@
     },
     {
       "path": "windows/app.manifest",
-      "sha256": "a941a7eff4d433916ceb647f97f3d4514fd787cdccafb62c4b93b3f9ad3df2ad",
+      "sha256": "5f864e997a6888014fcae4a6cf364ddf22abcfbe3722419e8bb3712b6f5d718f",
       "bytes": 828
     },
     {
       "path": "windows/launcher-build.json",
-      "sha256": "84baeef2af97eed8bff6df7c7bf9790098e07a7bb0b1dcbd57f7404b196d6bb9",
+      "sha256": "0cb70dd3065a1cbc85ac9470d1d9d2032204b093cde11d5f6ca5f00dc88a5548",
       "bytes": 763
     },
     {
       "path": "windows/Launcher.cs",
-      "sha256": "a983b742517fc061304f20649f9d06ef29661db72d97b8478f6a536718f246e2",
+      "sha256": "9e68f4abee8d1bb028957745a2d5c09aeb3977b3671924443d92fae9365eb449",
       "bytes": 4697
     }
   ],

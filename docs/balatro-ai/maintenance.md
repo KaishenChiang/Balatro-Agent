@@ -80,9 +80,9 @@ $env:UV_PYTHON_INSTALL_DIR = "$PWD/.tools/python"
 ## 源码交付
 
 ```powershell
-.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.3.json
-.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.3.json --output deliverables/github-ready-1.3.3
-.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.3.json
+.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.4.json
+.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.4.json --output deliverables/github-ready-1.3.4
+.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.4.json
 ```
 
 package要求本次源码检查、开发STDIO、内置固定发行包和最小Mod构建通过，源码哈希保持不变；不以历史游戏胜利作当前版本通过条件。它生成指定的deliverables/审核目录、deliverables/source/下的完整离线源码候选ZIP和逐文件清单，移除AGENTS中的本机操作者段落。自有EXE绑定可审查源码与构建收据，vendor只允许锁定的公开原始归档；不带本机运行环境、个人配置、游戏材料、存档、种子、TEST或备份。已有候选／review目录拒绝覆盖，先保全再重新构建。
@@ -101,7 +101,7 @@ runs/live/中的动作检查点、历史UNKNOWN、生命周期记录，config中
 
 diagnose的process.state=not_found只表示当前调用进程看不到Balatro；Windows沙箱可能只展示沙箱内的进程，不能据此认定游戏已关闭。进程枚举失败报告unverified，正常枚举未找到报告not_found；实际连接与会话使用MCP health／observe核验，诊断本身不读取游戏信息或授权启动、关窗。
 
-自动审批可因客户端网络错误在提交前中断。这与原生动作超时、项目日志写入失败分别调查；MCP超时设置不等于审批网络超时。保留客户端操作错误、原动作ID、项目意图与反馈记录；不关闭审批、改变destructive_hint或清除UNKNOWN来继续。[Codex自动审批说明](https://learn.chatgpt.com/docs/sandboxing/auto-review)、[MCP配置说明](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+自动审批可因客户端网络错误在提交前中断。这与原生动作超时、项目日志写入失败分别调查；MCP超时设置不等于审批网络超时。保留客户端操作错误、原动作ID、项目意图与反馈记录；不关闭审批、改变destructive_hint或清除UNKNOWN来继续。短暂网络波动按[网络恢复](network-recovery.md)保留任务与只读等待；仅宿主确认未执行的审批超时可作一次原请求重试。[Codex自动审批说明](https://learn.chatgpt.com/docs/sandboxing/auto-review)、[MCP配置说明](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
 
 Python本地HTTP修订由health的transport_policy="bounded-query-retry-v1"识别：默认超时、响应流及有限只读重试共用总预算；动作提交不重试。源码修改不表示已加载。客户端缺少MCP重载菜单时，可在保存本聊天检查点后由用户重启Codex；保持游戏窗口，不以重启游戏解除UNKNOWN。游戏Mod的翻面ready修订另需正常关窗、无未决动作、冻结哈希及备份后安装；当前要求保留窗口时只交付源码候选，不能热替换或冒称已实机验证。
 

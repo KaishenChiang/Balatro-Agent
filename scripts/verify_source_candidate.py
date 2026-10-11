@@ -52,7 +52,9 @@ def main():
     if companion.exists():raise ValueError('Preserve existing source validation companion and its candidate')
     archive=ROOT/'deliverables/source'/('balatro-agent-'+version+'-source-candidate.zip')
     no_links(archive)
-    target=ROOT/'.artifacts'/('source-validation-'+uuid.uuid4().hex)
+    # Keep nested Windows test/backup paths below the legacy path limit.
+    # A collision is still refused by unpack; previous receipts are preserved.
+    target=ROOT/'.artifacts'/('sv-'+uuid.uuid4().hex[:16])
     no_links(target)
     with ZipFile(archive) as bundle:
         manifest=json.loads(bundle.read('SOURCE-MANIFEST.json'))

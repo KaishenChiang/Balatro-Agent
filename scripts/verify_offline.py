@@ -25,7 +25,8 @@ def main():
     no_links(output)
     if output.exists():raise ValueError('Preserve the existing validation and choose a new output')
     if os.name!='nt':raise ValueError('This cold preparation probe supports Windows x64 only')
-    target=ROOT/'.artifacts'/('offline-validation-'+uuid.uuid4().hex)
+    # Leave room for the installed Python and nested Windows build paths.
+    target=ROOT/'.artifacts'/('ov-'+uuid.uuid4().hex[:16])
     no_links(target)
     files=selected_files(ROOT)
     for source in files:

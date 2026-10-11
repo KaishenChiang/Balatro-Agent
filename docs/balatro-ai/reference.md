@@ -104,7 +104,7 @@ Python请求等待上限20秒，游戏相关动作上限60秒；Python超时不�
 
 Windows文件打开遇共享／锁冲突，或CRT仅返回EACCES时，最多尝试4次，退避延迟累计170毫秒（不包含文件操作本身耗时）；检查点替换只重试同一已准备文件，源文件消失即停止。已经打开后的write／flush／fsync、进程间锁获取、游戏请求和原UNKNOWN动作均不重试；持续错误仍按原保护拒绝或保持不明，不改权限或清记录。
 
-客户端的isError或自动审批中断可能发生在MCP处理器收到请求之前，属于外部调用故障。先保留完整工具返回，不假定structuredContent总存在；isError=true时不得将content中的JSON误作成功游戏反馈。原动作仍查原ID及观察，缺少意图或record_not_found不能单独解除不确定性。
+客户端的isError或自动审批中断可能发生在MCP处理器收到请求之前，属于外部调用故障。先保留完整工具返回，不假定structuredContent总存在；isError=true时不得将content中的JSON误作成功游戏反馈。原动作仍查原ID及观察，缺少意图或record_not_found不能单独解除不确定性。仅宿主完整审批超时收据确认本次请求未执行时，客户端callMcp可在核验原记录及同一ready观察、会话和档位后原样重试一次；普通错误、明确拒绝或真实UNKNOWN均不适用。详见[网络恢复](network-recovery.md)。
 
 AWAITING_INPUT/native_unlock_input仅适用于已确认导航回调产生的当前真实解锁提示，保留原pending。重新observe，用新ID单次close_menu后查原导航；每张提示独立处理，最多一条input_pending，不连点或重新提交导航。
 

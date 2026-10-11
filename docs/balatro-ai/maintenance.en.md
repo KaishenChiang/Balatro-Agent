@@ -1,6 +1,6 @@
 # Installation, maintenance and recovery
 
-The transport hardening is identified by health.transport_policy="bounded-query-retry-v1" after the Python service is reloaded. Lock waits, response streaming and bounded retries of read-only queries share one deadline; act_submit is never retried. An approval-network error still requires the original action record and current observation, without disabling approval or clearing UNKNOWN. If the client has no MCP reload control, the user may restart Codex after saving the checkpoint and keeping the game window. The separate rendered-side readiness Mod patch requires normal closed-game, idle, backup and hash checks before installation; source changes and isolated tests do not prove it is installed or tested live.
+The transport hardening is identified by health.transport_policy="bounded-query-retry-v1" after the Python service is reloaded. Lock waits, response streaming and bounded retries of read-only queries share one deadline; act_submit is never retried. Transient approval-network failures retain the task and original record under [network recovery](network-recovery.md). Only an explicit host non-execution approval-timeout receipt permits one identical client retry after original-ID and unchanged-state checks. Keep approval and genuine UNKNOWN safeguards. If the client has no MCP reload control, the user may restart Codex after saving the checkpoint and keeping the game window. The separate rendered-side readiness Mod patch requires normal closed-game, idle, backup and hash checks before installation; source changes and isolated tests do not prove it is installed or tested live.
 
 Use the complete project folder on Windows x64 with a legitimate Steam installation of Balatro. Run **Balatro Agent.exe** from that folder. Python, uv, locked dependencies and fixed Mod archives are bundled; do not download an EXE alone or move it out of the folder. Keep the folder in a permanent writable location.
 
@@ -22,7 +22,7 @@ For a stopped/unresolved action, query its original ID and observe through MCP. 
 
 If the local pending record is absent, retirement still requires the service's own durably delivered missing-record status from one verified old session, matching registration, independent checkpoints, current profile and fresh observation. Known submission history or ambiguous sessions block this path. RETIRED preserves the original UNKNOWN outcome; it never proves the action was unsubmitted, successful or a normal loss, and recovery submits no game action.
 
-Windows file opens and replacement of the same prepared file have at most four attempts with 170 ms cumulative backoff. Stream writes, flush, fsync, process-lock acquisition and game submission are not retried. Persistent access errors still fail; permissions and checkpoints are preserved. Fixed numeric I/O diagnostics aid future diagnosis without exposing paths or exception text. The optional `prompts/mcp-evidence.js` wrapper also keeps the original action ID after host errors or absent DTOs and blocks new actions until verified recovery; it protects only clients using that wrapper.
+Windows file opens and replacement of the same prepared file have at most four attempts with 170 ms cumulative backoff. Stream writes, flush, fsync, process-lock acquisition and game submission are not retried. Persistent access errors still fail; permissions and checkpoints are preserved. Fixed numeric I/O diagnostics aid future diagnosis without exposing paths or exception text. functions.exec uses the default callMcp helper in `prompts/mcp-evidence.js`; registered evidence uses recordMcp. Both retain the original action ID after host errors or absent DTOs and protect uncertain submissions. Load the complete helper as described in [network recovery](network-recovery.md); other clients must enforce the same narrow contract.
 
 The [activity viewer](activity.md) is separate from the preparation launcher. A new permitted MCP game launch requests it automatically; `Balatro Agent.exe --monitor` reopens it without installation. Closing it does not stop gameplay or discard records. The interface displays submitted rationale and plans; it cannot retrieve unsubmitted internal reasoning.
 
@@ -34,10 +34,10 @@ The [activity viewer](activity.md) is separate from the preparation launcher. A 
 .venv/Scripts/python.exe scripts/project.py status
 .venv/Scripts/python.exe scripts/project.py build
 .venv/Scripts/python.exe scripts/project.py build-launcher
-.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.3.json
-.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.3.json --output deliverables/github-ready-1.3.3
-.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.3.json
-.venv/Scripts/python.exe scripts/project.py verify-offline --output runs/checks/offline-preparation-1.3.3.json
+.venv/Scripts/python.exe scripts/project.py check --source-only --output runs/checks/release-check-1.3.4.json
+.venv/Scripts/python.exe scripts/project.py package --check-report runs/checks/release-check-1.3.4.json --output deliverables/github-ready-1.3.4
+.venv/Scripts/python.exe scripts/project.py verify-package --output runs/checks/source-validation-1.3.4.json
+.venv/Scripts/python.exe scripts/project.py verify-offline --output runs/checks/offline-preparation-1.3.4.json
 ```
 
 Use new report/candidate paths; do not overwrite old evidence. Source-only checks do not update the game. Independent rebuilds and offline checks operate in fresh project-local directories and block real game transport. Private native-function fixtures are excluded from public source, and corresponding public tests skip when absent.
