@@ -492,3 +492,42 @@ decision=(Get-BalatroDisplayProse 'Red Deck is visibly selected and enabled; ver
     assert all(row['en']==row['expected_en'] and row['zh']==row['expected_zh'] for row in result['rows'])
     assert result['plan']=='按已核验的设置开始一局原生随机对局。'
     assert result['decision']=='红色牌组已选中且可用；核验白注选项。'
+
+
+@pytest.mark.parametrize('language',['en','zh-CN'])
+def test_viewer_narrows_and_resizes_without_clipping_controls_or_changing_records(tmp_path,settings,language):
+    journal=ActivityJournal(settings)
+    journal.delivered('observe',{'observation':observation()})
+    journal.intent({'action':'play','parameters':{'positions':[0]},
+                    'observation_id':'obs-0123456789abcdef-1','action_id':'layout',
+                    'reason':'[en]Meet the current score with the visible hand. [zh-CN]用当前可见手牌补足分数。',
+                    'experience_refs':[]})
+    journal.progress('act',{'action_id':'layout','state':'RUNNING'})
+    hook='''$original=$body.Text;$snapshots=@()
+foreach($size in @(@(320,300),@(460,460),@(900,650),@(340,520))) {
+    $form.Size=New-Object Drawing.Size($size[0],$size[1]);$form.PerformLayout()
+    $clipped=@()
+    foreach($control in @($languageLabel,$languageChoice,$hint,$recent,$follow,$copy,$folder,$summary,$body)) {
+        $bounds=$control.Bounds;$available=$control.Parent.ClientRectangle
+        if($bounds.Left -lt 0 -or $bounds.Top -lt 0 -or $bounds.Right -gt $available.Width -or $bounds.Bottom -gt $available.Height) {
+            $clipped+=$control.GetType().Name+':'+$control.Text
+        }
+    }
+    $overlap=$false
+    foreach($a in @($follow,$copy,$folder)) {foreach($b in @($follow,$copy,$folder)) {
+        if($a -ne $b -and $a.Bounds.IntersectsWith($b.Bounds)) {$overlap=$true}
+    }}
+    $snapshots+=@{width=$form.Width;height=$form.Height;body_height=$body.Height;
+                  top_bottom_overlap=($top.Bottom -gt $bottom.Top);clipped=@($clipped);button_overlap=$overlap}
+}
+$follow.Checked=$false;$form.Size=New-Object Drawing.Size(320,300);$form.PerformLayout()
+@{snapshots=$snapshots;unchanged=($body.Text -eq $original);count=$script:rows.Count;
+  wordwrap=$body.WordWrap;resizable=($form.FormBorderStyle -eq 'Sizable')}|ConvertTo-Json -Depth 5'''
+    entry=viewer_copy(tmp_path,hook)
+    result=run_ps('. '+quote(entry)+' -Preview -Language '+language+' -EventDirectory '+quote(journal.root))
+    assert result['snapshots'][0]['width'] < 780  # Original minimum prevented recording beside the game.
+    assert result['unchanged'] and result['wordwrap'] and result['resizable'] and result['count']==2
+    for snapshot in result['snapshots']:
+        assert not snapshot['clipped'], snapshot
+        assert not snapshot['button_overlap'] and not snapshot['top_bottom_overlap'], snapshot
+        assert snapshot['body_height']>0, snapshot

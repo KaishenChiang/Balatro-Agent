@@ -328,29 +328,67 @@ function Refresh-Activity {
 }
 
 $form=New-Object Windows.Forms.Form
-$form.Text=AT 'activity_title'; $form.Size=New-Object Drawing.Size(980,620)
-$form.MinimumSize=New-Object Drawing.Size(780,420); $form.StartPosition='CenterScreen'
+$form.Text=AT 'activity_title'; $form.Size=New-Object Drawing.Size(460,460)
+$form.MinimumSize=New-Object Drawing.Size(320,300); $form.StartPosition='CenterScreen'
+$form.FormBorderStyle='Sizable'; $form.MaximizeBox=$true
 $form.Font=New-Object Drawing.Font('Segoe UI',9)
 $form.BackColor=[Drawing.Color]::FromArgb(249,248,245)
-$top=New-Object Windows.Forms.Panel; $top.Height=80; $top.Dock='Top'; $form.Controls.Add($top)
-$hint=New-Object Windows.Forms.Label; $hint.Location=New-Object Drawing.Point(16,12); $hint.AutoSize=$true; $top.Controls.Add($hint)
-$recent=New-Object Windows.Forms.Label; $recent.Location=New-Object Drawing.Point(16,43); $recent.AutoSize=$true; $top.Controls.Add($recent)
+$top=New-Object Windows.Forms.Panel; $top.Dock='Top'; $form.Controls.Add($top)
+$hint=New-Object Windows.Forms.Label; $top.Controls.Add($hint)
+$recent=New-Object Windows.Forms.Label; $recent.AutoEllipsis=$true; $top.Controls.Add($recent)
 $languageLabel=New-Object Windows.Forms.Label; $languageLabel.Text='Language / 语言'; $languageLabel.AutoSize=$true
-$languageLabel.Location=New-Object Drawing.Point(780,6); $languageLabel.Anchor='Top,Right'; $top.Controls.Add($languageLabel)
+$top.Controls.Add($languageLabel)
 $languageChoice=New-Object Windows.Forms.ComboBox; $languageChoice.DropDownStyle='DropDownList'
-$languageChoice.Location=New-Object Drawing.Point(780,29); $languageChoice.Size=New-Object Drawing.Size(170,25)
-$languageChoice.Anchor='Top,Right'; $languageChoice.DisplayMember='Name'
+$languageChoice.Width=100; $languageChoice.DisplayMember='Name'
 foreach ($item in @([pscustomobject]@{Key='en';Name='English'},[pscustomobject]@{Key='zh-CN';Name='简体中文'})) { $languageChoice.Items.Add($item) | Out-Null }
 $languageChoice.SelectedIndex=if ($script:activityLanguage -eq 'en') { 0 } else { 1 }; $top.Controls.Add($languageChoice)
-$bottom=New-Object Windows.Forms.Panel; $bottom.Height=52; $bottom.Dock='Bottom'; $form.Controls.Add($bottom)
+$bottom=New-Object Windows.Forms.Panel; $bottom.Dock='Bottom'; $form.Controls.Add($bottom)
+$buttons=New-Object Windows.Forms.FlowLayoutPanel; $buttons.WrapContents=$true; $bottom.Controls.Add($buttons)
 $follow=New-Object Windows.Forms.CheckBox; $follow.Checked=$true; $follow.AutoSize=$true
-$follow.Location=New-Object Drawing.Point(16,16); $bottom.Controls.Add($follow)
-$copy=New-Object Windows.Forms.Button; $copy.Location=New-Object Drawing.Point(160,11); $copy.Size=New-Object Drawing.Size(140,30); $bottom.Controls.Add($copy)
-$folder=New-Object Windows.Forms.Button; $folder.Location=New-Object Drawing.Point(312,11); $folder.Size=New-Object Drawing.Size(120,30); $bottom.Controls.Add($folder)
-$summary=New-Object Windows.Forms.Label; $summary.Location=New-Object Drawing.Point(450,19); $summary.AutoSize=$true; $bottom.Controls.Add($summary)
+$buttons.Controls.Add($follow)
+$copy=New-Object Windows.Forms.Button; $copy.AutoSize=$true; $buttons.Controls.Add($copy)
+$folder=New-Object Windows.Forms.Button; $folder.AutoSize=$true; $buttons.Controls.Add($folder)
+$summary=New-Object Windows.Forms.Label; $bottom.Controls.Add($summary)
 $body=New-Object Windows.Forms.TextBox; $body.Multiline=$true; $body.ReadOnly=$true; $body.ScrollBars='Vertical'; $body.Dock='Fill'
 $body.Font=New-Object Drawing.Font('Segoe UI',10.5); $body.BackColor=[Drawing.Color]::White; $body.BorderStyle='None'
 $body.WordWrap=$true; $form.Controls.Add($body); $body.BringToFront()
+
+function Activity-LabelHeight($Label,[int]$Width,[int]$Lines=0) {
+    $flags=[Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::TextBoxControl
+    $measured=[Windows.Forms.TextRenderer]::MeasureText($Label.Text,$Label.Font,(New-Object Drawing.Size($Width,10000)),$flags)
+    $height=[Math]::Max($Label.Font.Height,$measured.Height)+4
+    if ($Lines -gt 0) { $height=[Math]::Min($height,$Label.Font.Height*$Lines+4) }
+    return [int]$height
+}
+function Update-ActivityLayout {
+    # Run on resize or new text, not idle timer ticks. Native text wrapping and
+    # button flow adapt to both languages without reformatting the timeline.
+    $scale=[Math]::Max(1.0,$form.Font.Height/15.0)
+    $margin=[int][Math]::Round(12*$scale); $gap=[int][Math]::Round(6*$scale)
+    $width=[Math]::Max(1,$form.ClientSize.Width-2*$margin)
+    $languageChoice.Width=[int][Math]::Round(100*$scale)
+    $languageChoice.Location=New-Object Drawing.Point(($form.ClientSize.Width-$margin-$languageChoice.Width),$margin)
+    $languageLabel.Location=New-Object Drawing.Point($margin,($margin+[Math]::Max(0,($languageChoice.Height-$languageLabel.Height)/2)))
+    $y=$margin+[Math]::Max($languageChoice.Height,$languageLabel.Height)+$gap
+    $hintHeight=Activity-LabelHeight $hint $width
+    $hint.SetBounds($margin,$y,$width,$hintHeight); $y+=$hintHeight+$gap
+    $recentHeight=Activity-LabelHeight $recent $width 3
+    $recent.SetBounds($margin,$y,$width,$recentHeight)
+    $top.Height=$y+$recentHeight+$margin
+    foreach ($button in @($follow,$copy,$folder)) {
+        $button.Margin=New-Object Windows.Forms.Padding(0,0,$gap,$gap)
+    }
+    foreach ($button in @($copy,$folder)) {
+        $button.MinimumSize=New-Object Drawing.Size(0,([int][Math]::Round(28*$scale)))
+    }
+    $buttons.Width=$width; $buttons.PerformLayout()
+    $buttonHeight=$buttons.GetPreferredSize((New-Object Drawing.Size($width,0))).Height
+    $buttons.SetBounds($margin,$margin,$width,$buttonHeight); $buttons.PerformLayout()
+    $summaryHeight=Activity-LabelHeight $summary $width
+    $summary.SetBounds($margin,($margin+$buttonHeight),$width,$summaryHeight)
+    $bottom.Height=$margin+$buttonHeight+$summaryHeight+$margin
+}
+$form.Add_Resize({ Update-ActivityLayout })
 
 function Render-Activity([switch]$Force) {
     if (-not $Force -and $script:renderedVersion -eq $script:version) { return }
@@ -359,6 +397,7 @@ function Render-Activity([switch]$Force) {
     $summary.Text=(AT 'activity_limit') -f $script:rows.Count
     $recent.Text=if ($script:lastUpdate) { (AT 'activity_last') -f $script:lastUpdate.ToLocalTime().ToString('HH:mm:ss') } else { AT 'activity_waiting' }
     if ($script:headerRow -and (Field (Field $script:headerRow 'data') 'state') -eq 'RUNNING') { $recent.Text+=' · '+(Activity-Message $script:headerRow) }
+    Update-ActivityLayout
     if ($Force -or ($follow.Checked -and $script:renderedViewVersion -ne $script:viewVersion)) {
         if ($follow.Checked) { $script:visibleRows=@($script:rows | Sort-Object _order,session,sequence) }
         if ($Force) {
@@ -386,7 +425,7 @@ $timer=New-Object Windows.Forms.Timer; $timer.Interval=500
 $timer.Add_Tick({ try { Refresh-Activity; Render-Activity } catch { } })
 
 if ($Preview) {
-    Refresh-Activity; Render-Activity -Force; $hint.Text=AT 'activity_preview'
+    Refresh-Activity; Render-Activity -Force; $hint.Text=AT 'activity_preview'; Update-ActivityLayout
     if ($PreviewImage) {
         $form.ShowInTaskbar=$false; $form.Opacity=0; $form.Show(); [Windows.Forms.Application]::DoEvents()
         $bitmap=New-Object Drawing.Bitmap($form.Width,$form.Height)

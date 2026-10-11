@@ -22,7 +22,7 @@
 
 MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶段变化、简短决策、计划更新、操作结果和心得保存状态。窗口展示模型已提交的依据与计划。
 
-窗口可随时关闭，不影响游玩；运行 `Balatro Agent.exe --monitor` 可重开。[窗口机制与实测开销](docs/balatro-ai/activity.md)
+拖动窗口边缘可调整宽高，正文自动换行。窗口可随时关闭，不影响游玩；运行 `Balatro Agent.exe --monitor` 可重开。[窗口机制与实测开销](docs/balatro-ai/activity.md)
 
 ## 牌组与注级
 

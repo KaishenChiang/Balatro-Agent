@@ -22,7 +22,7 @@ The launcher follows the Windows display language by default; use **Language / è
 
 An MCP game launch opens an independent activity window. Its **HH:mm:ss** timeline shows stage changes, short decisions, plan updates, action results, and experience saves. It displays the model's submitted rationale and plans.
 
-Close the window at any time without interrupting play; reopen it with `Balatro Agent.exe --monitor`. [How it works and measured overhead](docs/balatro-ai/activity.md)
+Drag the window edges to resize its width and height; text wraps automatically. Close it at any time without interrupting play; reopen it with `Balatro Agent.exe --monitor`. [How it works and measured overhead](docs/balatro-ai/activity.md)
 
 ## Decks and stakes
 
