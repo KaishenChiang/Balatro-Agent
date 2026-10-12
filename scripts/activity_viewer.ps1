@@ -420,7 +420,7 @@ function Render-Activity([switch]$Force) {
 $languageChoice.Add_SelectedIndexChanged({ $script:activityLanguage=$languageChoice.SelectedItem.Key; Render-Activity -Force })
 $follow.Add_CheckedChanged({ if ($follow.Checked) { Render-Activity -Force } })
 $copy.Add_Click({ try { [Windows.Forms.Clipboard]::SetText($body.Text) } catch { } })
-$folder.Add_Click({ if ([IO.Directory]::Exists($EventDirectory)) { Start-Process -FilePath (Join-Path $env:SystemRoot 'explorer.exe') -ArgumentList ('"'+$EventDirectory+'"') -WindowStyle Hidden } })
+$folder.Add_Click({ if ([IO.Directory]::Exists($EventDirectory)) { Start-Process -FilePath $EventDirectory -Verb Open -WindowStyle Normal } })
 $timer=New-Object Windows.Forms.Timer; $timer.Interval=500
 $timer.Add_Tick({ try { Refresh-Activity; Render-Activity } catch { } })
 

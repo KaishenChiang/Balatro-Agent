@@ -15,6 +15,7 @@ import uuid
 from .compact import expand
 from .local_audit import canonical, make_dir, safe_path
 from .file_io import open_file
+from .activity_runs import RunActivity
 
 SCHEMA = 'activity-v1'
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,6 +55,8 @@ class ActivityJournal:
         self.latest_observation = None
         self.board = {}
         self.actions = {}
+        self.runs = RunActivity(self.root)
+        self.run_history = False
 
     def emit(self, kind, tool, data):
         """Best effort only; the mandatory audit remains authoritative."""
@@ -76,6 +79,11 @@ class ActivityJournal:
             self.last[key] = signature
             if len(self.last) > 256:
                 self.last.pop(next(iter(self.last)))
+            try:
+                if not self.run_history:
+                    self.runs.append(row)
+            except Exception:
+                self.runs.problem = 'storage_unavailable'
         except Exception:
             pass
 
@@ -121,7 +129,7 @@ class ActivityJournal:
         except Exception:
             pass
 
-    def _observation(self, tool, observation, *, historical=False):
+    def _observation(self, tool, observation, *, historical=False, run_start=None):
         oid = observation.get('observation_id', '').split('-')
         if not historical and len(oid) == 3 and oid[2].isdigit():
             cursor = (oid[1], int(oid[2]))
@@ -129,6 +137,14 @@ class ActivityJournal:
                 historical = True
             else:
                 self.latest_observation = cursor
+        self.run_history = historical
+        if not historical:
+            try:
+                if self.runs.observe(observation, run_start) is False:
+                    historical = True
+                    self.run_history = True
+            except Exception:
+                self.runs.problem = 'storage_unavailable'
         resources = observation.get('resources') or {}
         setup = observation.get('setup') or {}
         data = {'phase': text(observation.get('phase'), 40), 'ready': observation.get('ready') is True,
@@ -157,9 +173,16 @@ class ActivityJournal:
             # result trees are never copied or traversed for this optional UI.
             value = result
             hint = value.get('public_changes') or {}
+            observation = None
             if isinstance(value.get('observation'), dict):
-                self._observation(tool, expand(value['observation']),
-                    historical=str(hint.get('reason', '')).startswith('historical_'))
+                observation = expand(value['observation'])
+                start = self.actions.get(value.get('action_id'), {}).get('action')
+                if (value.get('state') != 'COMPLETED' or value.get('duplicate')
+                        or start not in ('start_run','continue_run')):
+                    start = None
+                self._observation(tool, observation, run_start=start,
+                    historical=str(hint.get('reason', '')).startswith('historical_')
+                               or value.get('run_plan_status')=='stale_observation')
             if hint.get('protocol') == 'public-changes-v1':
                 sections = {'phase', 'hand', 'jokers', 'consumables', 'shop', 'pack',
                             'resources', 'blinds', 'poker_hands', 'deck_composition'}
@@ -204,8 +227,17 @@ class ActivityJournal:
                     'operation': text(value.get('operation'), 40), 'result': number(value.get('result'))})
             elif value.get('status') not in (None, 'ok'):
                 self.emit('notice', tool, {'status': text(value.get('status'), 40)})
+            if observation is not None and not self.run_history and (
+                    tool in ('act','action_status') and value.get('state')=='COMPLETED'
+                    or tool in ('observe','wait_until_ready') and value.get('status') in ('ok','ready')):
+                try:
+                    self.runs.finish(observation)
+                except Exception:
+                    self.runs.problem = 'storage_unavailable'
         except Exception:
             pass
+        finally:
+            self.run_history = False
 
 
 def open_viewer(settings):

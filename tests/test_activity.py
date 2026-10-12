@@ -199,6 +199,31 @@ def viewer_copy(tmp_path,hook):
     return entry
 
 
+@pytest.mark.parametrize('directory_mode',['default','override'])
+def test_folder_button_opens_literal_directory_visibly_with_chinese_and_spaces(tmp_path,directory_mode):
+    root=tmp_path/'中文 project';root.mkdir()
+    directory=root/('runs/live/activity' if directory_mode=='default' else 'chosen logs')
+    directory.mkdir(parents=True)
+    # Intercept only the OS launch; execute the real Windows Forms click handler.
+    hook='''function Start-Process {
+    param($FilePath,$Verb,$WindowStyle,$ArgumentList)
+    $script:opened=@{path=$FilePath;verb=$Verb;style=[string]$WindowStyle;arguments=$ArgumentList}
+}
+$form.ShowInTaskbar=$false;$form.Opacity=0;$form.Show()
+$folder.PerformClick()
+$script:opened|ConvertTo-Json'''
+    entry=viewer_copy(root,hook)
+    command='. '+quote(entry)+' -Preview -Language zh-CN'
+    if directory_mode=='override':
+        supplied=str(root/'unused/../chosen logs').replace('\\','/')
+        command+=' -EventDirectory '+quote(supplied)
+    result=run_ps(command)
+    assert Path(result['path']).samefile(directory)
+    assert result['verb']=='Open' and result['style']=='Normal'
+    assert result['arguments'] is None
+    assert not list(directory.iterdir())
+
+
 @pytest.mark.parametrize('language',['en','zh-CN'])
 def test_real_viewer_formats_live_summaries_and_language_switch_keeps_records(tmp_path,settings,language):
     journal=ActivityJournal(settings)

@@ -1,5 +1,17 @@
 # Live play activity / 实时游玩状态
 
+## Per-run editing logs / 每局剪辑日志
+
+Each run keeps one JSONL and one Chinese TXT timeline under `runs/live/activity/by-run/`, named with its UTC recording-start timestamp and a unique suffix. Saving is automatic while the service runs, even when the activity window is closed. At a current confirmed native result, the files receive one result marker; subsequent experience saves stay in the same run. **Log folder / 记录目录** opens the activity root; enter `by-run` to read these files. The original service-session activity files remain intact.
+
+TXT lines include actual timestamps with UTC offset, elapsed time from the log's recording origin, and public stage/decision/action/plan/experience summaries. Align one shared event with the video first; the elapsed column is not a recording frame/timecode and does not identify pure model thinking time. A confirmed new run, attachment midway through play, reconnect gap and interrupted run are distinguished. UNKNOWN and historical results cannot finalize the current run. No video recording, model calls or extra game observation is added.
+
+每局连续保存一份JSONL和一份中文TXT时间轴，位于`runs/live/activity/by-run/`，以记录起点的UTC时间及唯一后缀命名。窗口关闭时MCP仍保存；正常结算追加胜负、实际牌组/注级、底注和回合，局后心得写入继续追加到同一文件。原始会话活动文件不删除。记录目录按钮按文件夹原生Open方式正常显示，进入`by-run`即可查看。
+
+每行带实际时间及UTC偏移、从记录起点经过时间和公开活动摘要。剪辑前用一个共同事件与录像对齐；开局确认时间不是精确的录像起点，途中接入不补造开局时间，断连期间不补造活动，UNKNOWN不当作正常败局。不是录像、完整逐帧游戏证据或模型内部推理。
+
+`health.activity_run_log_protocol="per-run-v1"` advertises support. `activity_run_log` reports recording/completed/interrupted, its origin and relative file paths; storage failures report `storage_unavailable` and never alter native game results. Existing malformed optional recording cursors are preserved for maintenance instead of silently cleared. Reload MCP after updating source to activate this feature. All run logs remain local and are excluded from source publication.
+
 The independent Windows viewer opens with a permitted new `launch_game` request, including a verified game that is already running. It stays separate from the preparation launcher and Lovely's hidden console. Closing it does not stop the game, MCP or model. Identical lifecycle-ID queries do not reopen a window you closed. After the game ends or closes, the viewer retains its records for review.
 
 The timeline uses local **HH:mm:ss**, with one short line per meaningful event: game stages and run outcomes, the model's submitted decision and brief rationale, plan updates, confirmed native actions, and experience reads/saves. A purchase/use can name the one visible target; hand inventories, raw parameters, tool names, action IDs, note IDs and protocol codes are omitted. Repeated observations within the same stage and round, successful calculation output and plan reads do not clutter the view. Ordinary execution progress appears above the timeline. Unconfirmed results, rejected actions and in-game prompts remain explicit in plain language; an intention never appears as an executed action.

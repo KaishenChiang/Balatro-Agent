@@ -54,6 +54,8 @@ async def health() -> dict[str, object]:
     result['notes_default_view'] = 'strategy'
     result['run_plan_protocol'] = 'run-plan-v1'
     result['activity_text_protocol'] = 'bilingual-tags-v1'
+    result['activity_run_log_protocol'] = 'per-run-v1'
+    result['activity_run_log'] = reader.activity.runs.status()
     result['transport_policy'] = 'bounded-query-retry-v1'
     return result
 

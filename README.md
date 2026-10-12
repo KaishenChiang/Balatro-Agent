@@ -24,6 +24,8 @@ An MCP game launch opens an independent activity window. Its **HH:mm:ss** timeli
 
 Drag the window edges to resize its width and height; text wraps automatically. Close it at any time without interrupting play; double-click **[Balatro Status.exe](<Balatro Status.exe>)** to reopen it. The command `Balatro Agent.exe --monitor` also works. [How it works and measured overhead](docs/balatro-ai/activity.md)
 
+Each run automatically keeps a JSONL activity file and a Chinese TXT editing timeline under `runs/live/activity/by-run/`. Normal results and post-run experience saves stay with that run. Open **Log folder**, then `by-run`. The timeline includes actual timestamps and elapsed recording time: align one shared event with your video before editing. Mid-run attachment and reconnect gaps are labeled; these are not video timecodes.
+
 ## Decks and stakes
 
 The default is **Red Deck / White Stake**. Choose from **15 original decks**; unlocks are checked in the game. Locked or unconfirmed choices are reported and stopped.

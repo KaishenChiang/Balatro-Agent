@@ -128,6 +128,8 @@ runs/live/run-plans/保存模型的短局内计划和全部修订，active.json�
 
 中文current.md仅包含攻略。默认MCP strategy读取不返回来源、历史案例或保存凭证；局后修订或核验时才显式读取content/full。两层各存储根的.metadata/experience/保留审计资料；备份与迁移必须包含整个经验根，不能只复制Markdown而遗漏元数据。
 
+剪辑用按局JSONL/TXT位于runs/live/activity/by-run/，随runs/live/单独备份，不进入公开包。activity/active-run.json仅是可选日志当前记录游标；正常服务重载可以接续同一公开会话，断连空隙明确标记。损坏游标不自动删除，日志失败不改变原生执行、动作检查点或正常结果；原始会话活动文件继续保留。更新源码后重载MCP，核验health的per-run-v1标记启用按局保存。
+
 历史精选记录集中于[evidence](../../evidence/README.md)，旧建设记录保留在私人归档，不作为当前任务或授权。新对局须按[bootstrap](../../prompts/bootstrap.md)先实际读取主攻略、核对条件，相关主题按需读取并保留全部反馈；终局有新认识才写入并独立读回。更新源码文件不代表客户端已重载：health缺少notes_policy="local-over-baseline-v1"、notes_write_scope="local_only"或notes_storage_format="single-current-v2"时，先重载MCP并重新核验，再提交心得。常规开发STDIO使用隔离目录和阻断游戏的传输；专项存储检查可以明确记录只读正式经验，不能混作当前Codex客户端已重载或游戏实机证据。
 
 维护入口还提供timings／audit，基于完整过滤交付重算计时和记录一致性。调用间隔不是纯推理时间，故障恢复与连续正常局分开。

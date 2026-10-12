@@ -124,6 +124,8 @@ RETIRED只代表封存成功，original_action_state=UNKNOWN、normal_game_compl
 
 read_notes(kind="experience", note_ids=null, revision=null, view="strategy", query=null, offset=0)实际读盘；开局指定note_ids=["EXP-GENERAL-GUIDE"]，其他主题按当前条件读取。主攻略不存在时才省略note_ids读取可用正式经验；省略仍兼容读取全部，[]返回空。正式经验每个主题只有一个current.md；revision是更新计数，指定旧计数返回not_found，TEST仍支持历史读取。MCP默认strategy只返回行动判断、适用条件、反例、可信程度和简短更新引用，不返回来源编号、历史案例、时间或写入凭证。显式content/full用于审计，full额外返回中文攻略Markdown。新聊天或压缩后引用不清时重读，笔记只改变可读取上下文，不改变模型参数。
 
+health的activity_run_log_protocol="per-run-v1"表示按局活动归档支持；activity_run_log提供当前记录状态、起点类型和相对于配置日志目录的JSONL/TXT路径。每局记录在activity/by-run/连续追加，原生当前正常结算后标记completed；未决动作与历史终局不能促成虚假完成，接入中途、跨会话中断与断连空隙明确标记。可选归档失败不改变游戏动作结果，原始必需记录仍保留。时间列是实际服务记录时间及相对记录起点时间，不是录像时间码；见[活动说明](activity.md)。
+
 view="index"只返回note_id、revision/current_revision、note_ref、confidence与最多120字符的行动/条件/反例预览（正式经验用rule_preview，TEST保留fact_preview），明确discovery_only/preview_only。query为最多80字符的不区分大小写字面子串，匹配编号与策略正文，不搜索审计资料、不排序推荐动作或生成摘要；offset与next_offset按20条分页，索引可扫描最多200个主题。索引不算完整经验读取，先strategy读选中主题再作依据。query和非零offset仅index允许；索引仍每次读盘、校验完整记录，不走过期缓存。
 
 write_note(note_id, content, expected_revision, write_id, kind="experience")创建expected_revision=0，更新必须匹配当前修订。EXP-／TEST-编号与分区匹配，仅大写字母、数字、连字符。content含sources(run_id、steps)、facts、interpretation、conditions、counterexamples、confidence(low／medium／high)、revision_reason。模型撰写策略解释，程序校验结构；来源真实性须对照实际交付。

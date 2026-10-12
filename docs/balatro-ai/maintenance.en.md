@@ -22,6 +22,8 @@ With explicit authorization to integrate local experience into source, preview `
 
 Chinese `current.md` guides contain strategy only. Default MCP `strategy` reads omit provenance, historical facts and save receipts; explicit `content`/`full` reads expose those audit fields when revising or investigating a note. Each store keeps its audit metadata under `.metadata/experience/`. Back up and migrate the entire experience root, including metadata, to retain validation and deduplication.
 
+Back up editing logs in `runs/live/activity/by-run/` with `runs/live/`; they never belong in public source. `activity/active-run.json` is only the optional recording cursor. Reloaded services can continue the same public session, with reconnect gaps labeled. Preserve corrupt cursors for maintenance instead of deleting them; optional export failures never change native execution/checkpoints/results. Reload MCP after a source update and check the `per-run-v1` health marker.
+
 For a stopped/unresolved action, query its original ID and observe through MCP. Never replay an uncertain action or promote UNKNOWN to a loss. `recover_lost_session` is only for a confirmed lost old session under its contract. Normal wins/losses retain the game results window; closing the game requires a separate explicit request.
 
 If the local pending record is absent, retirement still requires the service's own durably delivered missing-record status from one verified old session, matching registration, independent checkpoints, current profile and fresh observation. Known submission history or ambiguous sessions block this path. RETIRED preserves the original UNKNOWN outcome; it never proves the action was unsubmitted, successful or a normal loss, and recovery submits no game action.
