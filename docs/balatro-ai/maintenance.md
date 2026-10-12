@@ -2,7 +2,7 @@
 
 [English](maintenance.en.md) | 简体中文
 
-项目只有一个STDIO服务；游戏观察和操作通过MCP，维护脚本不替模型作策略决策。工具契约见[技术参考](reference.md)，验证范围见[PROJECT](../../PROJECT.md)。
+项目只有一个STDIO服务；游戏观察和操作通过MCP，维护脚本不替模型作策略决策。工具契约见[技术参考](reference.md)，验证范围见[证据索引](../../evidence/README.md)。
 
 ## 首次安装
 

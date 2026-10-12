@@ -20,7 +20,7 @@ function Get-BalatroPlayPrompt([string]$ProjectRoot, [switch]$InlineRules,
             default { 'Play one run; do not retry automatically.' }
         }
         return 'Project directory: ' + $portablePath + [Environment]::NewLine +
-            'Read this project''s prompts/' + $rulesFile + ' and use balatro-agent MCP to play a native random run. Reply in English. If the rules or MCP tools are unavailable, report the missing connection or access and stop.' + [Environment]::NewLine +
+            'Read this project''s prompts/' + $rulesFile + ', then first use balatro-agent MCP launch_game to open or show the game and play a native random run. Reply in English. If rules or MCP tools are unavailable, report the gap and stop.' + [Environment]::NewLine +
             'Selected deck: ' + $deck[0].EnglishName + '; selected stake / mode: ' + $stake[0].EnglishName + '.' + [Environment]::NewLine + $mode
     } else {
         $mode = switch ($stake[0].Key) {
@@ -29,7 +29,7 @@ function Get-BalatroPlayPrompt([string]$ProjectRoot, [switch]$InlineRules,
             default { '只游玩一局，不自动重试。' }
         }
         return '项目目录：' + $portablePath + [Environment]::NewLine +
-            '请读取该项目的 prompts/' + $rulesFile + '，按规则仅通过 balatro-agent MCP 自主游玩原生随机对局。若无法读取规则或缺少 MCP 工具，报告缺项并停止。' + [Environment]::NewLine +
+            '请读取该项目的 prompts/' + $rulesFile + '，先通过 balatro-agent MCP 的 launch_game 打开或显示游戏，再按规则自主游玩原生随机对局。若无法读取规则或缺少 MCP 工具，报告缺项并停止。' + [Environment]::NewLine +
             '所选牌组：' + $deck[0].Name + '；所选注级／模式：' + $stake[0].Name + '。' + [Environment]::NewLine + $mode
     }
 }

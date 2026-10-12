@@ -28,7 +28,7 @@ Each run automatically keeps a JSONL activity file and a Chinese TXT editing tim
 
 ## Decks and stakes
 
-The default is **Red Deck / White Stake**. Choose from **15 original decks**; unlocks are checked in the game. Locked or unconfirmed choices are reported and stopped.
+The default is **Red Deck / White Stake**. Choose from **15 original decks**; the selected deck must be visibly unlocked. After you send the play prompt, the AI first opens or shows the game, then checks the connection.
 
 | Stake / mode | Behavior |
 | --- | --- |
@@ -36,7 +36,7 @@ The default is **Red Deck / White Stake**. Choose from **15 original decks**; un
 | Highest stake | One run at the highest unlocked stake for that deck |
 | Climb mode | Start at that deck's highest unlocked stake; retry normal losses, advance one stake after a verified win, and continue until beating Gold or you ask to stop |
 
-Climb mode reports and reviews each run before continuing. Connection faults or uncertain results require recovery and are not retried as normal losses.
+Highest stake ignores locked candidates, including unnamed ones, and compares only unlocked, enabled choices. Climb mode reports and reviews each run before continuing. Connection faults or uncertain results require recovery and are not retried as normal losses.
 
 ## Results and experience
 
@@ -48,7 +48,7 @@ The AI reads the [general guide](experience/README.md) before playing and other 
 
 ## More information
 
-[Setup and recovery](docs/balatro-ai/maintenance.en.md) · [English support](docs/balatro-ai/english-support.md) · [Play rules](prompts/bootstrap.en.md) · [Development and verification](PROJECT.md) · [Changelog](CHANGELOG.md)
+[Setup and recovery](docs/balatro-ai/maintenance.en.md) · [English support](docs/balatro-ai/english-support.md) · [Play rules](prompts/bootstrap.en.md) · [Verification evidence](evidence/README.md) · [Changelog](CHANGELOG.md)
 
 If this project helps you, a **Star** is welcome. Report problems in [Issues](https://github.com/KaishenChiang/balatro-agent/issues).
 

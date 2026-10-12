@@ -46,6 +46,7 @@ def test_link_encodes_exact_project_and_short_prompt_without_sending(tmp_path, n
     assert (prompts / 'bootstrap.md').read_text(encoding='utf-8').strip() not in value['short']
     assert value['short'].count('所选牌组：') == 1 and value['short'].count('prompts/bootstrap.md') == 1
     assert '缺少 MCP 工具' in value['short'] and '停止' in value['short']
+    assert '先通过 balatro-agent MCP 的 launch_game 打开或显示游戏' in value['short']
     assert '自动发送' not in value['link']
     assert not (root / '.artifacts').exists() and not (root / 'runs').exists()
 
@@ -120,6 +121,7 @@ def test_all_original_decks_and_stake_modes_reach_both_handoff_paths():
             assert '所选注级／模式：' + row['stake']['Name'] in text
             assert 'prompts/bootstrap.md' in text
             assert '缺少 MCP 工具' in text
+            assert '先通过 balatro-agent MCP 的 launch_game 打开或显示游戏' in text
         assert row['short'] == row['full']
         assert parse_qs(urlsplit(row['link']).query)['prompt'] == [row['short']]
         if row['stake']['Key'] == 'climb':

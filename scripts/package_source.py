@@ -11,7 +11,7 @@ import struct
 from bootstrap_sources import no_links, digest, unpack
 
 ROOT=Path(__file__).resolve().parents[1]
-TOP=['LICENSE','README.md','README.zh-CN.md','PROJECT.md','CHANGELOG.md','Balatro Agent.exe','Balatro Status.exe','pyproject.toml','uv.lock',
+TOP=['LICENSE','README.md','README.zh-CN.md','CHANGELOG.md','Balatro Agent.exe','Balatro Status.exe','pyproject.toml','uv.lock',
      '.gitattributes','.gitignore','.python-version','AGENTS.md']
 SCRIPTS=['setup.ps1','launcher.ps1','activity_viewer.ps1','codex_handoff.ps1','localization.ps1','build_launcher.ps1','onboarding.py','bootstrap_sources.py','build_mod.py','startup_display.py',
          'install_portable.py','update_mod.py','package_source.py','verify_source_candidate.py','verify_offline.py',

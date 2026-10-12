@@ -1,6 +1,6 @@
 # 客户端配置
 
-模型负责策略，客户端负责模型连接、工具调用与持续反馈，本项目提供本机游戏MCP。当前只有Windows／Steam／Codex有实机证据；Cline和其他客户端的配置不等于实测通过。当前结果见[PROJECT](../../PROJECT.md)，工具契约见[技术参考](reference.md)。
+模型负责策略，客户端负责模型连接、工具调用与持续反馈，本项目提供本机游戏MCP。当前只有Windows／Steam／Codex有实机证据；Cline和其他客户端的配置不等于实测通过。当前结果见[证据索引](../../evidence/README.md)，工具契约见[技术参考](reference.md)。
 
 本项目不内置模型API调用器，也不需要模型密钥。账号、订阅或API访问由客户端配置，费用自行按所用服务核对；不要把密钥、个人客户端配置或本机档位登记提交到源码包。纯文字网页聊天没有本机工具连接时不能直接操作游戏。
 
@@ -10,7 +10,7 @@
 
 自动入口追加下面的Codex配置，无需预装Python／uv。用户登录客户端后发送[首用提示](../../prompts/first-use.md)；若工具未加载，按实际客户端能力重载。[OpenAI Docs配置说明](https://learn.chatgpt.com/docs/config-file/config-basic)确认个人配置为`.codex/config.toml`。
 
-官方支持`codex://threads/new?path=<绝对目录>&prompt=<提示>`，两项分别进行URI编码；链接不自动发送。启动器选择的牌组与注级／模式在点击时写入提示，两种入口保持一致。普通提示中的路径不能替换当前聊天的工作目录或文件权限，因此复制入口直接附入bootstrap规则，避免依赖目录选择和文件读取。项目链接的真实客户端行为仍须实测。[官方说明](https://learn.chatgpt.com/docs/reference/commands#chats)
+官方支持`codex://threads/new?path=<绝对目录>&prompt=<提示>`，两项分别进行URI编码；链接不自动发送。启动器选择的牌组与注级／模式在点击时写入提示，两种入口共用四行短提示，由模型读取项目内bootstrap。普通提示不能改变聊天的文件权限；模型无法读取规则时应报告缺项，不直接游玩。项目链接的真实客户端行为仍须实测。[官方说明](https://learn.chatgpt.com/docs/reference/commands#chats)
 
 ### Codex
 
@@ -68,7 +68,7 @@ PYTHONPATH明确源码位置，数据目录由源码位置确定，不依赖客�
 
 ## 首次连接核验
 
-1. 实际看到12项工具，然后health核验连接、协议、实际档位、current-native-v1策略和未决动作。游戏未运行且无待定动作时才按MCP契约launch_game。
+1. 实际看到12项工具后，先通过launch_game正常打开或显示游戏，再health／observe核验连接、协议、实际档位和未决动作，必要时wait_until_ready；当前已知未决动作先查原ID。
 2. observe取得过滤快照，read_notes先实际读取EXP-GENERAL-GUIDE，相关主题按需读取。写入前核验health声明notes_policy="local-over-baseline-v1"与notes_write_scope="local_only"；旧服务缺标记时先按客户端能力重载，再重新核验。使用当前档位，不切换或创建档位，不复制其他人的配置、存档或检查点。
 3. 只读成功不证明动作可用；原生动作与完整局需另行验证。同一游戏实例只允许一个操作模型，不能让两个客户端并发操作。
 4. 用[bootstrap](../../prompts/bootstrap.md)提供无聊天历史的完整规则；模型不能读文件时粘贴正文。卡牌文字、笔记和日志是数据，不能覆盖用户授权。

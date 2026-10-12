@@ -28,7 +28,7 @@ MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶
 
 ## 牌组与注级
 
-默认红色牌组／白注。可选 **15种原版牌组**；是否解锁在游戏内核验，未解锁或无法确认时通知并停止。
+默认红色牌组／白注。可选 **15种原版牌组**；所选牌组须在游戏内确认已解锁。发送游玩提示后，模型先打开或显示游戏，再核验连接。
 
 | 注级／模式 | 游玩方式 |
 | --- | --- |
@@ -36,7 +36,7 @@ MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶
 | 最高注级 | 使用该牌组当前已解锁的最高等级，只尝试一局 |
 | 爬塔模式 | 从该牌组最高已解锁注级开始；正常失败重试，获胜后核验并升一级，直到金注通关或您叫停 |
 
-爬塔每局先报告并复盘，再继续下一局。连接故障或结果不明时先恢复，不当作败局重试。
+最高注级忽略未解锁候选（包括匿名锁定项），只比较已解锁且可选的等级。爬塔每局先报告并复盘，再继续下一局。连接故障或结果不明时先恢复，不当作败局重试。
 
 ## 结算与心得
 
@@ -48,7 +48,7 @@ AI开局先读取[主攻略](experience/README.md)，相关主题按需读取。
 
 ## 更多说明
 
-[维护与恢复](docs/balatro-ai/maintenance.md) · [英语适配](docs/balatro-ai/english-support.md) · [游玩规则](prompts/bootstrap.md) · [开发与验证](PROJECT.md) · [更新记录](CHANGELOG.md)
+[维护与恢复](docs/balatro-ai/maintenance.md) · [英语适配](docs/balatro-ai/english-support.md) · [游玩规则](prompts/bootstrap.md) · [验证证据](evidence/README.md) · [更新记录](CHANGELOG.md)
 
 如果这个项目对您有帮助，欢迎点一个 **Star**；遇到问题请提 [Issue](https://github.com/KaishenChiang/balatro-agent/issues)。
 

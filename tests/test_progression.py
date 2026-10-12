@@ -210,6 +210,31 @@ def test_setup_only_rendered_candidates_and_native_unlocked_click(game, kind):
     assert call('act_submit', req)['duplicate'] is True and lua.eval('TEST_SETUP_CLICKS') == 1
 
 
+def test_selectable_orange_is_not_blocked_by_anonymous_locked_gold(game):
+    lua, call, tick = game
+    setup_scene(game, 'stake')
+    lua.execute('''
+      G.P_STAKES.stake_orange={key='stake_orange',order=7,applied_stakes={'stake_purple'}}
+      G.PROFILES[2].deck_usage.b_red.wins_by_key.stake_purple=true
+      TEST_SETUP_CARDS[2].config.center=G.P_STAKES.stake_orange
+      TEST_SETUP_CARDS[2].params.stake='stake_orange'
+    ''')
+    options = Envelope.model_validate(call('reader_snapshot')).public.setup.options
+    assert [option.enabled for option in options] == [True, True, False]
+    assert options[1].name == lua.eval("localize{type='name_text',set='Stake',key='stake_orange'}")
+    assert options[2].name == lua.eval("localize('run_select_locked_stake')")
+    assert 'stake_gold' not in options[2].model_dump_json()
+    result = call('act_submit', request(
+        game, 'select_setup_option', {'kind': 'stake', 'position': 1}, 'choose-orange'))
+    assert result['submitted'] is True
+    for _ in range(4):
+        tick()
+    done = call('action_status', {'action_id': 'choose-orange'})
+    assert done['state'] == 'COMPLETED'
+    assert done['snapshot']['public']['setup']['options'][1]['selected'] is True
+    assert lua.eval('TEST_SETUP_CLICKS') == 1
+
+
 @pytest.mark.parametrize('gate', ['seed', 'challenge', 'locked', 'foreign', 'hidden_setup'])
 def test_native_progression_start_rejects_unsafe_configuration(game, gate):
     lua, call, _ = game

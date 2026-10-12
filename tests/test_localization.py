@@ -38,6 +38,7 @@ def test_all_english_deck_stake_requests_use_english_rules_in_both_handoff_paths
             assert 'Selected deck: ' + row['deck'] in text
             assert 'selected stake / mode: ' + row['stake'] in text
             assert 'Reply in English' in text and 'MCP tools are unavailable' in text
+            assert 'first use balatro-agent MCP launch_game to open or show the game' in text
         assert 'prompts/bootstrap.en.md' in row['short']
         assert row['full'] == row['short'] and rules not in row['full']
         assert len(row['short']) < 800 and len(row['short'].splitlines()) == 4
