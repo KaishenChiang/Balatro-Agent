@@ -1,6 +1,10 @@
 """Performance evidence must separate observed waits, gaps and host failures."""
 import importlib.util
+import copy
+import json
 from pathlib import Path
+
+import pytest
 
 spec = importlib.util.spec_from_file_location('timing_evidence', Path(__file__).resolve().parents[1] / 'scripts/analyze_timings.py')
 timing = importlib.util.module_from_spec(spec)
@@ -60,3 +64,67 @@ def test_legacy_actual_delivery_layout_and_native_completion_timing():
     assert report['by_completed_action_native_ms'] == {'select': {'count': 1, 'total_ms': 0, 'median_ms': 0, 'p95_ms': 0, 'max_ms': 0}}
     assert 'parameters' not in rows[0] and report['pure_model_latency_ms'] is None
     assert report['delivered_result_utf8_bytes']['count'] == 2
+
+
+def test_result_sizes_use_utf8_bytes_and_group_by_tool_without_mutating_rows():
+    rows = [row(1), {'step': 2, 'tool': 'read_notes', 'result': {'text': '公开经验心得'},
+                     'client_tool_ms': 20}, row(3)]
+    before = copy.deepcopy(rows)
+    sizes = [len(json.dumps(item['result'], ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+             for item in rows]
+    report = timing.summarize(rows)
+    assert report['delivered_result_utf8_bytes'] == timing.distribution(sizes, 'bytes')
+    assert report['by_tool_result_utf8_bytes'] == {
+        'act': timing.distribution([sizes[0], sizes[2]], 'bytes'),
+        'read_notes': timing.distribution([sizes[1]], 'bytes')}
+    assert sizes[1] > len(json.dumps(rows[1]['result'], ensure_ascii=False, separators=(',', ':')))
+    assert 'total_ms' not in report['delivered_result_utf8_bytes']
+    assert report['tool_wait']['total_ms'] == 220  # Existing timing fields remain compatible.
+    assert rows == before
+
+
+def test_transport_wait_and_poll_count_keep_independent_units_and_unknown_actions():
+    a, b, failed = row(1), row(2, state='UNKNOWN'), row(3)
+    a['result']['timing'] = {'native_elapsed_ms': 80, 'transport_wait_ms': 12.5, 'poll_count': 0}
+    b['result']['timing'] = {'native_elapsed_ms': 900, 'transport_wait_ms': 20, 'poll_count': 3}
+    failed['result']['timing'] = {'transport_wait_ms': 999, 'poll_count': 999}
+    failed['evidence_type'] = 'host_tool_error_not_mcp_delivery'
+    report = timing.summarize([a, b, failed])
+    assert report['transport_wait_ms'] == timing.distribution([12.5, 20])
+    assert report['poll_count'] == {'count': 2, 'total_polls': 3, 'median_polls': 1.5,
+                                   'p95_polls': 3, 'max_polls': 3}
+    assert report['by_completed_action_native_ms'] == {'play': timing.distribution([80])}
+    assert report['timing_components_overlap'] is True
+    assert report['pure_model_latency_ms'] is None and not report['performance_improvement_proven']
+    assert report['delivered_result_utf8_bytes']['count'] == 2
+
+
+@pytest.mark.parametrize('invalid', [None, True, -1, '0', float('nan'), float('inf')])
+def test_missing_or_invalid_measurements_are_not_zero(invalid):
+    a = row(1)
+    a['result']['timing'] = {'transport_wait_ms': invalid, 'poll_count': invalid}
+    report = timing.summarize([a, row(2)])
+    assert report['transport_wait_ms'] == {'count': 0}
+    assert report['poll_count'] == {'count': 0}
+
+
+def test_fractional_poll_count_is_invalid_but_fractional_transport_time_is_valid():
+    a = row(1)
+    a['result']['timing'] = {'transport_wait_ms': 0.5, 'poll_count': 0.5}
+    report = timing.summarize([a])
+    assert report['transport_wait_ms'] == timing.distribution([0.5])
+    assert report['poll_count'] == {'count': 0}
+
+
+def test_new_measurements_respect_scope_and_empty_delivery():
+    a, b = row(1), row(2)
+    a['result']['timing'] = {'transport_wait_ms': 10000, 'poll_count': 10000}
+    b['result']['timing'] = {'transport_wait_ms': 0, 'poll_count': 0}
+    report = timing.summarize([a, b], 2, 2)
+    assert report['transport_wait_ms'] == timing.distribution([0])
+    assert report['poll_count'] == timing.distribution([0], 'polls')
+    assert report['delivered_result_utf8_bytes']['count'] == 1
+    empty = timing.summarize([a, b], 3, 4)
+    assert empty['by_tool_result_utf8_bytes'] == {}
+    for field in ('delivered_result_utf8_bytes', 'transport_wait_ms', 'poll_count'):
+        assert empty[field] == {'count': 0}

@@ -96,6 +96,24 @@ def test_short_arrays_never_grow_and_columns_are_strict():
         expand({'$columns': ['position'], '$rows': [[0, 1]]})
 
 
+def test_action_clock_belongs_to_current_delivery_and_not_historical_receipt(context):
+    reader, executor, _, _, public, _, request = context
+    current = executor._deliver('act', {'state': 'COMPLETED', 'submitted': True,
+        'action_id': request['action_id'], 'observation': public}, restore_request=request)
+    from datetime import datetime
+    clock = current['server_time']
+    assert datetime.fromisoformat(clock['utc']).timestamp() == clock['unix_s']
+    assert current['observation']['observation_id'] == public['observation_id']
+    logged = json.loads(executor.log.read_text(encoding='utf-8').splitlines()[-1])['value']
+    assert logged['server_time'] == clock
+    previous = copy.deepcopy(reader.last_delivered_observation)
+    historical = executor._deliver('action_status', {'state': 'COMPLETED', 'submitted': True,
+        'action_id': 'older-action', 'observation': public})
+    assert historical['public_changes']['reason'].startswith('historical_')
+    assert 'server_time' not in historical
+    assert reader.last_delivered_observation == previous
+
+
 async def test_invalid_view_cannot_read_or_submit(context):
     reader, executor, _, _, public, _, _ = context
     assert (await reader.observe('SECRET'))['status'] == 'invalid_view'

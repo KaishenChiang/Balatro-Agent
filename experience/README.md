@@ -21,23 +21,29 @@ current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、
 
 | 编号 | 当前更新计数 | 用途 |
 | --- | --- | --- |
-| EXP-GENERAL-GUIDE | [r5](experience/EXP-GENERAL-GUIDE/current.md) | 主攻略：注级适用性、高难度持续骨架与12项按需参考 |
-| EXP-SCORE-THRESHOLD | [r5](experience/EXP-SCORE-THRESHOLD/current.md) | 通用补充：缺口、现成牌与累计补分 |
+| EXP-GENERAL-GUIDE | [r7](experience/EXP-GENERAL-GUIDE/current.md) | 主攻略：8条决策清单与12项按需参考 |
+| EXP-SCORE-THRESHOLD | [r6](experience/EXP-SCORE-THRESHOLD/current.md) | 通用补充：缺口、剩余计分能力与动态条件 |
 | EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 通用补充：计分牌、附带牌、留手与强制条件 |
 | EXP-MONEY-SCORING | [r7](experience/EXP-MONEY-SCORING/current.md) | 通用补充：付款后资源、期限预算与成长 |
 | EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 通用补充：触发阶段、顺序与条件冲突 |
 | EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 通用补充：观察更新、拒绝与UNKNOWN |
 | EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/current.md) | 条件参考：同花投入及其失败边界 |
-| EXP-REPEATED-HAND | [r5](experience/EXP-REPEATED-HAND/current.md) | 条件参考：同盲重复与Boss限制 |
+| EXP-REPEATED-HAND | [r6](experience/EXP-REPEATED-HAND/current.md) | 条件参考：本盲重复、整局累计与Boss限制 |
 | EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/current.md) | 条件参考：首张计分牌与逐次触发 |
 | EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/current.md) | 条件参考：优惠券与星球持有 |
 | EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/current.md) | 条件参考：翻面打乱后的未知顺序 |
 | EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/current.md) | 条件参考：红注规则，不直接套用于白注 |
-| EXP-ORANGE-STAKE-TRANSITION | [r5](experience/EXP-ORANGE-STAKE-TRANSITION/current.md) | 条件参考：永恒占位、易腐接替、持续核心与更高目标失败边界 |
+| EXP-ORANGE-STAKE-TRANSITION | [r7](experience/EXP-ORANGE-STAKE-TRANSITION/current.md) | 条件参考：商店三条件比较、易腐接替、持续成长与失败边界 |
 
 每个主题只有current.md，更新计数及精简写入收据用于冲突检查和重复请求核验。此次迁移前的r文件、HEAD和分支原稿先逐文件核验并压缩归档到本机.artifacts/experience-archive/，不再留在日常读取目录；以后不自动累积完整旧版。首牌早期错误解释已撤回。红注主题置信度low，其余medium；有限对局不能证明稳定胜率或最优策略。
 
 ## 整理与来源
+
+同日按提高通关机会与速度的开发授权，把主攻略与橙注主题维护为r7短清单；计分门槛和重复牌型保留r6。两份strategy内容JSON的UTF-8体积合计10005→5780字节（减少42.2%），保留全部旧事实、来源、反例、置信度及收据；这不是token、实测模型耗时或胜率。批读已知相关主题，同局清楚的修订无需反复读取；新主题、压缩、修订变化或条件不明再读。
+
+2026-10-12按开发交接授权，逐项核验并整合主攻略、橙注过渡、计分门槛及重复牌型四个主题的r6；正文与匹配审计元数据一起保存，旧来源、事实和写入收据完整保留，其余主题不变。重复牌型纠正为按具体效果区分本盲触发与超新星整局累计；计分门槛增加剩余能力及动态条件检查；高注级商店比较当前阵容、关键易腐失效后和公开Boss限制下的阵容。
+
+新增来源n5-red-highest-20261012-01的公开接续反馈为红色牌组／橙注、底注5／回合13正常失败，36516／50000；仅接续片段，不补齐完整连续对局或用时。最后一手缺口21170、实际7686，幸运+20倍率时11346是条件算术，未实际触发。商店流程来自有限失败复盘，尚未经橙注通关或同局对照；租用仅为待核验预案。交接方记录了MCP提交与读回，本工作树独立核验的是磁盘正文、元数据和收据一致性，未新增实机验收、推送或发布。
 
 以下是历史整理记录，其中版本数量和保留方式描述当时状态；2026-10-12按用户要求迁移为每主题一个当前文件，正文不变，旧快照留在上述一次性归档。
 

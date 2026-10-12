@@ -109,12 +109,14 @@ def test_evidence_wrapper_separates_host_errors_and_handles_missing_structured_o
 
 
 @pytest.mark.parametrize('resolution,cleared', [
-    ({'state':'COMPLETED','action_id':'original-id'}, True),
-    ({'state':'COMPLETED','action_id':'wrong-id'}, False),
+    ({'state':'COMPLETED','action_id':'original-id','submitted':True}, True),
+    ({'state':'COMPLETED','action_id':'wrong-id','submitted':True}, False),
+    ({'state':'COMPLETED','action_id':'original-id'}, False),
     ({'state':'REJECTED','action_id':'original-id','submitted':False}, True),
     ({'state':'REJECTED','action_id':'original-id','submitted':True}, False),
     ({'state':'UNKNOWN','action_id':'original-id'}, False),
-    ({'state':'AWAITING_INPUT','action_id':'original-id','required_action':'close_menu'}, True),
+    ({'state':'AWAITING_INPUT','action_id':'original-id','required_action':'close_menu','submitted':True}, True),
+    ({'state':'AWAITING_INPUT','action_id':'original-id','required_action':'close_menu'}, False),
     ({'state':'AWAITING_INPUT','action_id':'original-id'}, False),
 ])
 def test_evidence_host_failure_blocks_replay_until_original_query_is_resolved(resolution,cleared):

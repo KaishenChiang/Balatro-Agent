@@ -14,14 +14,14 @@ def numeric(value):
     return type(value) in (int, float) and math.isfinite(value) and value >= 0
 
 
-def distribution(values):
+def distribution(values, unit='ms'):
     if not values:
         return {'count': 0}
     ordered = sorted(values)
-    return {'count': len(values), 'total_ms': round(sum(values), 3),
-            'median_ms': round(median(values), 3),
-            'p95_ms': round(ordered[math.ceil(len(values) * .95) - 1], 3),
-            'max_ms': round(ordered[-1], 3)}
+    return {'count': len(values), f'total_{unit}': round(sum(values), 3),
+            f'median_{unit}': round(median(values), 3),
+            f'p95_{unit}': round(ordered[math.ceil(len(values) * .95) - 1], 3),
+            f'max_{unit}': round(ordered[-1], 3)}
 
 
 def summarize(rows, first=None, last=None):
@@ -77,9 +77,24 @@ def summarize(rows, first=None, last=None):
                                                 for r in actions if r['parameters']['action'] == 'select'))
     result['direct_hand_requests'] = sum(r['parameters']['action'] in ('play', 'discard')
                                         and 'positions' in r['parameters'].get('parameters', {}) for r in actions)
-    result['delivered_result_utf8_bytes'] = distribution([
-        len(json.dumps(r['result'], ensure_ascii=False, separators=(',', ':')).encode('utf-8')) for r in delivered])
+    sizes, transport, polls = defaultdict(list), [], []
+    for row in delivered:
+        sizes[row['tool']].append(len(json.dumps(row['result'], ensure_ascii=False,
+                                               separators=(',', ':')).encode('utf-8')))
+        measured = row['result'].get('timing') or {}
+        if numeric(measured.get('transport_wait_ms')):
+            transport.append(measured['transport_wait_ms'])
+        if type(measured.get('poll_count')) is int and measured['poll_count'] >= 0:
+            polls.append(measured['poll_count'])
+    # Preserve the existing outer result-size field, correcting its inner unit
+    # labels; all existing timing distributions retain their *_ms fields.
+    result['delivered_result_utf8_bytes'] = distribution(
+        [value for values in sizes.values() for value in values], 'bytes')
+    result['by_tool_result_utf8_bytes'] = {k: distribution(v, 'bytes') for k, v in sorted(sizes.items())}
     result['result_size_unit'] = 'UTF-8 bytes; not model tokens'
+    result['transport_wait_ms'] = distribution(transport)
+    result['poll_count'] = distribution(polls, 'polls')
+    result['timing_components_overlap'] = True  # Native/transport waits are within client tool wait.
     if calls and all(k in calls[0] and k in calls[-1] for k in ('client_started_utc', 'client_finished_utc')):
         result['scope_wall_ms'] = round((datetime.fromisoformat(calls[-1]['client_finished_utc'].replace('Z','+00:00'))
                                       - datetime.fromisoformat(calls[0]['client_started_utc'].replace('Z','+00:00'))).total_seconds()*1000,3)

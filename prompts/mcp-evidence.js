@@ -5,7 +5,7 @@ function mcpDto(raw) {
   if (!object(raw) || raw.isError === true) return null;
   if (object(raw.structuredContent)) return raw.structuredContent;
   if (Array.isArray(raw.content)) {
-    const block = raw.content.find(value => value.type === 'text');
+    const block = raw.content.find(value => value?.type === 'text');
     if (block) { try { const value = JSON.parse(block.text); if (object(value)) return value; } catch {} }
   }
   if (!('content' in raw) && !('structuredContent' in raw) && !('isError' in raw)) return raw;
@@ -20,8 +20,62 @@ function hostApprovalTimeout(raw) {
     'You may retry once, or ask the user for guidance or explicit approval.';
   return raw?.isError === true && raw.structuredContent == null &&
     Array.isArray(raw.content) && raw.content.length === 1 &&
-    raw.content[0].type === 'text' && typeof raw.content[0].text === 'string' &&
+    raw.content[0]?.type === 'text' && typeof raw.content[0].text === 'string' &&
     raw.content[0].text.trim() === message;
+}
+
+function resolvedGameAction(dto) {
+  return dto != null && (dto.state === 'COMPLETED' && dto.submitted === true ||
+    dto.state === 'AWAITING_INPUT' && dto.submitted === true && dto.required_action === 'close_menu' ||
+    dto.state === 'REJECTED' && dto.submitted === false);
+}
+
+function hostNonExecution(raw) {
+  // Recognize only the complete host envelope and known fail-closed quota receipt.
+  // Game text, generic errors, denials and missing service records are not proof.
+  if (raw?.isError !== true || raw.structuredContent != null ||
+      !Array.isArray(raw.content) || raw.content.length !== 1 ||
+      raw.content[0]?.type !== 'text' || typeof raw.content[0].text !== 'string') return null;
+  const message = raw.content[0].text.trim();
+  const suffix = '\nThe action was not executed because automatic approval review could not be completed. ' +
+    'This is a review failure, not a determination that the action is unsafe. ' +
+    'Do not bypass the approval check; resolve the error or ask the user for guidance.';
+  // Only the captured wording, apostrophe variants and a valid reset clock are
+  // accepted. Changed advice or additional assertions fail closed as UNKNOWN.
+  const prefix = /^Automatic approval review failed: Error running remote compact task: You[’']ve hit your usage limit\. Upgrade to Pro \(https:\/\/chatgpt\.com\/explore\/pro\), visit https:\/\/chatgpt\.com\/settings\/usage to purchase more credits or try again at (?:[1-9]|1[0-2]):[0-5]\d (?:AM|PM)\.$/;
+  if (!message.endsWith(suffix) || !prefix.test(message.slice(0, -suffix.length))) return null;
+  return 'approval_usage_limit_not_executed';
+}
+
+function retainHostNonExecution(request, raw) {
+  const reason = hostNonExecution(raw);
+  if (!reason) throw Error('No recognized host non-execution receipt');
+  // Host metadata stays separate from service DTOs and survives later queries.
+  const receipts = load('balatro_host_non_execution_receipts') || {};
+  const receipt = {state:'NOT_SUBMITTED', actionId:request.action_id, reason,
+    retryUsed:load('balatro_mcp_approval_retry_used')?.[request.action_id] === true,
+    originalRequest:JSON.parse(JSON.stringify(request)), raw:JSON.parse(JSON.stringify(raw))};
+  store('balatro_host_non_execution_receipts', {...receipts,
+    [request.action_id]:JSON.parse(JSON.stringify(receipt))});
+  store('balatro_evidence_uncertain', null);
+  return receipt;
+}
+
+function restoreHostNonExecution(request, raw) {
+  // Explicit migration of an old client-only gate using its ORIGINAL host output.
+  // Never synthesize a receipt or infer non-execution from record_not_found.
+  const waiting = load('balatro_evidence_uncertain');
+  const session = /^obs-([a-f0-9]{16})-\d+$/.exec(request?.observation_id || '')?.[1];
+  if (load('balatro_evidence_pending') || !waiting || waiting.state !== 'UNKNOWN' ||
+      waiting.actionId !== request?.action_id || !session || waiting.gameSession !== session ||
+      waiting.retryUsed !== false || waiting.hostApprovalTimeout !== false ||
+      load('balatro_mcp_approval_retry_used')?.[request.action_id] === true ||
+      !waiting.originalRequest || !waiting.originalRaw ||
+      JSON.stringify(waiting.originalRequest) !== JSON.stringify(request) ||
+      JSON.stringify(waiting.originalRaw) !== JSON.stringify(raw) ||
+      !hostNonExecution(waiting.originalRaw) || !hostNonExecution(raw))
+    throw Error('Original host receipt does not resolve this client gate');
+  return retainHostNonExecution(request, raw);
 }
 
 async function callMcp(tool, parameters, delivery) {
@@ -41,42 +95,60 @@ async function callMcp(tool, parameters, delivery) {
     if (uncertain) {
       const originalQuery = name === 'action_status' && args.action_id === uncertain.actionId;
       const recovery = name === 'recover_lost_session' && args.action_id === uncertain.actionId;
-      if (name !== 'observe' && !originalQuery && !recovery && !retry)
+      const diagnostic = ['health','observe','wait_until_ready','read_notes','calculate'].includes(name);
+      // launch_game enforces its own durable pending-action guard. It can show
+      // an existing window; this permission does not authorize process restart.
+      if (!diagnostic && name !== 'launch_game' && !originalQuery && !recovery && !retry)
         throw Error('Uncertain action: query the original ID and observe; never replay or advance');
     }
     const method = 'mcp__balatro_agent__' + name;
     if (typeof tools[method] !== 'function') throw Error('Actual MCP tool is not loaded');
     // Consume the only approval retry before invoking the host. If its response
     // is lost, the original non-execution receipt cannot authorize another try.
-    if (retry) store('balatro_evidence_uncertain', {...uncertain,
-      state:'UNKNOWN', hostApprovalTimeout:false, retryUsed:true});
+    if (retry) {
+      store('balatro_mcp_approval_retry_used', {...load('balatro_mcp_approval_retry_used'),
+        [args.action_id]:true});
+      store('balatro_evidence_uncertain', {...uncertain,
+        state:'UNKNOWN', hostApprovalTimeout:false, retryUsed:true});
+    }
     const started = Date.now();
     let raw;
     try { raw = await tools[method](JSON.parse(JSON.stringify(args))); }
     catch { raw = {isError:true}; }
     const ended = Date.now();
     const dto = mcpDto(raw);
+    const boundAction = dto != null && dto.action_id === args.action_id &&
+      (!session || dto.game_session === session);
+    const validationRejected = dto?.state === 'REJECTED' && dto.submitted === false &&
+      dto.action_id === null && dto.read_only === false &&
+      ['invalid_request','unknown_action'].includes(dto.reason);
+    const resolvedAction = boundAction && resolvedGameAction(dto) || validationRejected ||
+      dto != null && dto.action_id === args.action_id && dto.state === 'REJECTED' && dto.submitted === false;
     // Retain complete host results in host memory; never present them as game DTOs.
     store('balatro_mcp_last_raw', raw ?? null);
-    if (name === 'act' && (!dto || ['RUNNING','UNKNOWN'].includes(dto.state))) {
+    if (name === 'act' && hostNonExecution(raw)) {
+      retainHostNonExecution(args, raw); // No automatic retry for quota failures.
+    } else if (name === 'act' && !resolvedAction) {
       store('balatro_evidence_uncertain', {actionId:args.action_id,
-        state:dto?.state || 'UNKNOWN', hostApprovalTimeout:hostApprovalTimeout(raw),
+        state:boundAction && dto.state === 'RUNNING' ? 'RUNNING' : 'UNKNOWN',
+        hostApprovalTimeout:hostApprovalTimeout(raw),
         gameSession:/^obs-([a-f0-9]{16})-\d+$/.exec(args.observation_id || '')?.[1],
-        retryUsed:retry || uncertain?.retryUsed === true,
+        retryUsed:retry || uncertain?.retryUsed === true ||
+          load('balatro_mcp_approval_retry_used')?.[args.action_id] === true,
+        originalRequest:JSON.parse(JSON.stringify(args)),
+        originalRaw:JSON.parse(JSON.stringify(raw ?? null)),
         ...(hostApprovalTimeout(raw) && !retry ? {originalRequest:request,
           retryObservation:{observation_id:previousObservation?.observation_id,
-            profile:previousObservation?.profile}, approvalReceipt:raw} : {})});
+            profile:previousObservation?.profile},
+          approvalReceipt:JSON.parse(JSON.stringify(raw))} : {})});
     } else if (uncertain && name === 'action_status' && dto?.action_id === uncertain.actionId &&
         (!uncertain.gameSession || dto.game_session === uncertain.gameSession) &&
-        (dto.state === 'COMPLETED' || dto.state === 'REJECTED' && dto.submitted === false ||
-         dto.state === 'AWAITING_INPUT' && dto.required_action === 'close_menu')) {
+        resolvedGameAction(dto)) {
       store('balatro_evidence_uncertain', null);
     } else if (uncertain && name === 'recover_lost_session' && dto?.action_id === uncertain.actionId &&
         dto.state === 'RETIRED' && dto.write_state === 'COMMITTED') {
       store('balatro_evidence_uncertain', null);
-    } else if (name === 'act' && dto?.action_id === args.action_id &&
-        (!session || dto.game_session === session) &&
-        (dto.state === 'COMPLETED' || dto.state === 'REJECTED' && dto.submitted === false)) {
+    } else if (name === 'act' && resolvedAction) {
       store('balatro_evidence_uncertain', null);
     }
     if (dto?.observation && !dto.public_changes?.reason?.startsWith('historical_'))
@@ -96,12 +168,14 @@ async function callMcp(tool, parameters, delivery) {
     return result;
   }
   async function recoverApproval(result, waiting) {
-    const expected = waiting.retryObservation;
-    if (!session || expected?.observation_id !== request.observation_id ||
+    const expected = waiting?.retryObservation;
+    if (!waiting?.hostApprovalTimeout || waiting.retryUsed ||
+        load('balatro_mcp_approval_retry_used')?.[request.action_id] === true ||
+        !session || expected?.observation_id !== request.observation_id ||
         ![1,2,3].includes(expected?.profile)) return result.value;
     const status = await query('action_status', {action_id:request.action_id, view:request.view || 'compact'});
     if (status.dto?.action_id !== request.action_id || status.dto.game_session !== session) return result.value;
-    if (status.dto.state === 'COMPLETED' || status.dto.state === 'REJECTED' && status.dto.submitted === false)
+    if (resolvedGameAction(status.dto))
       return status.value; // An actual record resolves the call without replay.
     if (status.dto.state !== 'UNKNOWN' || status.dto.reason !== 'record_not_found' ||
         status.dto.submitted != null) return result.value;
@@ -148,6 +222,10 @@ async function recordMcpDelivery(tool, parameters, raw, started, ended) {
   if (hostError) {
     row.evidence_type = 'host_tool_error_not_mcp_delivery';
     if (hostApprovalTimeout(raw)) row.host_failure = 'approval_timeout_not_executed';
+    else if (hostNonExecution(raw)) {
+      row.host_failure = hostNonExecution(raw);
+      row.host_submission_state = 'NOT_SUBMITTED';
+    }
   }
   store('balatro_evidence_pending',row);
   store('balatro_last_delivery',dto);

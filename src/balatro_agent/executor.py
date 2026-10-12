@@ -132,6 +132,11 @@ class Executor:
         if prepared is not None:
             result = prepared.result
         historical = result.get('public_changes', {}).get('reason', '').startswith('historical_')
+        if observation is not None and not historical:
+            # Delivery wall clock, outside game state/observation identity. Reuse
+            # confirmed terminal feedback for timing without another observation.
+            sampled = datetime.now(timezone.utc)
+            result = {**result, 'server_time': {'utc': sampled.isoformat(), 'unix_s': sampled.timestamp()}}
         plans = getattr(self.reader, 'plans', None)
         if plans is not None and not historical:
             result = plans.attach(result, restore_request)

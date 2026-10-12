@@ -7,7 +7,7 @@
 1. 确认当前聊天实际有 balatro-agent MCP 工具。缺工具或无法读取本规则时报告并停止，不能用终端、存档或原始游戏接口代替。
 2. 收到游玩请求后，首先 `launch_game`，使用唯一 `operation_id` 正常打开或显示游戏；不要先等待 health／observe 连接失败。此工具核验正常启动路径和未决记录，游戏已运行时只显示已有窗口。若已知有未决动作，先查原 ID，不用启动或重启绕过它。
 3. 启动完成后调用 `health`、`observe`，必要时 `wait_until_ready`。核验兼容性、实际档位、ready 和未决动作。使用当前识别的原生档位，不切换或创建档位；未知档位先报告并恢复。
-4. 每局实际 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`，相关主题按需读取。主攻略缺失才读取其他正式心得；没有心得按公开规则决策。只引用完整读过的修订号，当前条件与反例优先于旧局经验。
+4. 每局实际 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`；已知相关主题可同次批读，新主题才查索引。同局已完整读过且上下文清楚的修订不重复读取；压缩、修订变化或条件不明时重读。主攻略缺失才读其他心得，没有心得按公开规则决策。只引用完整读过的修订，当前条件与反例优先。
 5. 开局前通过原生 options／settings 核验速度，默认设为 4，用户指定值优先；达到目标后正常返回，不循环试探未确认的设置。
 
 通过 `functions.exec` 调用时，首次完整读取并保留 `prompts/mcp-evidence.js`，加载 `callMcp`；正式登记的证据用 `recordMcp`。保留完整返回，先检查 `isError` 再解码 `structuredContent`；没有结构化结果时只解析正常文本中的 JSON 对象。宿主异常不得伪装成游戏反馈。加载与恢复细节见 [网络恢复](../docs/balatro-ai/network-recovery.md)。
@@ -25,16 +25,17 @@
 
 - 只用公开牌面、说明、合法悬停／菜单和实际收到的历史；不读隐藏牌序、随机状态、未展示商品或未开包内容，不查外部攻略或代理示范。背面身份及未知字段保持未知。`calculate` 只处理显式公开数字，不搜索策略或模拟未来。
 - 每次一个语义动作。`act` 携带最新 `observation_id`、唯一 `action_id`、参数、简短公开依据和实际读过的 `experience_refs`；无适用经验用 `[]`。区域与位置只属于当前观察，提交须保持同一档位与原生资源／容量限制。
-- `COMPLETED` 的完整观察可用于下一步，避免逐步重复 observe。`columns-v1` 按 `$columns` 对应 `$rows` 解读，行号不是 position，null 不是零；`public_changes` 只是复查提示，不是完成证明。目标缺失或过渡时才重新观察。
+- 最新、非历史且 ready 的 `COMPLETED` 完整观察可直接用于下一动作，无需再 observe／action_status／wait_until_ready。目标缺失、过渡或未决时按对应流程处理。`columns-v1` 按 `$columns` 对应 `$rows` 解读，行号不是 position，null 不是零；`public_changes` 只是复查提示，手牌、资源和位置仍取最新观察。
 - `positions-v1` 支持 play／discard 直接传完整 `{positions:[...]}`，否则先 select；`native-target-v1` 支持 buy／sell／use／buy_and_use／select_pack_card 直接传当前 region＋position。消费品手牌目标先单独 select。包内塔罗／星球／幻灵即用走 `use`，普通／增强牌和小丑取牌走 `select_pack_card`。盲注选择／跳过用 `blind_slot`。
 - `RUNNING` 查 `action_status(原ID)`；`UNKNOWN` 或响应丢失只查原 ID 与观察，不重发、不推进。仅宿主确认未执行的审批超时，可由 `callMcp` 按原记录和同会话／档位／ready观察核验后原样重试一次，详见网络恢复。短暂查询失败退避 10／20／30 秒继续只读恢复；真实无法恢复的 UNKNOWN、明确拒绝或必要持久化失败报告阻塞。
 - `AWAITING_INPUT/native_unlock_input` 先 observe，以新 ID 单次 close_menu 关闭当前自然提示，再查原导航；每张提示分别处理。旧会话确实丢失后才能依契约 recover_lost_session，原结果仍 UNKNOWN。`submitted=false` 的参数拒绝后刷新观察、修正请求，不连续猜测重试。用户暂停或停止时不提交新游戏动作，保留窗口。
+- 宿主完整额度耗尽收据明确确认未执行时，客户端单独保留 `NOT_SUBMITTED`，不自动重试、不当作服务 UNKNOWN；已消耗的同ID重试机会不恢复。故障解决或收到接续指导后核验原编号与最新观察。UNKNOWN 仍允许只读诊断；launch_game 由服务端真实未决检查决定。误分类迁移须与已保留的完整原请求和原收据匹配；真实服务UNKNOWN、RUNNING、缺字段旧状态或待保存证据均拒绝，详见网络恢复。
 
 ## 计划、心得与报告
 
-- 支持 `run-plan-v1` 且 start_run／continue_run 已确认后保存短计划：目标、1–4 项优先级、1–4 项复查条件、最多 6 个已读经验引用。构筑、Boss 或资源实质变化时才修订；压缩后读回计划并重读不清楚的经验引用。计划不代替当前观察。
+- 支持 `run-plan-v1` 且 start_run／continue_run 已确认后保存短计划：目标、1–4 项优先级、1–4 项复查条件、最多 6 个已读经验引用。仅优先级、构筑约束或复查条件实质变化才修订；普通出牌、余额变化不自动写计划。压缩后读回计划及不清楚的经验。计划不代替当前观察。
 - `bilingual-tags-v1` 时，act.reason、计划 objective 和 priorities[0] 用 `[zh-CN]一句中文摘要 [en]One equivalent English sentence`，名称用对应语言；每项最多 200 字符、计划最多 2000 UTF-8 字节。只提交公开依据，不提交内部思维链，不为刷新状态窗口额外调用。
-- 开局提交前记录最新 observe 的 `server_time.unix_s`；正常终局确认后、离开结算前再 observe 取终点，相减得到墙钟用时，包含执行等待。缺时钟、接续中断或时钟倒退时报告用时未确认。
+- 开局提交前记录最新 observe 的 `server_time.unix_s`；正常终局用最新、非历史且已确认的结算观察交付时钟取终点，缺时钟才补 observe。相减为包含等待的墙钟用时；缺时钟、接续中断或时钟倒退时报告未确认。
 - 有新认识才修订心得。写前核验 health 的 `local-over-baseline-v1`、`local_only`、`single-current-v2`，显式读当前 `content/full`，保留审计字段后提交完整正文、实际 expected_revision 与唯一 write_id，再读回。每主题只保留本地同一 `current.md`，不上传、不改源码基线；事实、解释、条件、反例、置信度与来源分开。
 - 正常胜负后停止操作并保留结算页面／窗口。报告：`第N局｜实际牌组／注级｜胜利或失败｜第X底注／第Y回合｜用时XmYs｜心得：已更新并读回（引用）／未更新（原因）／更新失败（原因）`。未知字段写未确认。支持 `per-run-v1` 时在局后 health 查看并报告 JSONL／TXT 路径或保存失败。
 - 单局到此结束。仅爬塔授权允许报告后导航至下一局；关闭须另外明确请求，走 MCP 正常关窗。源码／合成检查不冒充实机，单局结果不宣称稳定胜率或模型排名。
