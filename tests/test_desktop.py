@@ -119,6 +119,8 @@ def test_public_binary_is_bound_to_its_own_source_and_build_receipt(tmp_path,act
     ('Uninstalled 6 packages\nExisting Mod/injector installation is preserved; first install refused', 4, '已有配置'),
     ('Installed 6 packages\nSetup stopped: python.exe exit 1', 4, '请查看详情中的原因'),
     ('Unresolved or invalid checkpoint', 4, '操作尚未确认'),
+    ('Unresolved independent checkpoint (lifecycle: original-launch); Original lifecycle receipt is missing', 4, '旧启动／关闭收据缺失：original-launch'),
+    ('Unresolved independent checkpoint (lifecycle: original-close); Query close_game with the original operation_id', 4, '启动／关闭尚未确认：original-close'),
     ('The operation timed out', 1, '下载连接超时'),
     ('HTTPS download stalled', 1, '下载连接超时'),
     ('TimeoutError', 4, '本地连接检查超时'),

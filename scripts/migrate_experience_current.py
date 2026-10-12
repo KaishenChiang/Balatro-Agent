@@ -1,13 +1,13 @@
 """Archive legacy experience once, then retain one current file per topic."""
 from datetime import datetime, timezone
 import hashlib
-import json
 from pathlib import Path
 import uuid
 import zipfile
 
 from balatro_agent.local_audit import canonical, make_dir, safe_path
 from balatro_agent.notes import NotesStore, render_current
+from balatro_agent.installation_registry import atomic_json
 
 
 def digest(data):
@@ -83,7 +83,7 @@ def migrate(root, *, apply=False, output=None):
         if not report_path.is_relative_to(root / 'runs/checks') or report_path.exists():
             raise ValueError('Choose a new migration report under runs/checks')
         make_dir(report_path.parent)
-        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        atomic_json(report_path, report)
         try:
             for store, note_id, document, files in topics:
                 for path in files:
@@ -113,9 +113,9 @@ def migrate(root, *, apply=False, output=None):
                           content_unchanged=True, report=report_path.relative_to(root).as_posix())
         except Exception:
             report['state'] = 'PARTIAL_FAILURE'
-            report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            atomic_json(report_path, report)
             raise
-        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        atomic_json(report_path, report)
         return report
     finally:
         for lock in reversed(locks):

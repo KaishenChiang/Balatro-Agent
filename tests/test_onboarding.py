@@ -46,6 +46,42 @@ def prepare(layout, **options):
                               mods=mods, config=config, **options)
 
 
+@pytest.mark.parametrize('state', ['UNKNOWN', 'INTENT', 'COMPLETED', 'REJECTED'])
+def test_preparation_restores_lifecycle_receipt_but_only_reconciles_terminal_state(automatic_layout, state):
+    from balatro_agent.lifecycle import LifecycleJournal, Record, Receipt
+    from balatro_agent.settings import Settings
+    root, _, _, _, config = automatic_layout
+    prepare(automatic_layout)
+    registry = InstallationRegistry(registry_path(config))
+    journal = LifecycleJournal(Settings(log_dir=root / 'runs/live',
+        lifecycle_file=root / 'config/game-lifecycle.local.json', registration_file=registry.path))
+    record = Record(fingerprint='0' * 64, receipt=Receipt(operation_id='original-launch',
+        tool='launch_game', state=state, reason='dispatch_uncertain', submitted=None))
+    journal.save(record); journal.pending(); journal.set_pending('original-launch')
+    (journal.root).rename(root / 'retained-lifecycle')
+    if state in ('COMPLETED', 'REJECTED'):
+        result = prepare(automatic_layout, reuse_only=True)
+        assert result['prepared'] and registry.checkpoint('lifecycle', root)['pending'] is None
+    else:
+        with pytest.raises(ValueError, match='Query launch_game'):
+            prepare(automatic_layout, reuse_only=True)
+        assert registry.checkpoint('lifecycle', root)['pending'] == 'original-launch'
+    assert journal._read(journal.root / 'original-launch.json') == record.model_dump()
+
+
+def test_missing_legacy_lifecycle_receipt_stops_before_preparing_runtime(automatic_layout, monkeypatch):
+    root, _, _, _, config = automatic_layout
+    prepare(automatic_layout)
+    registry = InstallationRegistry(registry_path(config))
+    registry.write_checkpoint('lifecycle', root, {'pending': 'original-missing'})
+    called = []
+    monkeypatch.setattr(onboarding, 'runtime_ready', lambda root: called.append(True))
+    with pytest.raises(ValueError, match='Original lifecycle receipt is missing'):
+        prepare(automatic_layout, reuse_only=True)
+    assert not called
+    assert registry.checkpoint('lifecycle', root)['pending'] == 'original-missing'
+
+
 def test_automatic_first_install_and_fast_reopen(automatic_layout, monkeypatch):
     root, _, _, mods, config = automatic_layout
     result = prepare(automatic_layout, preparation_id='first')

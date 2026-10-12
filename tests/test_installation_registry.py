@@ -7,6 +7,7 @@ import pytest
 from balatro_agent.installation_registry import (
     InstallationRegistry, RegistrationGuard, SCHEMA, TRACKING, atomic_json)
 from balatro_agent.settings import Settings
+from balatro_agent.file_io import replace_file
 
 
 @pytest.fixture
@@ -121,3 +122,68 @@ def test_lifecycle_cannot_dispatch_while_a_game_action_is_unresolved(registered)
     assert called == []
     assert store.checkpoint('executor', root) == original
     assert store.checkpoint('lifecycle', root) == {'pending': None}
+
+
+@pytest.mark.parametrize('state', ['INTENT', 'UNKNOWN', 'COMPLETED', 'REJECTED'])
+def test_lifecycle_receipt_survives_redownload_without_changing_outcome(registered, state):
+    from balatro_agent.lifecycle import LifecycleJournal, Record, Receipt
+    root, store, settings, _ = registered
+    journal = LifecycleJournal(settings)
+    record = Record(fingerprint='0' * 64, receipt=Receipt(operation_id='original-launch',
+        tool='launch_game', state=state, reason='dispatch_uncertain', submitted=None))
+    journal.save(record)
+    journal.pending()
+    journal.set_pending('original-launch')
+    saved = root.parent / 'retained-history'
+    (root / 'runs/live/lifecycle').rename(saved)
+    restored = LifecycleJournal(settings)
+    assert restored.read('original-launch') == record
+    assert restored.pending() == 'original-launch'
+    assert store.checkpoint('lifecycle', root) == {'pending': 'original-launch'}
+    assert journal._read(saved / 'original-launch.json') == record.model_dump()
+
+
+@pytest.mark.parametrize('damage', ['missing_mirror', 'changed_root', 'changed_hash', 'changed_local', 'lost_executor'])
+def test_lifecycle_restore_never_overwrites_conflicts_or_erases_unknown(registered, damage):
+    from balatro_agent.lifecycle import LifecycleJournal, Record, Receipt
+    root, store, settings, _ = registered
+    journal = LifecycleJournal(settings)
+    record = Record(fingerprint='0' * 64, receipt=Receipt(operation_id='original-launch',
+        tool='launch_game', state='UNKNOWN', reason='launch_timeout', submitted=True))
+    journal.save(record)
+    journal.pending(); journal.set_pending('original-launch')
+    path = journal.root / 'original-launch.json'
+    mirror = journal._independent_path('original-launch')
+    if damage == 'changed_local':
+        replace_file(journal.root / 'checkpoint.json', journal.root / 'checkpoint.retained')
+        changed = record.model_dump(); changed['receipt']['reason'] = 'service_error'
+        atomic_json(path, changed)
+    else:
+        replace_file(path, path.with_suffix('.retained'))
+    if damage == 'missing_mirror':
+        replace_file(mirror, mirror.with_suffix('.retained'))
+        assert journal.read('original-launch') is None
+    else:
+        if damage in ('changed_root', 'changed_hash'):
+            value = store.read_json(mirror)
+            value['root' if damage == 'changed_root' else 'sha256'] = str(root.parent / 'other') if damage == 'changed_root' else '0' * 64
+            atomic_json(mirror, value)
+        if damage == 'lost_executor':
+            store.write_checkpoint('executor', root, {'pending': {'action_id': 'game-unknown'}, 'input_pending': None})
+        with pytest.raises(ValueError):
+            journal.read('original-launch')
+    assert store.checkpoint('lifecycle', root) == {'pending': 'original-launch'}
+    if damage != 'changed_local':
+        assert not path.exists()
+
+
+def test_lifecycle_completed_duplicate_restores_receipt_with_clear_checkpoint(registered):
+    from balatro_agent.lifecycle import LifecycleJournal, Record, Receipt
+    root, store, settings, _ = registered
+    journal = LifecycleJournal(settings)
+    record = Record(fingerprint='0' * 64, receipt=Receipt(operation_id='done',
+        tool='launch_game', state='COMPLETED', reason='started', submitted=True))
+    journal.save(record)
+    replace_file(journal.root / 'done.json', journal.root / 'done.retained')
+    assert journal.read('done') == record
+    store.ensure_idle(root)

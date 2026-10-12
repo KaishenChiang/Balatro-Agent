@@ -466,6 +466,29 @@ def prepare(root, *, steam_dir=None, library_dir=None, mods=None, config=None,
                         config=config, reuse_only=reuse_only, preparation_id=preparation_id, registry=registry)
 
 
+def reconcile_lifecycle(journal, registry, root):
+    """Caller holds the preparation lock; only recorded terminal receipts clear."""
+    journal._restore_pending_locked()
+    pending = registry.checkpoint('lifecycle', root)['pending']
+    if pending is None:
+        return
+    path = journal.root / (pending + '.json')
+    checkpoint = journal.root / 'checkpoint.json'
+    no_links(path); no_links(checkpoint)
+    if not path.is_file() or not checkpoint.is_file():
+        return
+    from balatro_agent.lifecycle import Record
+    record = Record.model_validate(journal._read(path))
+    if record.receipt.operation_id != pending:
+        raise ValueError('Original lifecycle receipt differs; preserve the checkpoint')
+    journal.registration._check()
+    if record.receipt.state in ('COMPLETED', 'REJECTED'):
+        # Same recovery boundary as an original-ID terminal receipt query.
+        # UNKNOWN/INTENT never clear merely because the process is absent.
+        journal._atomic(checkpoint, {'pending': None})
+        registry.write_checkpoint('lifecycle', root, {'pending': None})
+
+
 def _prepare(root, *, steam_dir=None, library_dir=None, mods=None, config=None,
              reuse_only=False, preparation_id=None, registry):
     root = root.absolute()
@@ -474,6 +497,18 @@ def _prepare(root, *, steam_dir=None, library_dir=None, mods=None, config=None,
     mods = (mods or Path(os.environ['APPDATA']) / 'Balatro/Mods').absolute()
     config = (config or Path(os.environ.get('CODEX_HOME', str(Path.home() / '.codex'))) / 'config.toml').absolute()
     no_links(mods)
+    independent = registry.read()
+    if independent:
+        previous = Path(independent['root'])
+        if previous == root:
+            from balatro_agent.lifecycle import LifecycleJournal
+            from balatro_agent.settings import Settings
+            journal = LifecycleJournal(Settings(log_dir=root / 'runs/live',
+                lifecycle_file=root / 'config/game-lifecycle.local.json', registration_file=registry.path))
+            # prepare already owns the registry lock. Restore/reconcile only
+            # through the unlocked helper below; no native action is submitted.
+            reconcile_lifecycle(journal, registry, root)
+        registry.ensure_idle(previous)
     if not runtime_ready(root):
         raise NeedsPreparation('Project-local Python and locked dependencies need preparation')
     entries = recorded_installation(root, steam, library, mods)
@@ -554,7 +589,7 @@ def _prepare(root, *, steam_dir=None, library_dir=None, mods=None, config=None,
         'stdio_tools_verified': count, 'client_config': str(config),
         'independent_installation_receipt': str(registry.path), 'checkpoint_tracking': TRACKING,
         'client_connection_verified': False, 'game_started': False,
-        'next_step': 'Use the launcher to open a Codex project chat with its prompt, or paste the complete path-aware play prompt into a local Codex chat'}
+        'next_step': 'Use the launcher to open a Codex project chat with its prompt, or paste the short path-aware play prompt into a local Codex chat'}
     target = root / '.artifacts/onboarding.local.json'
     no_links(target)
     target.parent.mkdir(parents=True, exist_ok=True)

@@ -6,6 +6,7 @@ preparation with durable intents; it never reads game state or selects actions.
 from contextlib import contextmanager
 import json
 import os
+import re
 from pathlib import Path
 import uuid
 
@@ -103,8 +104,23 @@ class InstallationRegistry:
 
     def ensure_idle(self, root):
         for area in CHECKPOINT_KEYS:
-            if any(value is not None for value in self.checkpoint(area, root).values()):
-                raise ValueError('Unresolved independent checkpoint; query the original action first')
+            checkpoint = self.checkpoint(area, root)
+            if any(value is not None for value in checkpoint.values()):
+                if area == 'lifecycle':
+                    operation_id = checkpoint['pending']
+                    if not isinstance(operation_id, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,79}', operation_id):
+                        raise ValueError('Independent lifecycle checkpoint is invalid; preserve it')
+                    path = root / 'runs/live/lifecycle' / (operation_id + '.json')
+                    if not path.is_file():
+                        detail = 'Original lifecycle receipt is missing; restore the original runs/live/lifecycle/ directory or its verified backup. Do not clear the checkpoint.'
+                    else:
+                        receipt = self.read_json(path, 8192).get('receipt', {})
+                        tool = receipt.get('tool', 'launch_game/close_game')
+                        detail = f'Query {tool} with the original operation_id and identical parameters; do not submit a new ID.'
+                    raise ValueError(f'Unresolved independent checkpoint (lifecycle: {operation_id}); {detail}')
+                ids = [str(value.get('action_id', 'unknown')) for value in checkpoint.values() if isinstance(value, dict)]
+                raise ValueError('Unresolved independent checkpoint (executor: ' + ', '.join(ids) +
+                                 '); query action_status for the original action_id first. Do not clear the checkpoint.')
 
     def write_checkpoint(self, area, root, checkpoint):
         if not isinstance(checkpoint, dict) or set(checkpoint) != CHECKPOINT_KEYS[area]:

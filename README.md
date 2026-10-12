@@ -14,7 +14,7 @@ For **Windows x64 · Steam Balatro · Codex desktop**. The launcher and play act
 2. Open **[Balatro Agent.exe](<Balatro Agent.exe>)** and wait for **Ready**. It finds the project and game, prepares dependencies, backs up and installs the Mods, and configures MCP. No separate Python installation is needed.
 3. Choose **Deck** and **Stake / mode**, then click **Start in Codex**. When Codex supports the project link, it opens a project chat with the prompt filled in. Review and **send the prompt in Codex** to begin. The launcher closes after successfully dispatching the opening request.
 
-If the project link does not open, reopen the launcher and use **Copy play prompt**. Paste it into a local Codex chat with the `balatro-agent` tools loaded. The prompt includes the actual project path and your selections, so you do not need to select the project folder first. If tools are missing after setup, reload MCP or reopen Codex.
+If the project link does not open, reopen the launcher and use **Copy play prompt**. Paste it into a local Codex chat with the `balatro-agent` tools loaded. Both paths use the same short prompt with the actual project path, your selections and a play-rules file reference, so you do not need to select the project folder first. If tools are missing after setup, reload MCP or reopen Codex.
 
 The launcher follows the Windows display language by default; use **Language / 语言** to switch. You can close the launcher after sending the prompt. Keep the project folder.
 

@@ -37,13 +37,14 @@ def test_all_english_deck_stake_requests_use_english_rules_in_both_handoff_paths
         for text in (row['short'], row['full']):
             assert 'Selected deck: ' + row['deck'] in text
             assert 'selected stake / mode: ' + row['stake'] in text
-            assert 'Reply in English' in text and 'UNKNOWN' in text and 'locked' in text
-            assert 'elapsed time' in text and 'experience' in text
-        assert '/prompts/bootstrap.en.md' in row['short']
-        assert rules in row['full'] and 'Read ' + ROOT.as_posix() not in row['full']
+            assert 'Reply in English' in text and 'MCP tools are unavailable' in text
+        assert 'prompts/bootstrap.en.md' in row['short']
+        assert row['full'] == row['short'] and rules not in row['full']
+        assert len(row['short']) < 800 and len(row['short'].splitlines()) == 4
         assert parse_qs(urlsplit(row['link']).query)['prompt'] == [row['short']]
         if row['key'] == 'climb':
             assert 'no retry limit' in row['short'] and 'immediately next stake' in row['short']
+            assert 'UNKNOWN' in row['short']
         else:
             assert 'no retry limit' not in row['short'] and 'one run' in row['short']
 

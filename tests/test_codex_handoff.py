@@ -38,11 +38,14 @@ def test_link_encodes_exact_project_and_short_prompt_without_sending(tmp_path, n
     query = parse_qs(link.query, strict_parsing=True)
     assert set(query) == {'path', 'prompt'}
     assert query['path'] == [str(root)] and query['prompt'] == [value['short']]
-    assert root.as_posix() + '/prompts/bootstrap.md' in value['short']
+    assert root.as_posix() in value['short'] and 'prompts/bootstrap.md' in value['short']
     assert root.as_posix() in value['full']
-    assert (prompts / 'bootstrap.md').read_text(encoding='utf-8').strip() in value['full']
-    assert '请阅读 ' not in value['full']
-    assert 'UNKNOWN' in value['full'] and '缺少 MCP 工具时先报告' in value['full']
+    assert value['full'] == value['short']
+    assert len(value['short'].splitlines()) == 4
+    assert len(value['short']) < 400
+    assert (prompts / 'bootstrap.md').read_text(encoding='utf-8').strip() not in value['short']
+    assert value['short'].count('所选牌组：') == 1 and value['short'].count('prompts/bootstrap.md') == 1
+    assert '缺少 MCP 工具' in value['short'] and '停止' in value['short']
     assert '自动发送' not in value['link']
     assert not (root / '.artifacts').exists() and not (root / 'runs').exists()
 
@@ -115,8 +118,9 @@ def test_all_original_decks_and_stake_modes_reach_both_handoff_paths():
         for text in (row['short'], row['full']):
             assert '所选牌组：' + row['deck']['Name'] in text
             assert '所选注级／模式：' + row['stake']['Name'] in text
-            assert row['deck']['EnglishName'] in text and row['stake']['EnglishName'] in text
-            assert '心得' in text and '用时' in text and '未解锁' in text
+            assert 'prompts/bootstrap.md' in text
+            assert '缺少 MCP 工具' in text
+        assert row['short'] == row['full']
         assert parse_qs(urlsplit(row['link']).query)['prompt'] == [row['short']]
         if row['stake']['Key'] == 'climb':
             assert '不设正常败局重试次数上限' in row['short']

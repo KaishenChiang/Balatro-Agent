@@ -100,6 +100,69 @@ async def test_same_id_across_service_restart_does_not_relaunch(game):
     assert (await restarted.close_game('once',OBS,0))['reason']=='id_conflict'
 
 
+async def test_redownload_recovers_original_launch_query_without_relaunch(game, tmp_path):
+    from balatro_agent.installation_registry import InstallationRegistry, SCHEMA, TRACKING
+    r, _, b, _ = game
+    root = tmp_path / 'source'; root.mkdir()
+    store = InstallationRegistry(tmp_path / 'client/installation.local.json')
+    store.publish({'schema': SCHEMA, 'checkpoint_tracking': TRACKING,
+                   'root': str(root), 'installed_files': []})
+    r.settings = replace(r.settings, lifecycle_file=root / 'config/game-lifecycle.local.json', registration_file=store.path)
+    executor = Executor(r)
+    lifecycle = GameLifecycle(r, executor, b, poll_s=0.001)
+    executor.lifecycle = lifecycle
+    b.process = None; b.finish_launch = False
+    assert (await lifecycle.launch_game('original', 0))['state'] == 'UNKNOWN'
+    lifecycle.journal.root.rename(tmp_path / 'retained-lifecycle')
+    restarted = GameLifecycle(r, executor, b, poll_s=0.001)
+    assert (await restarted.launch_game('original', 0))['state'] == 'UNKNOWN'
+    assert (await restarted.launch_game('different', 0))['reason'] == 'operation_busy'
+    b.process = PROCESS
+    assert (await restarted.launch_game('original', 0))['state'] == 'COMPLETED'
+    assert b.launches == 1 and b.closes == 0
+    assert restarted.journal.pending() is None
+
+
+@pytest.mark.parametrize('damage', [None, 'root', 'operation_id', 'sha256'])
+async def test_explicit_lost_receipt_retirement_never_replays_original_id(game, tmp_path, damage):
+    import hashlib
+    from balatro_agent.installation_registry import InstallationRegistry, SCHEMA, TRACKING, atomic_json
+    from balatro_agent.local_audit import canonical
+    r, _, b, _ = game
+    root = tmp_path / 'source'; root.mkdir()
+    store = InstallationRegistry(tmp_path / 'client/installation.local.json')
+    store.publish({'schema': SCHEMA, 'checkpoint_tracking': TRACKING,
+                   'root': str(root), 'installed_files': []})
+    r.settings = replace(r.settings, lifecycle_file=root / 'config/game-lifecycle.local.json', registration_file=store.path)
+    executor = Executor(r)
+    lifecycle = GameLifecycle(r, executor, b, poll_s=0.001)
+    record = {'root': str(root), 'operation_id': 'lost-original',
+              'original_operation_state': 'UNKNOWN', 'original_submission': None,
+              'game_action_submitted': False, 'normal_game_completed': False}
+    value = {'schema': 'manual-orphan-lifecycle-retirement-v1', 'record': record,
+             'sha256': hashlib.sha256(canonical(record).encode()).hexdigest()}
+    if damage in ('root', 'operation_id'):
+        record[damage] = str(tmp_path / 'other') if damage == 'root' else 'other-id'
+        value['sha256'] = hashlib.sha256(canonical(record).encode()).hexdigest()
+    if damage == 'sha256':
+        value['sha256'] = '0' * 64
+    path = lifecycle.journal._independent_path('lost-original', directory='retired-lifecycle')
+    atomic_json(path, value)
+    before = path.read_bytes()
+    b.process = None
+    for result in [await lifecycle.launch_game('lost-original', 0),
+                   await lifecycle.launch_game('lost-original', 0.001),
+                   await lifecycle.close_game('lost-original', OBS, 0)]:
+        if damage:
+            assert result['state'] == 'REJECTED' and result['reason'] == 'journal_unavailable'
+        else:
+            assert result['state'] == 'UNKNOWN' and result['retired']
+            assert result['submitted'] is None and result['read_only'] and result['duplicate']
+    assert b.launches == b.closes == b.focuses == 0 and path.read_bytes() == before
+    assert store.checkpoint('lifecycle', root) == {'pending': None}
+    assert not (lifecycle.journal.root / 'lost-original.json').exists()
+
+
 async def test_launch_timeout_and_late_recovery_query_only(game):
     r,e,b,l=game
     b.process=None; b.finish_launch=False

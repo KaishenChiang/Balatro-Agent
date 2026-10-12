@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+from pathlib import Path
 import re
 import time
 from typing import Literal
@@ -62,6 +63,7 @@ class LifecycleJournal:
         return json.loads(path.read_text(encoding='utf-8'))
 
     def pending(self):
+        self.restore_pending()
         self.registration.check()
         path = safe_path(self.root, 'checkpoint.json')
         if not path.exists():
@@ -88,16 +90,129 @@ class LifecycleJournal:
         self._expected_checkpoint = dict(checkpoint)
 
     def read(self, operation_id):
+        self.restore_pending()
         path = safe_path(self.root, operation_id + '.json')
         if not path.exists():
-            return None
+            store = self.registration.store
+            if store is None:
+                return None
+            with store.lock():
+                self.registration._check()
+                record = self._independent_record(operation_id)
+                if record is None:
+                    return None
+                self._atomic(path, record.model_dump())
         record = Record.model_validate(self._read(path))
         if record.receipt.operation_id != operation_id:
             raise ValueError('invalid_receipt')
         return record
 
     def save(self, record):
-        self._atomic(safe_path(self.root, record.receipt.operation_id + '.json'), record.model_dump())
+        store = self.registration.store
+        if store is None:
+            return self._atomic(safe_path(self.root, record.receipt.operation_id + '.json'), record.model_dump())
+        with store.lock():
+            self.registration._check()
+            value = record.model_dump()
+            # Retain the receipt outside the replaceable source directory before
+            # local persistence. A checkpoint ID alone cannot recover a query.
+            from .installation_registry import atomic_json
+            atomic_json(self._independent_path(record.receipt.operation_id), {
+                'schema': 'lifecycle-receipt-mirror-v1', 'root': str(self.registration.root),
+                'record': value, 'sha256': hashlib.sha256(canonical(value).encode()).hexdigest()})
+            self._atomic(safe_path(self.root, record.receipt.operation_id + '.json'), value)
+
+    def _independent_path(self, operation_id, *, directory='lifecycle'):
+        if not isinstance(operation_id, str) or not ID.fullmatch(operation_id):
+            raise ValueError('invalid_receipt')
+        scope = hashlib.sha256(os.path.normcase(str(self.registration.root)).encode()).hexdigest()[:16]
+        return safe_path(self.registration.store.path.parent, directory, scope, operation_id + '.json')
+
+    def retired(self, operation_id):
+        """Read a separately authorized lost-receipt tombstone; never create one."""
+        store = self.registration.store
+        if store is None:
+            return False
+        with store.lock():
+            owner = store.read()
+            if owner is None or Path(owner['root']) != self.registration.root:
+                raise ValueError('registration_owner_changed')
+            path = self._independent_path(operation_id, directory='retired-lifecycle')
+            if not path.exists():
+                return False
+            self.registration._check()
+            value = store.read_json(path, 16384)
+            record = value.get('record')
+            if (not isinstance(record, dict)
+                    or value.get('schema') != 'manual-orphan-lifecycle-retirement-v1'
+                    or not isinstance(record.get('root'), str) or Path(record['root']) != self.registration.root
+                    or record.get('operation_id') != operation_id
+                    or record.get('original_operation_state') != 'UNKNOWN'
+                    or record.get('original_submission') is not None
+                    or record.get('game_action_submitted') is not False
+                    or record.get('normal_game_completed') is not False
+                    or value.get('sha256') != hashlib.sha256(canonical(record).encode()).hexdigest()):
+                raise ValueError('invalid_lifecycle_retirement')
+            return True
+
+    def _independent_record(self, operation_id):
+        store = self.registration.store
+        if store is None:
+            return None
+        owner = store.read()
+        if owner is None or Path(owner['root']) != self.registration.root:
+            raise ValueError('registration_owner_changed')
+        path = self._independent_path(operation_id)
+        if not path.exists():
+            return None
+        value = store.read_json(path, 16384)
+        record = Record.model_validate(value['record'])
+        if (value.get('schema') != 'lifecycle-receipt-mirror-v1'
+                or not isinstance(value.get('root'), str) or Path(value['root']) != self.registration.root
+                or record.receipt.operation_id != operation_id
+                or value.get('sha256') != hashlib.sha256(canonical(value['record']).encode()).hexdigest()):
+            raise ValueError('invalid_independent_lifecycle_receipt')
+        return record
+
+    def restore_pending(self):
+        """Restore missing local mirrors; never infer completion or dispatch."""
+        store = self.registration.store
+        if store is None:
+            return
+        with store.lock():
+            self._restore_pending_locked()
+
+    def _restore_pending_locked(self):
+        store = self.registration.store
+        owner = store.read()
+        if owner is None or Path(owner['root']) != self.registration.root:
+            raise ValueError('registration_owner_changed')
+        pending = store.checkpoint('lifecycle', self.registration.root)
+        operation_id = pending['pending']
+        if operation_id is None:
+            return
+        self._independent_path(operation_id)  # Validate before any local path use.
+        checkpoint = safe_path(self.root, 'checkpoint.json')
+        receipt_path = safe_path(self.root, operation_id + '.json')
+        if checkpoint.exists() and receipt_path.exists():
+            return
+        # Do not rebuild, erase or bypass a game-action checkpoint.
+        mirrored = store.checkpoint('executor', self.registration.root)
+        executor_path = safe_path(self.registration.log_dir, 'executor', 'checkpoint.json')
+        local = store.read_json(executor_path, 65536) if executor_path.exists() else {'pending': None, 'input_pending': None}
+        if local != mirrored:
+            raise ValueError('independent_checkpoint_differs')
+        record = self._independent_record(operation_id)
+        if record is None:
+            return  # Legacy ID-only mirror remains protected and unresolved.
+        if checkpoint.exists() and self._read(checkpoint) != pending:
+            raise ValueError('independent_checkpoint_differs')
+        if receipt_path.exists() and self._read(receipt_path) != record.model_dump():
+            raise ValueError('independent_lifecycle_receipt_differs')
+        if not receipt_path.exists():
+            self._atomic(receipt_path, record.model_dump())
+        if not checkpoint.exists():
+            self._atomic(checkpoint, pending)
 
 
 class GameLifecycle:
@@ -125,7 +240,7 @@ class GameLifecycle:
         try:
             self.audit.record(receipt.tool, 'delivered', result)
         except (OSError, ValueError):
-            result.update(state='UNKNOWN' if receipt.submitted else 'REJECTED', reason='journal_unavailable')
+            result.update(state='UNKNOWN' if receipt.submitted is not False else 'REJECTED', reason='journal_unavailable')
             self.reader.activity.delivered(receipt.tool, result)
         return result
 
@@ -218,6 +333,12 @@ class GameLifecycle:
         async with self.reader._tool_lock:
             record = None
             try:
+                if self.journal.retired(operation_id):
+                    receipt.state, receipt.reason = 'UNKNOWN', 'dispatch_uncertain'
+                    receipt.submitted, receipt.read_only = None, True
+                    result = self._deliver(receipt, True)
+                    result['retired'] = True
+                    return result
                 saved = self.journal.read(operation_id)
                 pending = self.journal.pending()
                 if saved:

@@ -52,8 +52,8 @@ function Set-Status([string]$Key) {
 function Update-PlayPrompt {
     $deckKey = [string]$deckChoice.SelectedItem.Key
     $stakeKey = [string]$stakeChoice.SelectedItem.Key
-    $script:promptText = Get-BalatroPlayPrompt $root -InlineRules -DeckKey $deckKey -StakeChoice $stakeKey -Language $script:language
-    $script:codexLink = Get-BalatroCodexLink $root (Get-BalatroPlayPrompt $root -DeckKey $deckKey -StakeChoice $stakeKey -Language $script:language)
+    $script:promptText = Get-BalatroPlayPrompt $root -DeckKey $deckKey -StakeChoice $stakeKey -Language $script:language
+    $script:codexLink = Get-BalatroCodexLink $root $script:promptText
     $modeKey = switch ($stakeKey) { 'highest' { 'highest' }; 'climb' { 'climb' }; default { 'fixed' } }
     $modeDetail.Text = Get-BalatroText $modeKey $script:language
 }
@@ -206,6 +206,11 @@ function Complete-Preparation {
 function Get-PreparationFailureMessage([string]$Text, [int]$Stage = 0, [string]$Language = 'zh-CN') {
     if ($Text -match 'No unique verified Steam Balatro') { return (Get-BalatroText 'no_game' $Language) }
     if ($Text -match 'Close Balatro normally|normally closed') { return (Get-BalatroText 'close_game' $Language) }
+    if ($Text -match 'checkpoint \(lifecycle: ([A-Za-z0-9][A-Za-z0-9_.-]{0,79})\)') {
+        $operationId = $Matches[1]
+        $key = if ($Text -match 'Original lifecycle receipt is missing') { 'missing_lifecycle' } else { 'pending_lifecycle' }
+        return ((Get-BalatroText $key $Language) -f $operationId)
+    }
     if ($Text -match 'checkpoint|Unresolved') { return (Get-BalatroText 'unresolved' $Language) }
     if ($Text -match 'Previous registered project is unavailable') { return (Get-BalatroText 'old_project' $Language) }
     if ($Text -match 'Mod/injector|receipt|differs|existing|Existing|adoption|registration') { return (Get-BalatroText 'conflict' $Language) }

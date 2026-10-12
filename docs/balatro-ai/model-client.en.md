@@ -1,6 +1,6 @@
 # MCP client setup
 
-The launcher prepares the environment and the managed `balatro-agent` registration automatically. Use it first. **Start in Codex** opens a project chat when the client supports the link; the prompt still requires review and sending. The copy fallback includes the actual path and complete rules. Reload MCP or reopen the client when its tool list has not refreshed.
+The launcher prepares the environment and the managed `balatro-agent` registration automatically. Use it first. **Start in Codex** opens a project chat when the client supports the link; the prompt still requires review and sending. The copy fallback uses the same short prompt with the actual path and a play-rules file reference. Reload MCP or reopen the client when its tool list has not refreshed.
 
 For manual setup, use your complete extracted project folder in both `command` and `cwd`. This is one local STDIO service, with no model API key or paid API caller in the program. Example Codex TOML (replace the example paths):
 
