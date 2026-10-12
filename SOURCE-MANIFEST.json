@@ -1,6 +1,6 @@
 {
   "type": "checked_local_source_candidate_not_published",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "files": [
     {
       "path": ".gitattributes",
@@ -19,22 +19,27 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "3a0b29963e35e33f03f6890d316bf21cc223c58deec538301f0d880fc935eb89",
-      "bytes": 8325
+      "sha256": "3fa25cec9c19855fe2fb1495c2e687f9bcd5a715cc0499563633a4bd8881d3c0",
+      "bytes": 9112
     },
     {
       "path": "Balatro Agent.exe",
-      "sha256": "fb4469f7e8043200aa6f5273c29be4156ae4701cdfe7370d72e145199a0cdc84",
+      "sha256": "400b85389cb96a8300a6d5d504b11f9d72c0036d7b7df0a74831a9e0fc86d49f",
+      "bytes": 10240
+    },
+    {
+      "path": "Balatro Status.exe",
+      "sha256": "71998baca48c3b511a1911c5bd8531dc2acd8070c56ca0117993103a608be472",
       "bytes": 10240
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "7488cd03a8286b40d445338e0076da1a7eb37d8331db0a08d58b7dc972853cde",
-      "bytes": 14155
+      "sha256": "b51bc398d6a9225c684c4eb93392afbb62d9bc9de85b0075c04ba06ca637ce45",
+      "bytes": 15162
     },
     {
       "path": "config/dependencies.lock.json",
-      "sha256": "84a2f21ffcf6954565111fafe9df5ebab19fa15fa372c118cb3ebc507a3945de",
+      "sha256": "0bf2a65ec5a4f363d3bc62bcc3a79bdf2740131f58dff2325763f8357c9d8773",
       "bytes": 1961
     },
     {
@@ -49,7 +54,7 @@
     },
     {
       "path": "config/runtime.lock.json",
-      "sha256": "6f50f37d5653becd63c0569b4f50a535dbec6402daf2bbac876277e568384ead",
+      "sha256": "2b9a94c9673bc27cc6fb3e17437c32eeec5249b0238fa321d9823e2edd08b287",
       "bytes": 22174
     },
     {
@@ -64,8 +69,8 @@
     },
     {
       "path": "docs/balatro-ai/activity.md",
-      "sha256": "7076c2e5ab975a76fec1d3b32424ee8bf676e5a7ab697c8b1913d02078582883",
-      "bytes": 10050
+      "sha256": "26759e1ac6bbcb96dca5c4b391a3df6a57c1c3e9f80de7cc5581dbde729a87ff",
+      "bytes": 10171
     },
     {
       "path": "docs/balatro-ai/calculation-schema.json",
@@ -79,13 +84,13 @@
     },
     {
       "path": "docs/balatro-ai/maintenance.en.md",
-      "sha256": "3f7cd3d8ab6d480c26e0ae4152278dfde827dc63f632e015fd2714823753ab46",
-      "bytes": 8228
+      "sha256": "7e8778f8acbe3242ea01b98ea65bce1e565fe403adbc246ea8b73c4a8d450e7d",
+      "bytes": 9520
     },
     {
       "path": "docs/balatro-ai/maintenance.md",
-      "sha256": "f348e41b2a37ddebd214098cde10bbc5e5ab2a2126cd28fc9611350e00a09b5d",
-      "bytes": 16850
+      "sha256": "4c9e0160fecd97c146787483c0dcc4839479e801cf2a9b9d4d39f101213e4c93",
+      "bytes": 18047
     },
     {
       "path": "docs/balatro-ai/model-client.en.md",
@@ -124,8 +129,8 @@
     },
     {
       "path": "docs/balatro-ai/reference.md",
-      "sha256": "743833c28860476331c1276e1b0ae58141eb95d5c19e85548478581c3e34471e",
-      "bytes": 24009
+      "sha256": "4983d71eee288ee912a9cac4e30906e98345d225232b6cb47cc4ea06efe12dd9",
+      "bytes": 24992
     },
     {
       "path": "docs/balatro-ai/run-plan-schema.json",
@@ -149,408 +154,143 @@
     },
     {
       "path": "evidence/validation.json",
-      "sha256": "9a9d05b0de9a46ba310b0d82056f79af08260caea50e431dbc1ff7a8167f3e7a",
+      "sha256": "c3d9d8d981b01735dc47800339ddf78331eaf51854a19b9b039a89585de8cff6",
       "bytes": 813
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/HEAD.json",
-      "sha256": "63e0d73a77e406bfc73dc65da17517ef214c884fb9aac9dbcbb5c8201cb69b57",
-      "bytes": 97
+      "path": "experience/.metadata/experience/EXP-CONDITIONAL-ENGINE.json",
+      "sha256": "2d5c4c6f6ca9b7578270b068e4d7e1584d87c13b5f2e313733c4d7192c6cc721",
+      "bytes": 4521
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0001.md",
-      "sha256": "b94998e834c58e6c9646b2adbe6788c5c1fbd84e561fbeef34076af378a2445d",
-      "bytes": 5565
+      "path": "experience/.metadata/experience/EXP-CONDITIONAL-HANDS.json",
+      "sha256": "835d5caa94ea30693b90410287a5ea3871f3f5a416f376cd40f883fde8f9f822",
+      "bytes": 3258
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0002.md",
-      "sha256": "92ce5d2b18aeac554dd66ffacf99c6106dce25e8ad0a2364279798c550a2ba96",
-      "bytes": 6162
+      "path": "experience/.metadata/experience/EXP-FIRST-CARD-ENGINE.json",
+      "sha256": "ea2ec43da4e64de7b7253e2dca0091f4645add5814bbbaf69b3baa2d38465276",
+      "bytes": 2405
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0003.md",
-      "sha256": "5aec7edabf80eb49a687e9d59fed8fbafefcdaa975dd848feff2c32d0f85c1f6",
-      "bytes": 7252
+      "path": "experience/.metadata/experience/EXP-FLUSH-SUPPORT.json",
+      "sha256": "e6cc20784e8cf2de7899e65934aa927a7385630f3f75b4105ca5bb642dd2ada3",
+      "bytes": 2287
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0004.md",
-      "sha256": "e2e9294d3de452125d4019791bea14ced3c105fd5b739e44d1dd5be83bc37325",
-      "bytes": 8128
+      "path": "experience/.metadata/experience/EXP-GENERAL-GUIDE.json",
+      "sha256": "ed81d37772bfba57f54f6434fbcf60bc850e7fee040e838ead6b1d39a0049209",
+      "bytes": 2900
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0005.md",
-      "sha256": "eaf90c501e9e192783e6d2b47146a0cfd24f0cab460bd1aeb05606e14a82f30a",
-      "bytes": 9859
+      "path": "experience/.metadata/experience/EXP-MONEY-SCORING.json",
+      "sha256": "48e15c52a10413dcbeac1facc46123f59d3224bccf2d95aaa0d04dc87413e466",
+      "bytes": 2638
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0006.md",
-      "sha256": "0b69c139101e0e5efebc16de4a0bd5a2aab88b6360be2ca2369e36e3901ee60b",
-      "bytes": 11133
+      "path": "experience/.metadata/experience/EXP-ORANGE-STAKE-TRANSITION.json",
+      "sha256": "3ccc470fdc27f6636885ec93a18834377ec9b96b3a1cabb99044136ac1502248",
+      "bytes": 2631
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0007.md",
-      "sha256": "50ffc3d153db563947e0691753679952ec980e77734d284a630c62726c439ba9",
-      "bytes": 13134
+      "path": "experience/.metadata/experience/EXP-PLANET-RESERVE.json",
+      "sha256": "f6907655cbbf314e5e08fc70325a3df240cee5bfb99dc3a7d90deb16acbcce8c",
+      "bytes": 1374
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0008.md",
-      "sha256": "146285719c8a12c738c7c2690b6868595d19aa8e66f7e73fe62ae4d244bd0cec",
-      "bytes": 15926
+      "path": "experience/.metadata/experience/EXP-PUBLIC-STATE-AFTER-DRAW.json",
+      "sha256": "c5686e9e87cefda869b9486acc0a198d410472b8d6b2b61a98df0cbeaa5738b9",
+      "bytes": 1990
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0009.md",
-      "sha256": "ef5ad795a75e85c9d4c5e6e88773147e25ec6bd0dd79b1ec144459e610d16270",
-      "bytes": 2897
+      "path": "experience/.metadata/experience/EXP-RED-STAKE-ECON.json",
+      "sha256": "3f9ca86c6939bec2e76f0e296521aabb89e68945380bc70afbc437f634162567",
+      "bytes": 1544
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0010.md",
-      "sha256": "f52f73997df6a4b19e743d901432a6ce5e54b27a01f0825ece8f4d153fda6bc6",
-      "bytes": 5419
+      "path": "experience/.metadata/experience/EXP-REPEATED-HAND.json",
+      "sha256": "91ded7b201cbb055c0d5df1744d48d3fe70ad9a8e60e4c797203fdd960cc0f21",
+      "bytes": 1884
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0011.md",
-      "sha256": "979a2599bf19ed0fe42fef1c1c56c0ed66f53b1aef5af681e398c8a8f7ca5d78",
-      "bytes": 10544
+      "path": "experience/.metadata/experience/EXP-SCORE-THRESHOLD.json",
+      "sha256": "b6e6eab79b3db30e90b937cb6f1ad89c9593efd68848815ba6b40236f33a5a77",
+      "bytes": 1881
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/r0012.md",
-      "sha256": "1a1955725c2b829b9e92617b8e55f2cb806c1126fa3c33f194191502fe67cc03",
-      "bytes": 4117
+      "path": "experience/.metadata/experience/EXP-SHUFFLED-JOKERS.json",
+      "sha256": "67fcd4908b4a9d6e7e098abb304231bcf6e9325142e771cf179226d7dedb7ea0",
+      "bytes": 1327
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/HEAD.json",
-      "sha256": "3b975724672aa40bad1bc717dfd58de2df1ff1fea18db3a093ad2a301385f55e",
-      "bytes": 95
+      "path": "experience/experience/EXP-CONDITIONAL-ENGINE/current.md",
+      "sha256": "044f347470923ef95dc11041920f6f949d61fc6e94590fefd81a4ad25656647c",
+      "bytes": 1688
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0001.md",
-      "sha256": "aa75af632dfa5639174ebd37c03030424461324c2d8599107d11e41f43879404",
-      "bytes": 4094
+      "path": "experience/experience/EXP-CONDITIONAL-HANDS/current.md",
+      "sha256": "22129dab246a4064a0d695eaa632fa4088198cd4dda0a622f6b2b9e074c99917",
+      "bytes": 1337
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0002.md",
-      "sha256": "124f0c836f0529157136011edb41a0e8e27015c16127013801356dd4d06f3d8f",
-      "bytes": 5530
+      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/current.md",
+      "sha256": "30b6a09413dace260f1335a5e2a1315f2bedbfa65139cbc02895dc13aa554c1c",
+      "bytes": 816
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0003.md",
-      "sha256": "fa14b1e8f6049e649b5d2da08037e3e04a32c071be14a1bae2545f26bce5f072",
-      "bytes": 6969
+      "path": "experience/experience/EXP-FLUSH-SUPPORT/current.md",
+      "sha256": "9df0d0be2daa607bf7e7907f621afd2f16784494ae578c2bb14ceed4d8234140",
+      "bytes": 550
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0004.md",
-      "sha256": "1355fb04369b8269da73f4953c31115588e5e39c859416bcd622359bf329d04a",
-      "bytes": 8395
+      "path": "experience/experience/EXP-GENERAL-GUIDE/current.md",
+      "sha256": "8cc7c98fe3f87e054a344151c842615d97322786394ed10bb0c6ba4e22a0a1c3",
+      "bytes": 5426
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0005.md",
-      "sha256": "1da9d37cb43e1016a0fe50d5174f48921a05d7c25d3a80a515864bfabe8324cb",
-      "bytes": 2676
+      "path": "experience/experience/EXP-MONEY-SCORING/current.md",
+      "sha256": "ba8e444e4ce82dba48497eb76f527e96751c3bc7f9418e786426c355f0e1a814",
+      "bytes": 1764
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0006.md",
-      "sha256": "32754497f20bc6b6dcffec661b6e7e8fe709c65508ec2f8bbee743b99ed07bd0",
-      "bytes": 5192
+      "path": "experience/experience/EXP-ORANGE-STAKE-TRANSITION/current.md",
+      "sha256": "8d64cf1e29a3fd29095d966b1a78746a89c1f2d30c4e756abc6d65a08075e7be",
+      "bytes": 2017
     },
     {
-      "path": "experience/experience/EXP-CONDITIONAL-HANDS/r0007.md",
-      "sha256": "f9090459f1ab20575f54a1c8a24bc66af86746161fb337b15f89f4584057d508",
-      "bytes": 3032
+      "path": "experience/experience/EXP-PLANET-RESERVE/current.md",
+      "sha256": "3ce722d93d473ee6686d0e4fc6837a8527fee076a135a755dec7279487741aaf",
+      "bytes": 543
     },
     {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/forks/purple-20261010-r0004.md",
-      "sha256": "9579673a8134bd002f52ce684ad1117b7724b81c487da19823a82d78b5880074",
-      "bytes": 7006
+      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md",
+      "sha256": "cd7c84de8f36a5948b1d6ec5bba716b03f6098ad6786ae8f94faf5b9c5c35d20",
+      "bytes": 563
     },
     {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/forks/README.md",
-      "sha256": "f60ed168751048470f3ea793c815a3b0732cdff2e929821f69bb71cbac2478d3",
-      "bytes": 1436
+      "path": "experience/experience/EXP-RED-STAKE-ECON/current.md",
+      "sha256": "99fbd1d7892e980448063fd0cdd2565b3efb676368784fa0c6dd8e0dedfd40ce",
+      "bytes": 516
     },
     {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/HEAD.json",
-      "sha256": "b0ea5eafe365880a60e1d79ee44fd9c990b777bbf37e27811270bcf7f7edf1a5",
-      "bytes": 95
+      "path": "experience/experience/EXP-REPEATED-HAND/current.md",
+      "sha256": "a2ce7e6106d7232896b3a0f6d366ee11cf70c51a21c8d8b2201ed9cb56252846",
+      "bytes": 483
     },
     {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/r0001.md",
-      "sha256": "0c38e31129368f186f5127d56ee47daecf6b3dbc4f7b1b3242cc6d057528fb0d",
-      "bytes": 8995
+      "path": "experience/experience/EXP-SCORE-THRESHOLD/current.md",
+      "sha256": "dbaef04edb9952ceeef0e4033301ef54fec7986c0aeedf2563c2a4e68bf26e34",
+      "bytes": 577
     },
     {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/r0002.md",
-      "sha256": "d9c9c58ee21adef2c69294c454162b55856a8d1c25f2f1659d270e10ec105c96",
-      "bytes": 9959
-    },
-    {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/r0003.md",
-      "sha256": "491cda70b62fae73dfd2551250afd02cffeb2035d88ccd38d63a23fa58d7f1da",
-      "bytes": 2652
-    },
-    {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/r0004.md",
-      "sha256": "8ac0772dd6ba4bec8a4312f1fa7d1a9bf6cacbac50d3266fe60e78d983cd5ae5",
-      "bytes": 5730
-    },
-    {
-      "path": "experience/experience/EXP-FIRST-CARD-ENGINE/r0005.md",
-      "sha256": "a8f0ef5e9818a30c286ec58cb0b91e26c5d4d1675b7e4ea57edaf81c192c8821",
-      "bytes": 4071
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/HEAD.json",
-      "sha256": "a0aac9a574385333a6dd20c81ec621f7b7047f3b7e938afe30b27635fffa7e62",
-      "bytes": 91
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0001.md",
-      "sha256": "3eece4c939c820172d0b13cd92d581b86f3931dd670b7901d367bda03ede49b6",
-      "bytes": 4359
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0002.md",
-      "sha256": "f39596907b9c94423fe8d18e42402876db6582317199e506a49ed5b100c56ca7",
-      "bytes": 4870
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0003.md",
-      "sha256": "cf855228aeeb63198a9a0f822e7f31fd002207edb502753f0ea5cc2cadf90ca2",
-      "bytes": 6908
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0004.md",
-      "sha256": "ef8ef7126f6486d18cdf90e6de93da62297e58b84d6f58f6bdd1a6c872ced12b",
-      "bytes": 7842
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0005.md",
-      "sha256": "7f045bfa557e684cbe2a5bc07c20a3e8204172258aa353458d816173f15371c8",
-      "bytes": 9326
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0006.md",
-      "sha256": "97837c61cad2e9e205e03e39a6e8a4a10ebc31f8bbf3bf66969841bb6cb094c9",
-      "bytes": 16067
-    },
-    {
-      "path": "experience/experience/EXP-FLUSH-SUPPORT/r0007.md",
-      "sha256": "2d7aa279ed6e21799521b572e680570f6ced2f768c3e572fafa976563d80b519",
-      "bytes": 2699
-    },
-    {
-      "path": "experience/experience/EXP-GENERAL-GUIDE/HEAD.json",
-      "sha256": "2af09f2500e0bd05bca842d458574516800746050e8992fa1ddb2a19d1dbc53b",
-      "bytes": 91
-    },
-    {
-      "path": "experience/experience/EXP-GENERAL-GUIDE/r0001.md",
-      "sha256": "9d09758fa9cbc7bd8f52c87fc8b0a56bcce472fc7938a580836dd6963e1d0df6",
-      "bytes": 8150
-    },
-    {
-      "path": "experience/experience/EXP-GENERAL-GUIDE/r0002.md",
-      "sha256": "978b6a606358cbf66a81e7f33ae18b7e2ffb08cbe3ecc3fe46e10c00fb75587c",
-      "bytes": 8286
-    },
-    {
-      "path": "experience/experience/EXP-GENERAL-GUIDE/r0003.md",
-      "sha256": "3cd6c7ac5ae28bcbbebe78d3e27d8c2bfe0144c0e5e41c8e716892730bda38b9",
-      "bytes": 9063
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/HEAD.json",
-      "sha256": "4d489c187c91fabb211cbee32f8a68951c7046682b846b718dea5c8572929bbf",
-      "bytes": 91
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0001.md",
-      "sha256": "4f11aa9515fa3327a51fe93389e85efa0cd289e09485603e27405b6cb1e9d45f",
-      "bytes": 4376
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0002.md",
-      "sha256": "5a252ba68ecf631b727e42eab6367ee51909bb3f877a9759b37e63248d607b96",
-      "bytes": 6039
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0003.md",
-      "sha256": "45ed19caf02cd00010139ebd8ea20229c4c3a0c58f5455cf7eeb2fb3237c9006",
-      "bytes": 7690
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0004.md",
-      "sha256": "0f09bea23da4aaed00e812b4267dc35366ddadba25df8aa5a66f956cfe380985",
-      "bytes": 10476
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0005.md",
-      "sha256": "7833c8ca502a7692c28b80d7800170e52ce734e8c4c23874d6625b47ed76e0b7",
-      "bytes": 15753
-    },
-    {
-      "path": "experience/experience/EXP-MONEY-SCORING/r0006.md",
-      "sha256": "677741648e8b4c664fb5a22759e0070f2449b2316423b6218a5e4d4fcba34705",
-      "bytes": 2946
-    },
-    {
-      "path": "experience/experience/EXP-ORANGE-STAKE-TRANSITION/HEAD.json",
-      "sha256": "72ad894ac4b0aae431e4a3f9b2f58afe4fb367fd0d0a46ddcc76013d50f384f5",
-      "bytes": 101
-    },
-    {
-      "path": "experience/experience/EXP-ORANGE-STAKE-TRANSITION/r0001.md",
-      "sha256": "649dd5dda05c2b102120ca712d92cba8a8a865338e39bc3b00aced6a63860980",
-      "bytes": 7404
-    },
-    {
-      "path": "experience/experience/EXP-ORANGE-STAKE-TRANSITION/r0002.md",
-      "sha256": "a77932cf79a08925ef55be802a42a0af58cb34f6119320063bc411a6738ec27f",
-      "bytes": 4216
-    },
-    {
-      "path": "experience/experience/EXP-PLANET-RESERVE/HEAD.json",
-      "sha256": "2ce16f29316bfb3af9dc7b9f3f5cdff2d8a24e8dddb925fd632846b461a93616",
-      "bytes": 92
-    },
-    {
-      "path": "experience/experience/EXP-PLANET-RESERVE/r0001.md",
-      "sha256": "49580766dcf93ffea3187f026aebe56ae18d0ee370f0a75f1b5b70db7ae724c2",
-      "bytes": 6690
-    },
-    {
-      "path": "experience/experience/EXP-PLANET-RESERVE/r0002.md",
-      "sha256": "257c85d2e33a2849cadff4437b2bec9d3e66446f97fb4e13e657eba75d2d0d68",
-      "bytes": 2581
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/HEAD.json",
-      "sha256": "656c038e7463683c6e2603a268a49a1f863da7c85ed46b2b4d837924978685e1",
-      "bytes": 101
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0001.md",
-      "sha256": "1e997524698605d822f7acba4e5b267ff1d8e5a11183b4591ca37491f8e1f83a",
-      "bytes": 3734
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0002.md",
-      "sha256": "a79210fa4a6d2656d1444aa7d2a707401f15852fbbe0c89b635e94b870c91712",
-      "bytes": 6539
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0003.md",
-      "sha256": "2a7e69709b48e6b69c9027ccf021bce737d9a3df7aa7ee316b3ae8646f764a6a",
-      "bytes": 11018
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0004.md",
-      "sha256": "9c267711c9849401ca3f2b8fbc4eb5e067c6490e28f78e196e6a54d7539b50c8",
-      "bytes": 13895
-    },
-    {
-      "path": "experience/experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0005.md",
-      "sha256": "b3ef5a94e388f7832b6bf6a59e5d8dae34600304e3bfcfc5d074b52034fe780c",
-      "bytes": 2764
-    },
-    {
-      "path": "experience/experience/EXP-RED-STAKE-ECON/HEAD.json",
-      "sha256": "9c17907a4bde018e588e02f78a048f78d9fb6d75f78a66fe7b4965ace88cfc3c",
-      "bytes": 92
-    },
-    {
-      "path": "experience/experience/EXP-RED-STAKE-ECON/r0001.md",
-      "sha256": "cffd3b81f028cc41769d2fd5f86cb75ed7fec894ba0b631a68a6148cba08d3d4",
-      "bytes": 4123
-    },
-    {
-      "path": "experience/experience/EXP-RED-STAKE-ECON/r0002.md",
-      "sha256": "0de09ebc0dab87ef297a6c6e692067a92e873f76cbcad417d0a13d8e23927d5e",
-      "bytes": 7198
-    },
-    {
-      "path": "experience/experience/EXP-RED-STAKE-ECON/r0003.md",
-      "sha256": "101c445704a7b584b049c14613c1c8a52199272cb21bddbbcd437f87d24ac054",
-      "bytes": 2527
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/HEAD.json",
-      "sha256": "b8f1ca74fd6e75c7643ab06615be1c61449f952d92ef170771d906a2855faeb6",
-      "bytes": 91
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/r0001.md",
-      "sha256": "2cbb8af12a4089186fc8d448a14132434c996d4ac8e8fce50109e60c7737ea0b",
-      "bytes": 4141
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/r0002.md",
-      "sha256": "391032fbcc741311c2773f450787728c56d6611bca2416f4c49461f5f479e37d",
-      "bytes": 6091
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/r0003.md",
-      "sha256": "66290938323270bfcab83a63f39822e0f92fa7c377b3a9ee177be329c5dbe9ea",
-      "bytes": 8134
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/r0004.md",
-      "sha256": "a4c85c69c5f9c5c44c13eff6bcb914dc46c5d147522c8823c777447b726324ca",
-      "bytes": 10156
-    },
-    {
-      "path": "experience/experience/EXP-REPEATED-HAND/r0005.md",
-      "sha256": "2fbca2a99548d5ad10e7ce18d3d58ca261ef44e76f7dff89ad09740cadbdf536",
-      "bytes": 2488
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/HEAD.json",
-      "sha256": "adf234d68ad6a924bb271eb87e6ca7d097b1bc18b1f103116fff5e0014bc513b",
-      "bytes": 93
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/r0001.md",
-      "sha256": "56d4f8691aac40888c01f6e17d4e3c2143c98b0f367b5521efb7891230b2375d",
-      "bytes": 4337
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/r0002.md",
-      "sha256": "45e5338c54c5505dbc3c19bad9d4ad0598a1de6d18ae64e228c1d4bc3b176118",
-      "bytes": 6087
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/r0003.md",
-      "sha256": "6bbf1717d722845d256956cd791e469a5936cbfb0b803139d54dd07625060034",
-      "bytes": 7829
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/r0004.md",
-      "sha256": "b7db559ab423f3caa32b96da02c690b8a06c0752fda0b3f966b55f29393a79b6",
-      "bytes": 10308
-    },
-    {
-      "path": "experience/experience/EXP-SCORE-THRESHOLD/r0005.md",
-      "sha256": "b41d64fc1f12822a9cd767c3ea378a30732028386a225d3727a0bcc2829c46a9",
-      "bytes": 2672
-    },
-    {
-      "path": "experience/experience/EXP-SHUFFLED-JOKERS/HEAD.json",
-      "sha256": "8637da654bfb99615b509aa10fbf483055165f0243937de815a2273b9126782b",
-      "bytes": 93
-    },
-    {
-      "path": "experience/experience/EXP-SHUFFLED-JOKERS/r0001.md",
-      "sha256": "1ea7c3788d0d294eafa711916ac8a03fb8ee295ce6e35a78d324b6e3c5139001",
-      "bytes": 7879
-    },
-    {
-      "path": "experience/experience/EXP-SHUFFLED-JOKERS/r0002.md",
-      "sha256": "521dd9a32b41369bd13cf26ebf91ae3467a4a4a03c0346af461af191e7191046",
-      "bytes": 2552
+      "path": "experience/experience/EXP-SHUFFLED-JOKERS/current.md",
+      "sha256": "4f3df77da0f70a54626514c195146f7d6fcfb1471139ffb8b5d3c0cdcaa5006b",
+      "bytes": 571
     },
     {
       "path": "experience/README.md",
-      "sha256": "bae1b92e52796809af2b5c0ca2992488fb4a53e6848326a02b4c9e2f2977c1d3",
-      "bytes": 8455
+      "sha256": "580c5f326bee98e28590f95b0905792fce91ed7c92cd861c1d792252baa0eeb5",
+      "bytes": 10810
     },
     {
       "path": "LICENSE",
@@ -619,18 +359,18 @@
     },
     {
       "path": "PROJECT.md",
-      "sha256": "4a3114a268439c3352c63a530cceaa1cc39012a607e3c94e4eb51681d3c4b322",
-      "bytes": 8378
+      "sha256": "f42b0804174f7a4a82a1d32056d1fce0071eb4aef4b67de8d1bceb58f4a5f60b",
+      "bytes": 9159
     },
     {
       "path": "prompts/bootstrap.en.md",
-      "sha256": "ea6bd17de61e106d6c6e68943d19426038fc275ccf870d7d3120a4ac4a208af8",
-      "bytes": 18144
+      "sha256": "82cfe86b0ec39f8cf5dd8188598e6d1a94d84857461bbf1fe5d79c6614cffa87",
+      "bytes": 18876
     },
     {
       "path": "prompts/bootstrap.md",
-      "sha256": "98bb5ca9853b2b323eb9894278f1088ba704c6d82d0c2d516a420e9408a5b3ba",
-      "bytes": 17318
+      "sha256": "db72063cef76a7725976135c5a445eaaff95771fa6b84f3933f012f13182a232",
+      "bytes": 18019
     },
     {
       "path": "prompts/first-use.en.md",
@@ -649,18 +389,18 @@
     },
     {
       "path": "pyproject.toml",
-      "sha256": "c46ade7b7d0d425cab6d2858644632662866e68f62433e0ad2306be096664b2c",
+      "sha256": "ebba50b96bbadfd1e4a7c7b579209d4030aa97427630229ad6dca7121fc884f2",
       "bytes": 555
     },
     {
       "path": "README.md",
-      "sha256": "9ec0dd74f969f337d1292d772d7be7fc4504bbf4201734a4dd288ba10ad3a726",
-      "bytes": 4064
+      "sha256": "d0ac6f28c3e416fd0efbe129aa09c6f9c6ec5c8d390047e1f5fd7426d6640170",
+      "bytes": 4483
     },
     {
       "path": "README.zh-CN.md",
-      "sha256": "419fabe05c7104372f6c9508d9ee44f50d5678bc525121f8b4dfea5d3b4c9dfa",
-      "bytes": 3641
+      "sha256": "b40c0be4789287feb2123a10263db61f59b0c5ff6e9bb5077a1e7aefeb87e2fa",
+      "bytes": 4019
     },
     {
       "path": "scripts/activity_viewer.ps1",
@@ -684,8 +424,8 @@
     },
     {
       "path": "scripts/build_launcher.ps1",
-      "sha256": "abab1a9d1d857fb6decfca20fc202d6d4cee525f2c5fb9ca4a27fd8cecb19a50",
-      "bytes": 4852
+      "sha256": "2f37a2dadac03ca2f1db2cb3033e191d1391e9fc91883f66fb6807b2b8f236bf",
+      "bytes": 5691
     },
     {
       "path": "scripts/build_mod.py",
@@ -694,8 +434,8 @@
     },
     {
       "path": "scripts/check_notes_persistence.py",
-      "sha256": "d71b6d3137cfa57bed1cb44d43138aa5259cd74e830b3515c19f767b4c5c1b17",
-      "bytes": 4293
+      "sha256": "641938da730cc23f166bb648f30e0862d24ca307aa60e6eb05066b27ff85569e",
+      "bytes": 4523
     },
     {
       "path": "scripts/client_evidence.py",
@@ -728,19 +468,29 @@
       "bytes": 29171
     },
     {
+      "path": "scripts/migrate_experience_current.py",
+      "sha256": "b84b9aea3ca821ed9ca3279a41574e239ad4fdd8b62c65d5e3281d0fb46349cd",
+      "bytes": 6736
+    },
+    {
       "path": "scripts/onboarding.py",
       "sha256": "51b089cdc4feab9830052419b1e39079e3c147eb29ebb1d6a96fb93508636a3e",
       "bytes": 31138
     },
     {
       "path": "scripts/package_source.py",
-      "sha256": "f476d97613c72b981cc905a8134290b367631e09cdc6bd224cc336289d02530a",
-      "bytes": 20305
+      "sha256": "015162ce60222e36d1aecffd9ffa3ba802b1cd418cbe63916474c5660fd48683",
+      "bytes": 20838
     },
     {
       "path": "scripts/project.py",
-      "sha256": "73c21a58d70a365eec44355cfe59caaa608cd5383a959b8e768581b55899a718",
-      "bytes": 12344
+      "sha256": "bf76c038602048aacc4804e12d0123732f4a5c73d5520284d22424b3ae87c3bc",
+      "bytes": 13141
+    },
+    {
+      "path": "scripts/promote_experience.py",
+      "sha256": "c9ab24647b058c32632f7b3f4fd56e9b40e9172f58b064246ef63d4900cafd03",
+      "bytes": 5995
     },
     {
       "path": "scripts/setup.ps1",
@@ -754,8 +504,8 @@
     },
     {
       "path": "scripts/stdio_smoke.py",
-      "sha256": "68276c847ef42e025b3fe3b1ac62a77ba874b765a2bb920d9898d9dc7b302b17",
-      "bytes": 5786
+      "sha256": "788e2b29c41a375a9705543a01a03b11a62b10211a7c9cce9fea3f994092e0f8",
+      "bytes": 5871
     },
     {
       "path": "scripts/update_mod.py",
@@ -769,8 +519,8 @@
     },
     {
       "path": "scripts/verify_source_candidate.py",
-      "sha256": "e8b596ff5aee9bc66435b45ce11932328b5a337f6310dafb7f32b3f9761ded48",
-      "bytes": 6097
+      "sha256": "d4e50ddfc1d3f20e64a8bdc3c7cc245d76c0cdd02db44cef6eae9435e0a806da",
+      "bytes": 6131
     },
     {
       "path": "src/balatro_agent/__init__.py",
@@ -834,8 +584,8 @@
     },
     {
       "path": "src/balatro_agent/notes.py",
-      "sha256": "7ae8e11a42a29a62954d2ba9a9c2f94135c9590ca159e406297ecde3922b1b7e",
-      "bytes": 20516
+      "sha256": "e51f2e9392db729d6af0a81a07f984cd4ed5436391998fa23c820cdb46c0226a",
+      "bytes": 35503
     },
     {
       "path": "src/balatro_agent/policy.py",
@@ -854,8 +604,8 @@
     },
     {
       "path": "src/balatro_agent/reader.py",
-      "sha256": "bae09c38599a2df1289c75a5d2461077c6fd2a33a99396b87cf10d893d4321b7",
-      "bytes": 12010
+      "sha256": "588e6cb0ae651b56309d335df8c9e3c402016d41ed5bd1b1251ad2edac5e1c50",
+      "bytes": 12022
     },
     {
       "path": "src/balatro_agent/recovery.py",
@@ -869,8 +619,8 @@
     },
     {
       "path": "src/balatro_agent/server.py",
-      "sha256": "b65ad94e5ea1639dc53aac91456fe104240614637a1c5a22632bf7e29bccaced",
-      "bytes": 14560
+      "sha256": "bf1df0b14ea2431b272130541b591ab94ad5b45013a6e95c76e7a0230ac09d32",
+      "bytes": 15369
     },
     {
       "path": "src/balatro_agent/settings.py",
@@ -914,8 +664,8 @@
     },
     {
       "path": "tests/test_activity.py",
-      "sha256": "1eb4a9386d2fce88869661b38ea4bf0f1a0ac87274733d2d6d64975b7b67a356",
-      "bytes": 33610
+      "sha256": "3d9b556a28332feae1a107406304a1df6485f0400f98cd9c4bfd513b7baa9561",
+      "bytes": 33716
     },
     {
       "path": "tests/test_blind_description.py",
@@ -939,13 +689,13 @@
     },
     {
       "path": "tests/test_context.py",
-      "sha256": "63e9d821c79599040a8b90191068f37bfa9ed21d08bd197d6e1c6e0b94cf97d8",
-      "bytes": 26367
+      "sha256": "fcf454d0a1e71a9c7cd90f80ea56386edd4ecdd4caef5a16dba0f77339bb85ca",
+      "bytes": 26400
     },
     {
       "path": "tests/test_desktop.py",
-      "sha256": "21163691b2718a385ad868607907e1dccb65070732dad07d744bb248f7478f87",
-      "bytes": 7394
+      "sha256": "e913a5fc0cf1a77e8e95ea58a2d88e5826f12b5fd60ef7cf6c06d39f2346b909",
+      "bytes": 7657
     },
     {
       "path": "tests/test_distribution.py",
@@ -964,8 +714,13 @@
     },
     {
       "path": "tests/test_experience_baseline.py",
-      "sha256": "116983f60c66027bdf5f2141a5008365a38d1c955b7a3ed38656f2d5f67b9811",
-      "bytes": 17004
+      "sha256": "835fe420b343f10c08ffa681b4d5f6c820cbc5ca43548a2f1e94ce13fd5f999f",
+      "bytes": 16499
+    },
+    {
+      "path": "tests/test_experience_current.py",
+      "sha256": "0f9545eef6f9d8c416d2a6ef527d4fabe8ddcf1fba1b136bbf4732867e7f531e",
+      "bytes": 12346
     },
     {
       "path": "tests/test_file_io.py",
@@ -1144,7 +899,7 @@
     },
     {
       "path": "uv.lock",
-      "sha256": "a218d012a7452dcff7b57dec0b56f8d0dde876265943da3251a71a236587f14d",
+      "sha256": "4ae845c3321d8153213790b6b4cee6d9178917db3194dc9d867641558ffd9c9d",
       "bytes": 61065
     },
     {
@@ -1179,18 +934,23 @@
     },
     {
       "path": "windows/app.manifest",
-      "sha256": "3e7bf2fcdf1e94fabab1ba93dd984fe6bf5e5bbcd1d40f3aa098f5d6eecd682d",
+      "sha256": "906f249a21ca3b59c905e478f16b83c7cddfaeae93fb15fff876db22bd0e868a",
       "bytes": 828
     },
     {
       "path": "windows/launcher-build.json",
-      "sha256": "a9836c58bacfa5e77a40a0bf04475acc696ad9d8114b93a47e50f4adf5420e49",
-      "bytes": 763
+      "sha256": "f90bb0091cc4edf211be0bfec917b69fa8aa562a071339f40c3513ce95a22d55",
+      "bytes": 809
     },
     {
       "path": "windows/Launcher.cs",
-      "sha256": "d0bcfa196c1825a8e409423c81e4693d1eea0274bdf36817f0bbe0ef1c249c82",
-      "bytes": 4697
+      "sha256": "248c53ed2500a761a5458dae9486ea027e8482b8d891a81668f3119275cac4fa",
+      "bytes": 4884
+    },
+    {
+      "path": "windows/status-build.json",
+      "sha256": "3e95424d6f438c2c048cd02b3e0c8cb4e65c32db882d25731547b432b9210ac7",
+      "bytes": 801
     }
   ],
   "license": "MIT_self_authored_only",

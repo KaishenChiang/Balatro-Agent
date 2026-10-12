@@ -49,8 +49,7 @@ def test_reads_baseline_without_copying_and_test_partition_never_inherits(layere
     service = NotesService(config)
     assert service.read_notes(view='content') == base.read(view='content')
     historical = service.read_notes(note_ids=['EXP-SYNTHETIC'], revision=1)
-    assert historical['notes'][0]['content'] == fixture_content('seed one')
-    assert historical['notes'][0]['current_revision'] == 2
+    assert historical['status'] == 'not_found'
     assert not config.notes_dir.exists()
     assert service.read_notes(note_ids=[])['notes'] == []
     assert service.read_notes(kind='TEST')['notes'] == []
@@ -61,7 +60,7 @@ def test_reads_baseline_without_copying_and_test_partition_never_inherits(layere
     assert not (base.root / 'TEST').exists()
 
 
-def test_first_local_revision_forks_complete_history_and_never_changes_baseline(layered):
+def test_first_local_edit_has_one_file_and_never_changes_baseline(layered):
     base, config = layered
     before = snapshot(base.root)
     service = NotesService(config)
@@ -69,10 +68,10 @@ def test_first_local_revision_forks_complete_history_and_never_changes_baseline(
     result = service.write_note('EXP-SYNTHETIC', content, 2, 'personal-3')
     assert result['note']['revision'] == 3
     assert snapshot(base.root) == before
+    folder = config.notes_dir / 'experience/EXP-SYNTHETIC'
+    assert [p.name for p in folder.iterdir()] == ['current.md']
     for revision in (1, 2):
-        relative = Path(f'experience/EXP-SYNTHETIC/r{revision:04d}.md')
-        assert (config.notes_dir / relative).read_bytes() == (base.root / relative).read_bytes()
-        assert service.read_notes(note_ids=['EXP-SYNTHETIC'], revision=revision)['status'] == 'ok'
+        assert service.read_notes(note_ids=['EXP-SYNTHETIC'], revision=revision)['status'] == 'not_found'
     assert service.write_note('EXP-SYNTHETIC', content, 2, 'personal-3')['duplicate']
     assert service.write_note('EXP-SYNTHETIC', content, 2, 'other-3')['status'] == 'revision_conflict'
     assert service.write_note('EXP-SYNTHETIC', fixture_content('different'), 2, 'personal-3')['status'] == 'id_conflict'
@@ -95,7 +94,7 @@ def test_source_upgrade_keeps_personal_history_and_updates_untouched_topics(laye
     assert current['EXP-SYNTHETIC']['content'] == local
     assert current['EXP-UNTOUCHED']['content'] == fixture_content('new official topic')
     assert not (config.notes_dir / 'experience/EXP-UNTOUCHED').exists()
-    assert fresh.read_notes(note_ids=['EXP-SYNTHETIC'], revision=1)['notes'][0]['content'] == fixture_content('seed one')
+    assert fresh.read_notes(note_ids=['EXP-SYNTHETIC'], revision=1)['status'] == 'not_found'
 
 
 async def test_mcp_roundtrip_revises_local_experience_using_the_delivered_baseline_revision(layered, monkeypatch):
@@ -118,20 +117,19 @@ async def test_mcp_roundtrip_revises_local_experience_using_the_delivered_baseli
         assert current['notes'][0]['content'] == content
         historical = (await client.call_tool('read_notes', {
             'note_ids': ['EXP-SYNTHETIC'], 'revision': 1, 'view': 'content'})).structured_content
-        assert historical['notes'][0]['content'] == fixture_content('seed one')
+        assert historical['status'] == 'not_found'
     assert snapshot(base.root) == before
-    assert (config.notes_dir / 'experience/EXP-SYNTHETIC/r0003.md').is_file()
+    assert (config.notes_dir / 'experience/EXP-SYNTHETIC/current.md').is_file()
 
 
-@pytest.mark.parametrize('failed_target', ['r0001.md', 'r0002.md', 'HEAD.json'])
-def test_interrupted_first_fork_retains_baseline_and_same_request_can_resume(layered, monkeypatch, failed_target):
+def test_interrupted_first_replace_retains_baseline_and_same_request_can_resume(layered, monkeypatch):
     base, config = layered
     before = snapshot(base.root)
     service = NotesService(config)
     content = fixture_content('personal revision')
     original = os.replace
     def fail(source, destination):
-        if Path(destination).name == failed_target:
+        if Path(destination).name == 'current.md':
             raise OSError('SECRET_PATH')
         original(source, destination)
     monkeypatch.setattr(os, 'replace', fail)
@@ -141,9 +139,6 @@ def test_interrupted_first_fork_retains_baseline_and_same_request_can_resume(lay
     assert service.read_notes()['notes'][0]['revision'] == 2
     assert snapshot(base.root) == before
     monkeypatch.setattr(os, 'replace', original)
-    if failed_target == 'HEAD.json':
-        alternative = fixture_content('different request')
-        assert service.write_note('EXP-SYNTHETIC', alternative, 2, 'alternative-3')['status'] == 'storage_unavailable'
     resumed = NotesService(config).write_note('EXP-SYNTHETIC', content, 2, 'personal-3')
     assert resumed['write_state'] == 'COMMITTED' and resumed['note']['revision'] == 3
     assert snapshot(base.root) == before
@@ -158,21 +153,21 @@ def test_stale_baseline_revision_cannot_fork_a_newer_official_head(layered):
     assert not (config.notes_dir / 'experience/EXP-SYNTHETIC/HEAD.json').exists()
 
 
-def test_corrupt_baseline_history_cannot_be_copied_or_exposed(layered):
+def test_corrupt_baseline_current_content_cannot_be_copied_or_exposed(layered):
     base, config = layered
-    (base.root / 'experience/EXP-SYNTHETIC/r0001.md').write_text('SECRET_CORRUPTION', encoding='utf-8')
+    (base.root / 'experience/EXP-SYNTHETIC/current.md').write_text('SECRET_CORRUPTION', encoding='utf-8')
     service = NotesService(config)
     result = service.write_note('EXP-SYNTHETIC', fixture_content('personal'), 2, 'personal-3')
     assert result['status'] == 'store_corrupt' and 'SECRET' not in canonical(result)
     assert not (config.notes_dir / 'experience/EXP-SYNTHETIC/HEAD.json').exists()
 
 
-def test_missing_local_history_does_not_silently_fall_back_to_official_history(layered):
+def test_missing_local_current_does_not_silently_fall_back_to_baseline(layered):
     _, config = layered
     service = NotesService(config)
     assert service.write_note('EXP-SYNTHETIC', fixture_content('personal'), 2, 'personal-3')['status'] == 'ok'
-    (config.notes_dir / 'experience/EXP-SYNTHETIC/r0001.md').unlink()
-    result = service.read_notes(note_ids=['EXP-SYNTHETIC'], revision=1)
+    (config.notes_dir / 'experience/EXP-SYNTHETIC/current.md').unlink()
+    result = service.read_notes(note_ids=['EXP-SYNTHETIC'])
     assert result['status'] == 'store_corrupt'
 
 
@@ -191,7 +186,7 @@ def test_runtime_local_paths_and_development_test_isolation(tmp_path, monkeypatc
 
 def test_shipped_primary_guide_and_references_have_bounded_payload_and_valid_ids():
     root = Path(__file__).resolve().parents[1]
-    rows = NotesStore(root / 'experience').read(view='content')['notes']
+    rows = NotesStore(root / 'experience').read(view='strategy')['notes']
     notes = {row['note_id']: row for row in rows}
     guide = notes['EXP-GENERAL-GUIDE']
     assert len(canonical(guide['content']).encode('utf-8')) <= 8000
@@ -253,13 +248,13 @@ def test_independent_disk_verifier_matches_local_revision_and_rejects_tampered_d
     assert snapshot(baseline.root) == before
 
 
-def test_source_upgrade_after_interrupted_first_commit_preserves_the_pending_branch(layered, monkeypatch):
+def test_source_upgrade_after_failed_first_replace_rejects_old_expected_revision(layered, monkeypatch):
     base, config = layered
     service = NotesService(config)
     original = os.replace
     def fail_head(source, destination):
-        if Path(destination).name == 'HEAD.json':
-            raise OSError('SYNTHETIC interrupted HEAD')
+        if Path(destination).name == 'current.md':
+            raise OSError('SYNTHETIC interrupted replacement')
         original(source, destination)
     monkeypatch.setattr(os, 'replace', fail_head)
     assert service.write_note('EXP-SYNTHETIC', fixture_content('pending personal revision'), 2, 'pending-3')['status'] == 'storage_unavailable'
@@ -270,22 +265,20 @@ def test_source_upgrade_after_interrupted_first_commit_preserves_the_pending_bra
     fresh = NotesService(config)
     assert fresh.read_notes()['notes'][0]['content'] == fixture_content('new official revision')
     assert fresh.write_note('EXP-SYNTHETIC', fixture_content('pending personal revision'), 2, 'pending-3')['status'] == 'revision_conflict'
-    assert fresh.write_note('EXP-SYNTHETIC', fixture_content('fresh request'), 3, 'fresh-4')['status'] == 'store_corrupt'
     assert snapshot(config.notes_dir) == pending
+    assert fresh.write_note('EXP-SYNTHETIC', fixture_content('fresh request'), 3, 'fresh-4')['status'] == 'ok'
     assert snapshot(base.root) == official
 
 
-def test_shipped_baseline_contains_valid_complete_history_and_all_guides():
+def test_shipped_baseline_has_one_current_document_per_topic():
     root = Path(__file__).resolve().parents[1]
     store = NotesStore(root / 'experience')
     rows = store.read(view='content')['notes']
     assert len(rows) == 13
-    count = 0
     for row in rows:
-        for revision in range(1, row['revision'] + 1):
-            assert store._revision('experience', row['note_id'], revision)['revision'] == revision
-            count += 1
-    assert count == 64
+        assert store._revision('experience', row['note_id'], row['revision'])['content'] == row['content']
+        folder = root / 'experience/experience' / row['note_id']
+        assert [p.name for p in folder.iterdir()] == ['current.md']
 
 
 def test_nested_baseline_and_local_roots_are_rejected_without_creating_files(tmp_path):

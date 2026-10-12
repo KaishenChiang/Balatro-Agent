@@ -165,7 +165,7 @@ class Reader:
                 result["connected"] = exc.code not in ("disconnected", "request_timeout")
             except Exception:
                 result = error_result("internal_error")
-            result['notes_read_views'] = ['content', 'index', 'full']
+            result['notes_read_views'] = ['strategy', 'content', 'index', 'full']
             result['observation_views'] = ['compact', 'full']
             result['observation_encoding'] = 'columns-v1'
             return self._deliver("health", result)

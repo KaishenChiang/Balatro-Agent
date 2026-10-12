@@ -44,7 +44,7 @@ def status():
               'uv_lock_sha256': digest(ROOT / 'uv.lock'), 'fixed_downloads': cache,
               'live_game_verified': False}
     from package_source import verify_launcher, verified_bundles
-    result['packaged_gui_launcher_verified'] = verify_launcher(ROOT)
+    result['packaged_gui_launcher_verified'] = verify_launcher(ROOT) and verify_launcher(ROOT, activity_only=True)
     try:
         result['bundled_dependencies_verified'] = bool(verified_bundles(ROOT))
     except (OSError,ValueError,KeyError):
@@ -99,6 +99,8 @@ def check(output, *, source_only=False):
     stdio = target.with_name(target.stem + '-stdio.json')
     env = dict(os.environ)
     env['BALATRO_AGENT_CLIENT_CONTEXT'] = 'development'
+    # Isolated Windows tests also exercise Chinese project paths in children.
+    env['PYTHONUTF8'] = '1'
     from package_source import source_snapshot
     before = source_snapshot(ROOT)
     # A fresh workspace directory avoids cross-user ownership of global TEMP.
@@ -124,7 +126,7 @@ def check(output, *, source_only=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'status', 'diagnose', 'configure-display', 'check', 'build', 'build-launcher', 'package', 'verify-package', 'verify-offline', 'update-mod', 'timings', 'audit'])
+    parser.add_argument('command', choices=['prepare', 'status', 'diagnose', 'configure-display', 'check', 'build', 'build-launcher', 'package', 'verify-package', 'verify-offline', 'update-mod', 'timings', 'audit', 'experience-single', 'experience-promote'])
     parser.add_argument('--output')
     parser.add_argument('--source-only', action='store_true')
     parser.add_argument('--check-report')
@@ -167,8 +169,16 @@ def main():
         except GameProcessError as exc:
             print('Steam installation could not be verified: ' + exc.code, file=sys.stderr)
             return 1
+    if args.command == 'experience-single':
+        from migrate_experience_current import migrate
+        print(json.dumps(migrate(ROOT, apply=args.apply, output=args.output), ensure_ascii=False))
+        return 0
+    if args.command == 'experience-promote':
+        from promote_experience import promote
+        print(json.dumps(promote(ROOT, apply=args.apply, output=args.output), ensure_ascii=False))
+        return 0
     if args.apply and args.command != 'update-mod':
-        parser.error('--apply is only valid with update-mod')
+        parser.error('--apply is only valid with update-mod, experience-single or experience-promote')
     if (args.console is not None or args.loading is not None) and args.command != 'configure-display':
         parser.error('--console and --loading are only valid with configure-display')
     if args.command == 'configure-display':
@@ -208,8 +218,10 @@ def main():
     if args.command == 'build-launcher':
         if os.name != 'nt':
             raise RuntimeError('The GUI launcher build requires Windows')
-        return subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-            '-File', str(ROOT / 'scripts/build_launcher.ps1')], cwd=ROOT, check=False).returncode
+        command = ['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+                   '-File', str(ROOT / 'scripts/build_launcher.ps1')]
+        result = subprocess.run(command, cwd=ROOT, check=False).returncode
+        return result or subprocess.run(command + ['-ActivityOnly'], cwd=ROOT, check=False).returncode
     if args.command == 'package':
         arguments = ['--review-dir', args.output] if args.output else []
         if args.check_report:

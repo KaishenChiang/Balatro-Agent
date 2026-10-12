@@ -9,6 +9,7 @@ The records come only from public MCP results and the model's submitted `act.rea
 The interface follows the Windows display language, with a **Language / 语言** selector. The default window is **460 × 460**, with a **320 × 300** minimum. Drag any edge or corner to resize its width and height, or maximize it. Header text and the timeline wrap to the available width; footer buttons flow onto another row when needed. Layout updates only when the window size or displayed text changes. It supports following the latest records, pausing the visible view, copying the visible text and opening the log folder. Reopen without installation or game operations:
 
 ```powershell
+& '.\Balatro Status.exe'
 & '.\Balatro Agent.exe' --monitor
 & '.\Balatro Agent.exe' --monitor --language en
 ```
@@ -31,7 +32,7 @@ Developer replay/preview can use `scripts/activity_viewer.ps1 -EventDirectory <s
 
 内容只来自模型实际收到的公开MCP结果，以及提交的决策依据和局内计划；未提交的内部思考与聊天正文无法读取。原生观察与审计原文保留原语言；界面牌组／注级名称复用启动器的公共双语目录。health声明activity_text_protocol="bilingual-tags-v1"时，模型在原有act.reason、计划objective和priorities[0]字符串内以`[zh-CN]... [en]...`提交同义短摘要，窗口选择对应语言，切换历史行时同样生效。每种语言只写一句，标签与两种摘要计入原上限（计划每项200字符、正文2000 UTF-8字节），无需额外工具请求或模型API。普通单语文字继续有效；旧记录或错标文本缺可用译文时，用所选语言明确提示，并显示已知操作。仅已识别的旧开局句式可直接转换；无法转换的外语目标名显示已知公开类别，不猜译名。完整原文仍在必需记录中。历史观察不回退当前阶段和目标。[公开变化提示](public-changes.md)与算术结果仍完整保留在本地记录和模型返回中，零与未知值的区别保持。
 
-默认跟随 Windows 显示语言，可在 **Language / 语言** 切换中英。默认尺寸 **460 × 460**，最小 **320 × 300**；拖动边缘或角落可调整宽高，也可最大化。顶部文字和正文按宽度换行，底部按钮不足一行时自动分行。布局只在窗口尺寸或显示文字变化时更新。支持跟随最新、暂停当前显示、复制当前记录、打开记录目录。关闭后运行上述 `--monitor` 入口可重开，不重新准备安装或操作游戏。
+默认跟随 Windows 显示语言，可在 **Language / 语言** 切换中英。默认尺寸 **460 × 460**，最小 **320 × 300**；拖动边缘或角落可调整宽高，也可最大化。顶部文字和正文按宽度换行，底部按钮不足一行时自动分行。布局只在窗口尺寸或显示文字变化时更新。支持跟随最新、暂停当前显示、复制当前记录、打开记录目录。关闭后双击项目根目录的Balatro Status.exe即可重开；原有 `--monitor` 入口仍可用。两个入口复用同一状态窗口脚本，不重新准备安装或操作游戏。
 
 MCP通过必需审计／交付边界后，追加一条小型可选JSONL摘要；独立的PowerShell／Windows Forms窗口读取这些追加内容。既有文件每500毫秒检查一次，新增会话文件每3秒发现一次；文件未增长时不重新打开。新摘要只格式化一次并缓存，正文只在新增可见事件、切换语言或恢复跟随时整理更新。附加记录不再复制笔记等完整返回树。
 

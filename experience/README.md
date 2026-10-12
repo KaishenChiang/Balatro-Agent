@@ -1,41 +1,45 @@
 # 通用经验基线
 
-源码提供 **1份通用攻略、12个简短主题、64份完整版本文件**。内容由模型从既有公开反馈中提炼，未采用外部专家攻略；这是一套有条件的决策框架，不是保证胜率的固定路线。
+源码提供 **1份通用攻略、12个简短主题，每个主题仅一个current.md**。内容由模型从既有公开反馈中提炼，未采用外部专家攻略；这是一套有条件的决策框架，不是保证胜率的固定路线。
 
-日常先读 [通用攻略 r3](experience/EXP-GENERAL-GUIDE/r0003.md)。它覆盖累计门槛、条件计分、弃牌与出牌、经济与成长、升级改牌、Boss、跳盲及观察更新。通用不等于无条件：当前局面优先，适用条件与反例必须保留。
+日常先读 [通用攻略](experience/EXP-GENERAL-GUIDE/current.md)。它覆盖累计门槛、条件计分、弃牌与出牌、经济与成长、升级改牌、Boss、跳盲及观察更新。通用不等于无条件：当前局面优先，适用条件与反例必须保留。
 
 ## 读取与本地学习
 
-开局调用 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"content"})`，遇到相关机制再按编号读下表主题；未支持content时省略view。旧版本与逐手算式供追溯，默认不装入整局上下文。
+开局调用 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`，遇到相关机制再按编号读下表主题。日常只读取行动判断、适用条件、反例和可信程度；revision是更新计数，不表示另存完整版本。旧服务应重载后核验single-current-v2与strategy支持。
+
+current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、保存时间和写入凭证另存`.metadata/experience/`，默认游玩读取不返回这些内容。它们用于局后核验、纠错与可靠保存；需要修订时才显式读取content/full审计视图。备份或整合经验时必须同时保留攻略与元数据。
 
 经验只有被工具实际读出后才进入聊天上下文，不修改模型参数，也不由程序逐步强制注入。新聊天或上下文压缩后引用不清时重读主攻略，不机械地每步读取。
 
 - **源码基线：** `experience/experience/`，随源码包提供。
-- **用户修订：** `runs/local-experience/experience/`，按主题优先读取；首次修改在本地保留该主题的全部基线历史，再追加新修订。
+- **用户修订：** `runs/local-experience/experience/`，按主题优先读取。每个主题仅一个current.md；首次修改以当前基线为起点，之后在本地当前正文上增加、修改或撤回，提交完整修改后的内容并原子替换同一文件。
 - **更新原则：** 跨构筑规则修订主攻略，特定技巧精简保留在对应主题；保留来源、事实/解释、条件、反例、置信度与修订理由。不逐局堆叠流水账，没有新认识时保留原经验。
-- **升级与发布：** 日常游玩只写本地目录，不自动上传、提交或反写基线，源码打包排除runs/。用户明确要求纳入共享源码时，单独核对来源、完整历史与分支冲突，再整理公开基线。升级时保全本地目录；已修改主题不自动合并新基线，未修改主题跟随基线。换目录时单独迁移经验，不复制动作检查点绕过UNKNOWN。
+- **升级与发布：** 日常游玩只写本地目录，不自动上传、提交或反写基线，源码打包排除runs/。用户明确要求纳入共享源码时，单独核对来源与冲突，再整理公开基线。升级时保全本地当前文件；已修改主题不自动合并新基线，未修改主题跟随基线。换目录时单独迁移经验，不复制动作检查点绕过UNKNOWN。
 
 ## 按需参考
 
-| 编号 | 当前版本 | 用途 |
+| 编号 | 当前更新计数 | 用途 |
 | --- | --- | --- |
-| EXP-GENERAL-GUIDE | [r3](experience/EXP-GENERAL-GUIDE/r0003.md) | 主攻略：通用决策框架及12项按需参考 |
-| EXP-SCORE-THRESHOLD | [r5](experience/EXP-SCORE-THRESHOLD/r0005.md) | 通用补充：缺口、现成牌与累计补分 |
-| EXP-CONDITIONAL-HANDS | [r7](experience/EXP-CONDITIONAL-HANDS/r0007.md) | 通用补充：计分牌、附带牌、留手与强制条件 |
-| EXP-MONEY-SCORING | [r6](experience/EXP-MONEY-SCORING/r0006.md) | 通用补充：付款后资源、预算与成长 |
-| EXP-CONDITIONAL-ENGINE | [r12](experience/EXP-CONDITIONAL-ENGINE/r0012.md) | 通用补充：触发阶段、顺序与条件冲突 |
-| EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/r0005.md) | 通用补充：观察更新、拒绝与UNKNOWN |
-| EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/r0007.md) | 条件参考：同花投入及其失败边界 |
-| EXP-REPEATED-HAND | [r5](experience/EXP-REPEATED-HAND/r0005.md) | 条件参考：同盲重复与Boss限制 |
-| EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/r0005.md) | 条件参考：首张计分牌与逐次触发 |
-| EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/r0002.md) | 条件参考：优惠券与星球持有 |
-| EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/r0002.md) | 条件参考：翻面打乱后的未知顺序 |
-| EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/r0003.md) | 条件参考：红注规则，不直接套用于白注 |
-| EXP-ORANGE-STAKE-TRANSITION | [r2](experience/EXP-ORANGE-STAKE-TRANSITION/r0002.md) | 条件参考：易腐失效、钢铁阶段与更高目标失败边界 |
+| EXP-GENERAL-GUIDE | [r5](experience/EXP-GENERAL-GUIDE/current.md) | 主攻略：注级适用性、高难度持续骨架与12项按需参考 |
+| EXP-SCORE-THRESHOLD | [r5](experience/EXP-SCORE-THRESHOLD/current.md) | 通用补充：缺口、现成牌与累计补分 |
+| EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 通用补充：计分牌、附带牌、留手与强制条件 |
+| EXP-MONEY-SCORING | [r7](experience/EXP-MONEY-SCORING/current.md) | 通用补充：付款后资源、期限预算与成长 |
+| EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 通用补充：触发阶段、顺序与条件冲突 |
+| EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 通用补充：观察更新、拒绝与UNKNOWN |
+| EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/current.md) | 条件参考：同花投入及其失败边界 |
+| EXP-REPEATED-HAND | [r5](experience/EXP-REPEATED-HAND/current.md) | 条件参考：同盲重复与Boss限制 |
+| EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/current.md) | 条件参考：首张计分牌与逐次触发 |
+| EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/current.md) | 条件参考：优惠券与星球持有 |
+| EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/current.md) | 条件参考：翻面打乱后的未知顺序 |
+| EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/current.md) | 条件参考：红注规则，不直接套用于白注 |
+| EXP-ORANGE-STAKE-TRANSITION | [r5](experience/EXP-ORANGE-STAKE-TRANSITION/current.md) | 条件参考：永恒占位、易腐接替、持续核心与更高目标失败边界 |
 
-每条HEAD.json指向当前版本，旧r文件完整保留。首牌r1的错误解释已在r2撤回，旧版本只供审计。红注主题置信度low，其余medium；有限对局不能证明稳定胜率或最优策略。
+每个主题只有current.md，更新计数及精简写入收据用于冲突检查和重复请求核验。此次迁移前的r文件、HEAD和分支原稿先逐文件核验并压缩归档到本机.artifacts/experience-archive/，不再留在日常读取目录；以后不自动累积完整旧版。首牌早期错误解释已撤回。红注主题置信度low，其余medium；有限对局不能证明稳定胜率或最优策略。
 
 ## 整理与来源
+
+以下是历史整理记录，其中版本数量和保留方式描述当时状态；2026-10-12按用户要求迁移为每主题一个当前文件，正文不变，旧快照留在上述一次性归档。
 
 2026-10-08实际通过MCP读完11个主题后整理上述基线，并逐项保存、读回；此次是经验编辑，没有新增实机对局。原有41份历史文件保留，旧经验索引已归档并核对哈希。完整工具记录与独立进程核验留在本地检查目录，不作为新游戏验收。
 
@@ -46,6 +50,14 @@
 该局北京时间19:22:57开局、21:21:38终局，跨度1小时58分41秒含用户暂停；20:25:51恢复后55分47秒。暂停开始未精确记录，不报告整局净执行时间或纯推理时间。
 
 完整存储契约见[技术参考](../docs/balatro-ai/reference.md#经验与公开计算)，执行入口见[bootstrap](../prompts/bootstrap.md)。
+
+## 2026-10-12本地经验整合与单文件维护
+
+按用户明确授权，把本地当前的主攻略r5、橙注过渡r5、经济r7、条件选牌r8、计分阶段r13整合进源码对应主题；其余8个主题保留当前内容。五个主题逐字核验，策略与审计信息分别保存。橙注过渡由r4精简为r5，去除正文中的重复案例叙述，原事实保留在审计资料。大局框架强调永恒的长期槽位承诺、易腐核心的到期接替、期限预算和常见手稳定性。有限橙注反馈不能证明金注攻略已验证，也不补齐未知最后牌型、替代采购路线或胜率。
+
+源码与本地各自每主题一个current.md，本地正文仍保留并优先；整合完成时这5份正文与元数据一致。后续游玩直接更新本地当前文件；需要再次纳入源码时，显式运行 `scripts/project.py experience-promote` 查看计划，再以 `--apply` 核验、备份并替换对应源码当前文件。源码独立变化与本地不兼容时拒绝覆盖，须先复核冲突。该维护命令不自动提交或上传，也不将无关主题拼成重复流水账。
+
+本次是存储与经验整理，没有新增游戏。旧完整快照在本机一次性归档；源码日常目录不保留r文件或HEAD，Git提交历史仍提供公开代码变更追溯。
 
 ## 2026-10-10授权导入
 
@@ -59,7 +71,7 @@
 | n5-climb-red-20261009-03 | 红色牌组／蓝注，胜利 | 当手成长、钢铁阶段、石头与强制牌 |
 | n5-red-purple-20261010-01 | 红色牌组／紫注，胜利，第18回合 | 照片复制与首人头重触发 |
 
-条件选牌原r6、计分阶段原r10/r11和昨日首牌原r4逐字保留，新增紧凑整理版分别为r7、r12、r5。原有54份历史文件保持原字节，新线性历史共61份。今日首牌独立r4与昨日同号不同内容，其原稿另保存在[分支记录](experience/EXP-FIRST-CARD-ENGINE/forks/README.md)，不覆盖昨日r4，也不改写原稿的修订号。
+条件选牌原r6、计分阶段原r10/r11和昨日首牌原r4逐字保留，新增紧凑整理版分别为r7、r12、r5。原有54份历史文件保持原字节，新线性历史共61份。今日首牌独立r4与昨日同号不同内容，其原稿另保存在分支记录（现位于本机一次性旧经验归档），不覆盖昨日r4，也不改写原稿的修订号。
 
 这是用户授权的经验整理，依据已保存笔记及来源对话的实际反馈；没有重建已删除的聊天、补齐完整动作记录或新增实机验收。来源run_id为笔记的模型审计标签，steps按原笔记对应动作后缀解释。紫注局接续中断，用时未确认，终局相关事件标记仍按原记录保留。五个来源局不能当作五个连续正式验收局，也不能据此计算稳定胜率或测速。
 

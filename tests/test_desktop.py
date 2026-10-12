@@ -103,15 +103,16 @@ def test_real_exe_uses_unicode_project_and_creates_no_console(tmp_path,exit_code
     assert value['root']==str(scripts) and value['image']==str(image) and value['preview']
 
 
-def test_public_binary_is_bound_to_its_own_source_and_build_receipt(tmp_path):
-    assert verify_launcher(ROOT)
-    for relative in ('Balatro Agent.exe','windows/launcher-build.json','windows/Launcher.cs',
+@pytest.mark.parametrize('activity_only,executable,receipt',[(False,'Balatro Agent.exe','windows/launcher-build.json'),(True,'Balatro Status.exe','windows/status-build.json')])
+def test_public_binary_is_bound_to_its_own_source_and_build_receipt(tmp_path,activity_only,executable,receipt):
+    assert verify_launcher(ROOT,activity_only=activity_only)
+    for relative in (executable,receipt,'windows/Launcher.cs',
                      'windows/app.manifest','scripts/build_launcher.ps1','pyproject.toml'):
         target=tmp_path/relative;target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(ROOT/relative,target)
-    assert verify_launcher(tmp_path)
+    assert verify_launcher(tmp_path,activity_only=activity_only)
     (tmp_path/'windows/Launcher.cs').write_text('changed source')
-    assert not verify_launcher(tmp_path)
+    assert not verify_launcher(tmp_path,activity_only=activity_only)
 
 
 @pytest.mark.parametrize('text,stage,expected', [

@@ -1,6 +1,6 @@
 ﻿# Build only this project's small WinExe, using Windows' existing .NET compiler.
 [CmdletBinding()]
-param()
+param([switch]$ActivityOnly)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -21,8 +21,10 @@ function Assert-Plain([string]$Path) {
 Assert-Plain $root
 $source = Join-Path $root 'windows/Launcher.cs'
 $appManifest = Join-Path $root 'windows/app.manifest'
-$output = Join-Path $root 'Balatro Agent.exe'
-$receiptPath = Join-Path $root 'windows/launcher-build.json'
+$executableName = if ($ActivityOnly) { 'Balatro Status.exe' } else { 'Balatro Agent.exe' }
+$receiptName = if ($ActivityOnly) { 'windows/status-build.json' } else { 'windows/launcher-build.json' }
+$output = Join-Path $root $executableName
+$receiptPath = Join-Path $root $receiptName
 foreach ($path in @($source, $appManifest, $output, $receiptPath)) { Assert-Plain $path }
 $ownedHash = $null
 if (Test-Path -LiteralPath $output) {
@@ -36,7 +38,7 @@ if (-not (Test-Path -LiteralPath $compiler)) { throw 'Windows .NET Framework C# 
 $build = Join-Path $root ('.artifacts/launcher-build/' + [Guid]::NewGuid().ToString('N'))
 Assert-Plain $build
 [IO.Directory]::CreateDirectory($build) | Out-Null
-$candidate = Join-Path $build 'Balatro Agent.exe'
+$candidate = Join-Path $build $executableName
 $iconPath = Join-Path $build 'app.ico'
 Add-Type -AssemblyName System.Drawing
 Add-Type 'using System; using System.Runtime.InteropServices; public static class LauncherIconHandle { [DllImport("user32.dll")] public static extern bool DestroyIcon(IntPtr handle); }'
@@ -55,20 +57,30 @@ $stream = [IO.File]::Open($iconPath, [IO.FileMode]::CreateNew)
 try { $icon.Save($stream) } finally { $stream.Dispose(); $icon.Dispose(); [LauncherIconHandle]::DestroyIcon($handle) | Out-Null; $graphics.Dispose(); $bitmap.Dispose(); $paper.Dispose(); $red.Dispose() }
 $sourceHash = Get-Digest $source
 $manifestHash = Get-Digest $appManifest
-& $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ /debug- "/win32icon:$iconPath" "/win32manifest:$appManifest" /reference:System.Windows.Forms.dll "/out:$candidate" $source
+$compilerArguments = @('/nologo', '/codepage:65001', '/target:winexe', '/platform:x64', '/optimize+', '/debug-', "/win32icon:$iconPath", "/win32manifest:$appManifest", '/reference:System.Windows.Forms.dll', "/out:$candidate")
+if ($ActivityOnly) { $compilerArguments += '/define:ACTIVITY_ONLY' }
+& $compiler @compilerArguments $source
 if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed; previous executable preserved.' }
 if ((Get-Digest $source) -ne $sourceHash -or (Get-Digest $appManifest) -ne $manifestHash) { throw 'Launcher inputs changed during compilation.' }
 Assert-Plain $output
 if ($ownedHash) {
     if ((Get-Digest $output) -ne $ownedHash) { throw 'Existing launcher changed during build.' }
     [IO.File]::Copy($output, (Join-Path $build 'previous.exe'), $false)
-    [IO.File]::Replace($candidate, $output, [NullString]::Value)
+    for ($attempt = 0; $attempt -lt 5; $attempt++) {
+        if ((Get-Digest $output) -ne $ownedHash) { throw 'Existing launcher changed during replacement.' }
+        try { [IO.File]::Replace($candidate, $output, [NullString]::Value); break }
+        catch {
+            if ($attempt -eq 4 -or -not ($_.Exception -is [IO.IOException] -or $_.Exception.InnerException -is [IO.IOException])) { throw }
+            Start-Sleep -Milliseconds (200 * ($attempt + 1))
+        }
+    }
 } else { [IO.File]::Move($candidate, $output) }
 $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($output).FileVersion
 $receipt = [ordered]@{schema='self-authored-launcher-1';source='windows/Launcher.cs';source_sha256=$sourceHash;
     app_manifest='windows/app.manifest';app_manifest_sha256=$manifestHash;
     build_script='scripts/build_launcher.ps1';build_script_sha256=(Get-Digest $PSCommandPath);
-    executable='Balatro Agent.exe';sha256=(Get-Digest $output);version=$version;subsystem='windows_gui';
+    executable=$executableName;sha256=(Get-Digest $output);version=$version;subsystem='windows_gui';
+    entry_mode=$(if ($ActivityOnly) { 'activity_only' } else { 'preparation_or_monitor' });
     byte_reproducible=$false;compiler='Windows .NET Framework csc';license='MIT'}
 [IO.File]::WriteAllText($receiptPath, ($receipt | ConvertTo-Json) + "`n", [Text.UTF8Encoding]::new($false))
 $receipt | ConvertTo-Json

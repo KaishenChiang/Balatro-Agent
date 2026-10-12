@@ -72,6 +72,7 @@ def main():
     environment['PYTHONPATH']=str(target/'src')
     environment['BALATRO_AGENT_CLIENT_CONTEXT']='development'
     environment['PYTHONDONTWRITEBYTECODE']='1'
+    environment['PYTHONUTF8']='1'
     commands=[
         ('bootstrap',[sys.executable,str(target/'scripts/bootstrap_sources.py'),'--cache',str(ROOT/'.artifacts/sources'),'--offline']),
         ('build',[sys.executable,str(target/'scripts/build_mod.py')]),

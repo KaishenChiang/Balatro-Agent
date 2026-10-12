@@ -14,15 +14,15 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def matches_delivery(note, disk, view='full'):
-    # content view omits Markdown, but retains the immutable revision identity.
+    # content view omits Markdown, but retains the committed update identity.
     # The disk parser still verifies content, request hash and canonical rendering.
-    fields = ('note_id', 'kind', 'revision', 'created_utc', 'write_id', 'content')
-    expected_keys = set(disk) - ({'markdown'} if view == 'content' else set())
-    return (view in ('full', 'content') and set(note) == expected_keys
-            and all(note.get(key) == disk[key] for key in fields)
+    expected = NotesStore._strategy(disk) if view == 'strategy' else {key:value for key,value in disk.items() if view!='content' or key!='markdown'}
+    fields = ('note_id','kind','revision','current_revision','content') if view=='strategy' else ('note_id', 'kind', 'revision', 'created_utc', 'write_id', 'content')
+    return (view in ('full', 'content','strategy') and set(note) == set(expected)
+            and all(note.get(key) == expected[key] for key in fields)
             and type(note.get('current_revision')) is int
             and disk['revision'] <= note['current_revision'] <= 100
-            and note.get('source_validation') == disk['source_validation']
+            and (view=='strategy' or note.get('source_validation') == disk['source_validation'])
             and (view == 'content' or note['markdown'] == disk['markdown']))
 
 
@@ -56,7 +56,7 @@ def main():
             # Historical defaults returned full; current read and write defaults
             # return content. Either has the same independently verified identity.
             # An explicitly requested view must still match its exact field set.
-            view = parameters['view'] if 'view' in parameters else 'full' if 'markdown' in note else 'content'
+            view = parameters['view'] if 'view' in parameters else 'full' if 'markdown' in note else 'content' if 'created_utc' in note else 'strategy'
             if matches_delivery(note, disk, view):
                 matches.append(index)
     assert matches, 'No matching actual delivered note.'

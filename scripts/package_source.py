@@ -11,12 +11,13 @@ import struct
 from bootstrap_sources import no_links, digest, unpack
 
 ROOT=Path(__file__).resolve().parents[1]
-TOP=['LICENSE','README.md','README.zh-CN.md','PROJECT.md','CHANGELOG.md','Balatro Agent.exe','pyproject.toml','uv.lock',
+TOP=['LICENSE','README.md','README.zh-CN.md','PROJECT.md','CHANGELOG.md','Balatro Agent.exe','Balatro Status.exe','pyproject.toml','uv.lock',
      '.gitattributes','.gitignore','.python-version','AGENTS.md']
 SCRIPTS=['setup.ps1','launcher.ps1','activity_viewer.ps1','codex_handoff.ps1','localization.ps1','build_launcher.ps1','onboarding.py','bootstrap_sources.py','build_mod.py','startup_display.py',
          'install_portable.py','update_mod.py','package_source.py','verify_source_candidate.py','verify_offline.py',
          'stdio_smoke.py','export_contract.py','check_notes_persistence.py',
-         'audit_experience_mcp_evidence.py','client_evidence.py','project.py','analyze_timings.py']
+         'audit_experience_mcp_evidence.py','client_evidence.py','project.py','analyze_timings.py',
+         'migrate_experience_current.py','promote_experience.py']
 DOCS=['reference.md','maintenance.md','maintenance.en.md','model-client.md','model-client.en.md','english-support.md','activity.md','public-changes.md','optimization.md','network-recovery.md',
       'observation-schema.json','action-schema.json','notes-schema.json','calculation-schema.json','run-plan-schema.json']
 
@@ -74,13 +75,15 @@ def verified_bundles(root=ROOT):
     return paths
 
 
-def verify_launcher(root=ROOT):
+def verify_launcher(root=ROOT, *, activity_only=False):
     """Allow only the self-authored WinExe bound to its source/build receipt."""
     try:
-        receipt_path=root/'windows/launcher-build.json'
+        executable_name = 'Balatro Status.exe' if activity_only else 'Balatro Agent.exe'
+        receipt_path=root/('windows/status-build.json' if activity_only else 'windows/launcher-build.json')
         no_links(receipt_path)
         receipt=json.loads(receipt_path.read_text(encoding='utf-8'))
-        if receipt['schema']!='self-authored-launcher-1' or receipt['executable']!='Balatro Agent.exe':
+        if (receipt['schema']!='self-authored-launcher-1' or receipt['executable']!=executable_name
+                or receipt.get('entry_mode')!=('activity_only' if activity_only else 'preparation_or_monitor')):
             return False
         inputs={'source':'windows/Launcher.cs','app_manifest':'windows/app.manifest',
                 'build_script':'scripts/build_launcher.ps1'}
@@ -88,7 +91,7 @@ def verify_launcher(root=ROOT):
             path=root/relative; no_links(path)
             if receipt[key]!=relative or digest(path)!=receipt[key+'_sha256']:
                 return False
-        executable=root/'Balatro Agent.exe'; no_links(executable)
+        executable=root/executable_name; no_links(executable)
         if digest(executable)!=receipt['sha256'] or receipt['subsystem']!='windows_gui':
             return False
         version=tomllib.loads((root/'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
@@ -105,9 +108,9 @@ def verify_launcher(root=ROOT):
 def selected_files(root=ROOT, *, include_validation=True):
     """Explicit roots and file types; local history/runtime data is excluded."""
     selected=[root/name for name in TOP]
-    if not verify_launcher(root):
+    if not verify_launcher(root) or not verify_launcher(root, activity_only=True):
         raise ValueError('Self-authored GUI launcher does not match its source/build receipt')
-    selected += [root/'windows'/name for name in ('Launcher.cs','app.manifest','launcher-build.json')]
+    selected += [root/'windows'/name for name in ('Launcher.cs','app.manifest','launcher-build.json','status-build.json')]
     selected += [root/'scripts'/name for name in SCRIPTS]
     selected += [root/'docs/balatro-ai'/name for name in DOCS]
     selected += [root/'config'/name for name in ('dependencies.lock.json','game-lifecycle.example.json',
@@ -122,6 +125,7 @@ def selected_files(root=ROOT, *, include_validation=True):
     selected += [p for p in (root/'mod').glob('*') if p.suffix in ('.lua','.patch','.json','.toml')]
     selected += [p for p in (root/'experience/experience').rglob('*')
                  if p.is_file() and (p.name=='HEAD.json' or p.suffix=='.md')]
+    selected += list((root/'experience/.metadata/experience').glob('*.json'))
     selected += [root/'evidence'/name for name in ('README.md','history.json','historical-runs.zip')]
     if include_validation and (root/'evidence/validation.json').is_file():
         selected.append(root/'evidence/validation.json')
@@ -131,7 +135,7 @@ def selected_files(root=ROOT, *, include_validation=True):
         relative=path.relative_to(root)
         if not path.is_file() or getattr(path.stat(),'st_file_attributes',0)&stat.FILE_ATTRIBUTE_REPARSE_POINT:
             raise ValueError('Missing or linked candidate file')
-        forbidden_binary=path.suffix.lower() in ('.jkr','.dll','.exe','.png') and relative.as_posix()!='Balatro Agent.exe'
+        forbidden_binary=path.suffix.lower() in ('.jkr','.dll','.exe','.png') and relative.as_posix() not in ('Balatro Agent.exe','Balatro Status.exe')
         if any(p in ('.artifacts','.tools','.venv','__pycache__','runs','TEST') for p in relative.parts) or '.local.' in path.name or forbidden_binary:
             raise ValueError('Forbidden source candidate content')
     return files

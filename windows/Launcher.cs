@@ -7,13 +7,18 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 
+#if ACTIVITY_ONLY
+[assembly: AssemblyTitle("Balatro Status")]
+[assembly: AssemblyDescription("Read-only play activity window")]
+#else
 [assembly: AssemblyTitle("Balatro Agent")]
 [assembly: AssemblyDescription("Local AI game preparation")]
+#endif
 [assembly: AssemblyCompany("Balatro Agent contributors")]
 [assembly: AssemblyProduct("Balatro Agent")]
 [assembly: AssemblyCopyright("MIT, 2026 Balatro Agent contributors")]
-[assembly: AssemblyVersion("1.3.5.0")]
-[assembly: AssemblyFileVersion("1.3.5.0")]
+[assembly: AssemblyVersion("1.3.6.0")]
+[assembly: AssemblyFileVersion("1.3.6.0")]
 
 internal static class Launcher
 {
@@ -51,7 +56,11 @@ internal static class Launcher
                 }
             }
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+#if ACTIVITY_ONLY
+            bool monitor = true;
+#else
             bool monitor = Array.IndexOf(args, "--monitor") >= 0;
+#endif
             string script = Path.Combine(root, "scripts", monitor ? "activity_viewer.ps1" : "launcher.ps1");
             if (!File.Exists(script)) throw new FileNotFoundException(english ? "Extract the complete project folder, then open Balatro Agent.exe." : "请解压完整的项目目录，再打开 Balatro Agent.exe。");
             string arguments = "-NoProfile -NonInteractive -STA -ExecutionPolicy Bypass -File " + Quote(script);
@@ -81,7 +90,7 @@ internal static class Launcher
             };
             using (var process = Process.Start(start))
             {
-                if (process == null) throw new InvalidOperationException(english ? "Could not open the preparation window." : "无法启动准备窗口。");
+                if (process == null) throw new InvalidOperationException(english ? "Could not open the window." : "无法启动窗口。");
                 process.WaitForExit();
                 return process.ExitCode;
             }

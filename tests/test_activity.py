@@ -176,12 +176,13 @@ def test_development_context_never_starts_a_desktop_viewer(settings,monkeypatch)
 
 
 @pytest.mark.parametrize('language',['en','zh-CN'])
-def test_exe_monitor_mode_selects_read_only_viewer_and_preserves_language(tmp_path,language):
+@pytest.mark.parametrize('executable,arguments',[('Balatro Agent.exe',['--monitor']),('Balatro Status.exe',[])])
+def test_exe_monitor_mode_selects_read_only_viewer_and_preserves_language(tmp_path,language,executable,arguments):
     if not PS: pytest.skip('Windows WinExe')
     scripts=tmp_path/'scripts';scripts.mkdir()
-    shutil.copyfile(ROOT/'Balatro Agent.exe',tmp_path/'Balatro Agent.exe')
+    shutil.copyfile(ROOT/executable,tmp_path/executable)
     (scripts/'activity_viewer.ps1').write_text('param([string]$Language)\n$Language|Set-Content -LiteralPath (Join-Path $PSScriptRoot "../called.txt") -Encoding UTF8',encoding='utf-8-sig')
-    result=subprocess.run([str(tmp_path/'Balatro Agent.exe'),'--monitor','--language',language],timeout=20)
+    result=subprocess.run([str(tmp_path/executable),*arguments,'--language',language],timeout=20)
     assert result.returncode==0
     assert (tmp_path/'called.txt').read_text(encoding='utf-8-sig').strip()==language
     assert not (tmp_path/'runs').exists()

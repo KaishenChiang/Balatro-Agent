@@ -22,7 +22,7 @@ The launcher follows the Windows display language by default; use **Language / è
 
 An MCP game launch opens an independent activity window. Its **HH:mm:ss** timeline shows stage changes, short decisions, plan updates, action results, and experience saves. It displays the model's submitted rationale and plans.
 
-Drag the window edges to resize its width and height; text wraps automatically. Close it at any time without interrupting play; reopen it with `Balatro Agent.exe --monitor`. [How it works and measured overhead](docs/balatro-ai/activity.md)
+Drag the window edges to resize its width and height; text wraps automatically. Close it at any time without interrupting play; double-click **[Balatro Status.exe](<Balatro Status.exe>)** to reopen it. The command `Balatro Agent.exe --monitor` also works. [How it works and measured overhead](docs/balatro-ai/activity.md)
 
 ## Decks and stakes
 
@@ -42,7 +42,7 @@ Each completed run returns a brief report: **actual deck / stake Â· win or loss 
 
 After a single run or a completed climb, **the game stays on the results screen with its window open**. A climb continues after each run's report.
 
-The AI reads the [general guide](experience/README.md) before playing and other topics as needed. New experience stays in `runs/local-experience/` and is not uploaded automatically. Back up and migrate that folder separately when moving or re-downloading the project.
+The AI reads the [general guide](experience/README.md) before playing and other topics as needed. Both source baselines and local experience keep one `current.md` per topic; local updates amend and atomically replace that same file. Chinese guides contain rules, conditions, counterexamples and confidence. Provenance and save receipts are separate audit metadata, omitted from default gameplay reads. Local experience takes priority and stays in `runs/local-experience/` without automatic upload. Back up and migrate that entire folder, including `.metadata/`, when moving or re-downloading the project.
 
 ## More information
 

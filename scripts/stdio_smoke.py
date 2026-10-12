@@ -54,7 +54,8 @@ async def main():
         assert results['health'].get('primary_experience_note') == 'EXP-GENERAL-GUIDE'
         assert results['health'].get('notes_policy') == 'local-over-baseline-v1'
         assert results['health'].get('notes_write_scope') == 'local_only'
-        assert results['health'].get('notes_default_view') == 'content'
+        assert results['health'].get('notes_storage_format') == 'single-current-v2'
+        assert results['health'].get('notes_default_view') == 'strategy'
         assert results['health'].get('run_plan_protocol') == 'run-plan-v1'
         # Isolated development notes; never writes to the formal experience root.
         results['read_notes'] = (await client.call_tool('read_notes', {})).structured_content

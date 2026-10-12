@@ -122,19 +122,19 @@ RETIRED只代表封存成功，original_action_state=UNKNOWN、normal_game_compl
 
 ## 经验与公开计算
 
-read_notes(kind="experience", note_ids=null, revision=null, view="content", query=null, offset=0)实际读盘；开局指定note_ids=["EXP-GENERAL-GUIDE"]，其他主题按当前条件读取。主攻略不存在时才省略note_ids读取可用正式经验；省略仍兼容读取全部，[]返回空。指定历史revision时只传一个编号；未知编号not_found。MCP默认content保留完整字段与修订元数据，full额外返回重复Markdown，磁盘格式不变。新聊天或压缩后引用不清时重读，笔记只改变可读取上下文，不改变模型参数。
+read_notes(kind="experience", note_ids=null, revision=null, view="strategy", query=null, offset=0)实际读盘；开局指定note_ids=["EXP-GENERAL-GUIDE"]，其他主题按当前条件读取。主攻略不存在时才省略note_ids读取可用正式经验；省略仍兼容读取全部，[]返回空。正式经验每个主题只有一个current.md；revision是更新计数，指定旧计数返回not_found，TEST仍支持历史读取。MCP默认strategy只返回行动判断、适用条件、反例、可信程度和简短更新引用，不返回来源编号、历史案例、时间或写入凭证。显式content/full用于审计，full额外返回中文攻略Markdown。新聊天或压缩后引用不清时重读，笔记只改变可读取上下文，不改变模型参数。
 
-view="index"只返回note_id、revision/current_revision、note_ref、confidence与最多120字符的事实/条件/反例预览，明确discovery_only/preview_only。query为最多80字符的不区分大小写字面子串，匹配编号与已校验正文，不排序推荐动作或生成摘要；offset与next_offset按20条分页，索引可扫描最多200个主题。索引不算完整经验读取，先content/full读选中版本再作依据。query和非零offset仅index允许；索引仍每次读盘、校验完整修订，不走过期缓存。
+view="index"只返回note_id、revision/current_revision、note_ref、confidence与最多120字符的行动/条件/反例预览（正式经验用rule_preview，TEST保留fact_preview），明确discovery_only/preview_only。query为最多80字符的不区分大小写字面子串，匹配编号与策略正文，不搜索审计资料、不排序推荐动作或生成摘要；offset与next_offset按20条分页，索引可扫描最多200个主题。索引不算完整经验读取，先strategy读选中主题再作依据。query和非零offset仅index允许；索引仍每次读盘、校验完整记录，不走过期缓存。
 
 write_note(note_id, content, expected_revision, write_id, kind="experience")创建expected_revision=0，更新必须匹配当前修订。EXP-／TEST-编号与分区匹配，仅大写字母、数字、连字符。content含sources(run_id、steps)、facts、interpretation、conditions、counterexamples、confidence(low／medium／high)、revision_reason。模型撰写策略解释，程序校验结构；来源真实性须对照实际交付。
 
-write_note的MCP返回也默认view="content"，可用full取Markdown；展示视图不进入写入去重身份，不改变持久化及读回要求。
+write_note的MCP返回也默认view="strategy"；显式content/full用于核对审计内容，full包含Markdown。展示视图不进入写入去重身份，不改变持久化及读回要求。更新前的完整结构可在局后需要修订时显式读取，不在每步游玩时加载来源与历史案例。
 
-正式基线目录experience/experience/只读；个人修订目录runs/local-experience/experience/优先读取，TEST独立且不继承基线。首次修订将该主题全部已验证基线历史复制到本地，再追加新版本并提交本地HEAD；部分复制失败保留文件，无本地HEAD时仍读基线，同请求可恢复，已有修订不得覆盖。源码升级后已修订主题只读自己的完整历史，不自动拼接新基线；未修订主题跟随基线。日常本地经验不自动上传、提交或反写源码；用户明确授权共享时，开发维护阶段单独核对来源、完整历史和分支冲突，再整理公开基线。
+正式基线目录experience/experience/只读；个人经验目录runs/local-experience/experience/优先读取，TEST独立且不继承基线。首次本地修改读取当前基线并由模型增改，提交完整正文，只创建本地current.md，不复制旧版本。后续更新直接原子替换同一路径。源码升级后已修改主题保留本地当前内容，不自动拼接新基线；未修改主题跟随基线。日常本地经验不自动上传、提交或反写源码。旧布局由scripts/project.py experience-single先预览，再以--apply逐项归档、核验和迁移；原始对局记录与UNKNOWN不在迁移范围。
 
-r0001.md等为不可变完整版本，HEAD.json是原子提交指针。先fsync版本再原子更新HEAD，保留历史；同写ID同内容恢复，异内容拒绝。禁止穿越、绝对路径、符号链接／联接、reparse点、设备或流名称；残留跨进程锁报busy，不自动删除。写入后实际读回，独立进程验证full与content视图的完整内容和修订身份。写入前health须实际声明primary_experience_note="EXP-GENERAL-GUIDE"、notes_policy="local-over-baseline-v1"、notes_write_scope="local_only"；缺标记先重载并重新核验，不向旧服务写入。跨构筑规则更新主攻略，特定技巧保持对应主题简短，无新认识不强行创建逐局流水账。
+current.md只显示中文攻略，不嵌入重复JSON正文、来源清单或保存时间；一个简短中文更新标记用于绑定提交。审计资料另存各存储根的.metadata/experience/<note_id>.json，仅含当前来源/案例、修订理由与简短写入凭证，不复制策略正文。先原子落盘旧/新元数据候选，再原子替换Markdown作为提交点；读盘只选择Markdown哈希匹配的候选，失败写入不能覆盖旧策略或把未提交意图当完成。成功后精简为一份元数据，精简暂时失败不影响已提交正文，后续读取仍按哈希核验。同写ID同内容去重、异内容拒绝，旧请求不会覆盖当前内容；旧确认可用原样请求和已存哈希重建，不等于旧正文仍可读。禁止穿越、绝对路径、符号链接／联接、reparse点、设备或流名称；残留锁报busy，不自动删除。写入后实际读回、独立进程验证。写入前health须声明primary_experience_note="EXP-GENERAL-GUIDE"、notes_policy="local-over-baseline-v1"、notes_write_scope="local_only"、notes_storage_format="single-current-v2"；缺标记先重载再核验。跨构筑规则更新主攻略，特定技巧保持简短，无新认识不强行新增流水账。
 
-每类最多200笔记、每条100修订、每次读20条；字段最多2000字符、结构12000 UTF-8字节、单文件65536字节、单次返回262144字节。sources最多20项，各1–5000的步骤最多50个。提交后日志失败返回write_state=UNKNOWN，按同write_id恢复，不能猜测未写入。固定安全错误不回显路径、任意输入或栈。
+每类最多200笔记、每条100次更新计数（TEST保留历史文件）、每次读20条；字段最多2000字符、结构12000 UTF-8字节、单文件65536字节、单次返回262144字节。sources最多20项，各1–5000的步骤最多50个。提交后日志失败返回write_state=UNKNOWN，按同write_id恢复，不能猜测未写入。固定安全错误不回显路径、任意输入或栈。
 
 calculate只处理显式输入：sum／difference／product／quotient／mean／median／variance_population用values，difference／quotient仅两数；combination用n、k；hypergeometric用population、successes、draws、min_successes、max_successes。返回规范输入、公式、结果与假设，不读取游戏、种子、存档或网络。
 

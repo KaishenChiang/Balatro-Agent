@@ -112,7 +112,7 @@ def test_index_is_literal_bounded_discovery_and_actual_disk_read(context):
     first = notes.read_notes(view='index', query='aLPHa')
     assert first['discovery_only'] and first['total_matches'] == 21 and first['next_offset'] == 20
     assert len(first['notes']) == 20 and first['notes'][0]['preview_only']
-    assert len(first['notes'][0]['fact_preview']) == 120
+    assert first['notes'][0]['rule_preview'] == note_content()['interpretation'][0][:120]
     assert not notes.read_refs
     second = notes.read_notes(view='index', query='alpha', offset=first['next_offset'])
     assert len(second['notes']) == 1 and second['next_offset'] is None

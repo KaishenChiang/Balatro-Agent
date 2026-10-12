@@ -63,7 +63,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup.ps1 -Apply
 - status／diagnose只读核验安装、构建、进程、未决动作和日志元数据，不读局面或存档、不自动启闭游戏。
 - prepare由自动入口调用，首次安装或更新仍冻结方案、核验备份并保留真实收据；--reuse-only只核验已有环境、枚举工具并保存本地准备结果，不下载安装。准备结果在.artifacts/onboarding.local.json；不代表Codex已加载工具或游戏已连接。
 - build只重建项目内Mod，不安装。首次初始化已准备固定来源；新开发副本先运行bootstrap_sources.py。
-- build-launcher仅用Windows内置.NET编译器重建自有GUI入口；既有EXE必须匹配收据，保留旧版后替换。不宣称旧编译器的输出字节可复现。源码打包只允许这一有源码与构建哈希绑定的自有EXE，其他运行程序仍排除。
+- build-launcher仅用Windows内置.NET编译器重建Balatro Agent.exe与只开状态窗口的Balatro Status.exe；二者共享可审查源码，分别保存构建模式与哈希收据。既有EXE必须匹配收据，保留旧版后替换。不宣称旧编译器的输出字节可复现。源码打包只允许这两个绑定自有源码的EXE，其他运行程序仍排除。
 - verify-offline仅复制公开交付文件，在无Python、venv和缓存的新目录以-DependenciesOnly／-Offline准备组件，核对版本、重建Mod并检查开发STDIO；不写真实游戏或客户端配置，不算其他机器完整首用通过。
 - update-mod默认冻结差异；游戏正常关闭、无未决动作且已授权更新时，同一output加`--apply`。漂移拒绝，先核验备份，部分失败保留收据。
 - check执行合成检查与隔离TEST开发STDIO，并冻结源码哈希；STDIO检查阻断真实游戏传输，不读取正在进行的局面。已有报告拒绝覆盖，应选择新output。默认同时核验记录中的安装，不匹配或不可读时可退出1；`--source-only`只以当前源码、固定组件和构建决定状态码，仍完整报告旧安装不匹配事实。须分别检查pytest_exit_code、development_stdio_exit_code、source_status_passed与recorded_installation_passed，不能把源码检查通过写成实装核验通过。
@@ -120,10 +120,14 @@ Python本地HTTP修订由health的transport_policy="bounded-query-retry-v1"识�
 
 ## 记录与经验
 
-源码经验基线及全部版本位于experience/experience/，运行时只读；游玩修订位于runs/local-experience/experience/，优先读取并保留该主题全部历史，不上传、提交或反写源码。原目录升级保留runs/local-experience/；换项目目录时先备份并逐文件核验，再单独迁移该目录，不能用复制动作检查点来绕过UNKNOWN。已修订主题不自动混入新基线，未修订主题读取新基线；迁移不得覆盖同编号不同内容的r文件，冲突需保留双方证据并复核。首次写入中断保留部分历史，原请求可恢复；不清锁、删HEAD或删旧修订来继续。
+源码基线位于experience/experience/，运行时只读；游玩经验位于runs/local-experience/experience/，按主题优先读取。两层各自每主题仅一个current.md，本地更新提交完整修改后的正文并原子替换同一文件，不上传、提交或反写源码。原目录升级保留本地当前文件；换项目目录时先备份并逐文件核验，再单独迁移，不能复制动作检查点绕过UNKNOWN。已修订主题不自动混入新基线，未修订主题读取新基线；同主题不同正文的冲突须保留证据并复核。旧格式迁移先运行 `scripts/project.py experience-single` 查看计划，再用 `--apply` 逐文件核验归档并迁移，报告在runs/checks/，一次性归档在.artifacts/experience-archive/。已有MCP服务须重载后使用single-current-v2；不清锁或删记录来绕过未决写入。
+
+用户明确授权将本地心得纳入源码时，运行 `scripts/project.py experience-promote` 预览；加 `--apply` 后先核验备份，再将本地当前文件原样整合到源码对应主题，并独立读回。原本地文件保留；源码独立变化且不兼容时拒绝覆盖。报告位于runs/checks/，备份位于.artifacts/experience-promotion/，均不随源码发布。该命令不自动提交或推送GitHub。
 
 runs/live/run-plans/保存模型的短局内计划和全部修订，active.json绑定已确认新局/继续对局的公开作用域；升级时与运行记录一起保留，不作缓存清理，也不提交或上传。新局和公开档位/会话变化会使旧计划失效，文件仍保留。仅通过run_plan核对读回和同ID查询，不搬运作用域、清锁或删除记录来绕过未知动作。旧安装准备凭证只有11项工具时，新源码须重新枚举当前12项工具；源码修改并不说明客户端已经重载。
 
-历史精选记录集中于[evidence](../../evidence/README.md)，旧建设记录保留在私人归档，不作为当前任务或授权。新对局须按[bootstrap](../../prompts/bootstrap.md)先实际读取主攻略、核对条件，相关主题按需读取并保留全部反馈；终局有新认识才写入并独立读回。更新源码文件不代表客户端已重载：health缺少notes_policy="local-over-baseline-v1"或notes_write_scope="local_only"时，先重载MCP并重新核验，再提交心得。开发STDIO使用隔离目录和阻断游戏的传输，不读取正式基线或本地经验。
+中文current.md仅包含攻略。默认MCP strategy读取不返回来源、历史案例或保存凭证；局后修订或核验时才显式读取content/full。两层各存储根的.metadata/experience/保留审计资料；备份与迁移必须包含整个经验根，不能只复制Markdown而遗漏元数据。
+
+历史精选记录集中于[evidence](../../evidence/README.md)，旧建设记录保留在私人归档，不作为当前任务或授权。新对局须按[bootstrap](../../prompts/bootstrap.md)先实际读取主攻略、核对条件，相关主题按需读取并保留全部反馈；终局有新认识才写入并独立读回。更新源码文件不代表客户端已重载：health缺少notes_policy="local-over-baseline-v1"、notes_write_scope="local_only"或notes_storage_format="single-current-v2"时，先重载MCP并重新核验，再提交心得。常规开发STDIO使用隔离目录和阻断游戏的传输；专项存储检查可以明确记录只读正式经验，不能混作当前Codex客户端已重载或游戏实机证据。
 
 维护入口还提供timings／audit，基于完整过滤交付重算计时和记录一致性。调用间隔不是纯推理时间，故障恢复与连续正常局分开。
