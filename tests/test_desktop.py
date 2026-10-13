@@ -121,6 +121,9 @@ def test_public_binary_is_bound_to_its_own_source_and_build_receipt(tmp_path,act
     ('Unresolved or invalid checkpoint', 4, '操作尚未确认'),
     ('Unresolved independent checkpoint (lifecycle: original-launch); Original lifecycle receipt is missing', 4, '旧启动／关闭收据缺失：original-launch'),
     ('Unresolved independent checkpoint (lifecycle: original-close); Query close_game with the original operation_id', 4, '启动／关闭尚未确认：original-close'),
+    ('Installed bytes differ from the recorded installation; preserve user changes\nReuse verification stopped; preserve the output, installation and checkpoints.', 0, '已有配置或安装需要核对'),
+    ('Unresolved independent checkpoint (executor: original-action); query action_status first', 0, '上一会话的操作尚未确认'),
+    ('Independent checkpoint is invalid; preserve it', 0, '上一会话的操作尚未确认'),
     ('The operation timed out', 1, '下载连接超时'),
     ('HTTPS download stalled', 1, '下载连接超时'),
     ('TimeoutError', 4, '本地连接检查超时'),
@@ -140,3 +143,22 @@ def test_desktop_failure_distinguishes_installed_packages_conflicts_and_actual_t
     if expected not in output:
         output = result.stdout.decode('gbk', errors='replace')
     assert expected in output
+
+
+@pytest.mark.parametrize('language,expected', [
+    ('zh-CN', '已有配置或安装需要核对，请查看详情。'),
+    ('en', 'Existing settings or installation need checking. See Details.'),
+])
+def test_installation_failure_with_preservation_advice_is_not_an_unresolved_action(tmp_path, language, expected):
+    if not PS: pytest.skip('Windows PowerShell')
+    source = (ROOT / 'scripts/launcher.ps1').read_text(encoding='utf-8-sig')
+    start = source.index('function Get-PreparationFailureMessage')
+    end = source.index('function Show-PreparationError', start)
+    text = 'Installed bytes differ from the recorded installation; preserve user changes\nReuse verification stopped; preserve the output, installation and checkpoints.'
+    helper = tmp_path / 'classify.ps1'
+    helper.write_text('. ' + quote(ROOT / 'scripts/localization.ps1') + '\n' + source[start:end]
+        + '\n[Console]::OutputEncoding=[Text.Encoding]::UTF8\nGet-PreparationFailureMessage '
+        + quote(text) + ' 0 ' + quote(language), encoding='utf-8-sig')
+    result = subprocess.run([PS, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', str(helper)],
+        capture_output=True, timeout=20)
+    assert result.returncode == 0 and result.stdout.decode('utf-8-sig').strip() == expected

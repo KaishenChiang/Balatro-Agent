@@ -22,6 +22,10 @@ class NeedsPreparation(Exception):
     pass
 
 
+class InstalledBytesDiffer(ValueError):
+    pass
+
+
 LEGACY_TOOLS = [tool for tool in TOOLS if tool != 'run_plan']
 
 
@@ -415,7 +419,7 @@ def verify_installation_entries(entries, steam, library, mods):
             raise ValueError('Unexpected or duplicate recorded installation file')
         seen.add(path)
         if digest(path) != entry['sha256'].lower():
-            raise ValueError('Installed bytes differ from the recorded installation; preserve user changes')
+            raise InstalledBytesDiffer('Installed bytes differ from the recorded installation; preserve user changes')
     if not entries or mods / 'balatrobot/balatrobot.json' not in seen or injector not in seen:
         raise ValueError('Incomplete recorded Mod installation')
     return entries
@@ -440,6 +444,79 @@ def save_ledger(root, entries):
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         write_atomic(path, (json.dumps({'installed_files': entries}, indent=2) + '\n').encode())
+
+
+def reconcile_stale_ledger(root, steam, library, mods, config, registry, *, reuse_only):
+    """Caller holds the installation lock. Repair metadata only from verified ownership."""
+    independent = registry.read()
+    if independent is None:
+        raise InstalledBytesDiffer('Installed bytes differ; no independent receipt is available. Preserve user changes')
+    previous = Path(independent['root'])
+    if not registry_ready(registry, previous, steam, library, mods, config, independent['installed_files']):
+        raise ValueError('Independent installation ownership differs; preserve the ledger')
+    client = client_identity(config)
+    if Path(client['cwd']) not in (previous, root):
+        raise ValueError('Client ownership differs; preserve the ledger')
+    registry.ensure_idle(previous)
+    backend = WindowsGame(root / 'config/game-lifecycle.local.json')
+    ensure_idle(root, backend); ensure_idle(previous, backend)
+    entries = verify_installation_entries(independent['installed_files'], steam, library, mods)
+    if not build_matches_install(root, mods):
+        raise ValueError('Installed runtime differs from the current build; preserve the ledger')
+    ledger_path = root / 'runs/checks/current-installation.json'
+    ledger = read_json(ledger_path)
+    original = ledger['installed_files']
+    if ([Path(item['path']) for item in original] != [Path(item['path']) for item in entries]
+            or len({Path(item['path']) for item in original}) != len(original)):
+        raise ValueError('Local installation file list differs; preserve the ledger')
+    runtime = {mods / 'balatrobot' / relative_file(item['path'])
+               for item in read_json(root / 'mod/build-manifest.json')['files']
+               if item['path'] != 'reader-profile.json'}
+    changed = []
+    for before, after in zip(original, entries):
+        # Ownership/profile/dependency metadata cannot be reconciled as runtime drift.
+        if (set(before) - {'path', 'sha256', 'bytes'} or set(after) - {'path', 'sha256', 'bytes'}):
+            raise ValueError('Unexpected installation entry fields; preserve the ledger')
+        if (before['sha256'].lower() != after['sha256'].lower()
+                or before.get('bytes') != after.get('bytes')):
+            if Path(before['path']) not in runtime:
+                raise ValueError('Non-runtime installation record differs; preserve the ledger')
+            changed.append(str(Path(before['path'])))
+    if not changed:
+        raise ValueError('No verified stale runtime records to reconcile')
+    if reuse_only:
+        raise NeedsPreparation('Verified stale runtime ledger needs backed-up preparation')
+    paths = [ledger_path, config, registry.path,
+             registry.checkpoint_path('executor'), registry.checkpoint_path('lifecycle')]
+    paths += [root / 'runs/live' / area / 'checkpoint.json' for area in ('executor', 'lifecycle')
+              if (root / 'runs/live' / area / 'checkpoint.json').exists()]
+    protected = {path: digest(path) for path in paths}
+    backup = root / '.artifacts/backups' / ('ledger-reconciliation-' + uuid.uuid4().hex)
+    no_links(backup); backup.mkdir(parents=True)
+    saved = []
+    for index, path in enumerate(paths):
+        target = backup / (str(index) + '-' + path.name)
+        write_atomic(target, path.read_bytes())
+        if digest(target) != protected[path]:
+            raise ValueError('Ledger recovery backup changed; preserve it')
+        saved.append({'source': str(path), 'relative': target.name, 'sha256': protected[path]})
+    proof = {'verified': True, 'files': saved, 'changed_runtime_records': changed}
+    write_atomic(backup / 'manifest.json', (json.dumps(proof, indent=2) + '\n').encode())
+    # Recheck ownership, intents, build and installed bytes at the replacement boundary.
+    registry.ensure_idle(previous)
+    ensure_idle(root, backend); ensure_idle(previous, backend)
+    verify_installation_entries(entries, steam, library, mods)
+    if (read_json(backup / 'manifest.json') != proof
+            or any(digest(backup / item['relative']) != item['sha256'] for item in saved)):
+        raise ValueError('Ledger recovery backup changed; preserve it')
+    if not build_matches_install(root, mods) or any(digest(path) != expected for path, expected in protected.items()):
+        raise ValueError('State changed during ledger recovery; preserve the backup')
+    ledger['installed_files'] = entries
+    ledger['ledger_reconciliation'] = {'utc': datetime.now(timezone.utc).isoformat(),
+        'backup': str(backup), 'independent_receipt_sha256': protected[registry.path],
+        'changed_runtime_records': changed}
+    write_atomic(ledger_path, (json.dumps(ledger, ensure_ascii=False, indent=2) + '\n').encode())
+    return recorded_installation(root, steam, library, mods)
 
 
 async def list_prepared_tools(root):
@@ -511,7 +588,10 @@ def _prepare(root, *, steam_dir=None, library_dir=None, mods=None, config=None,
         registry.ensure_idle(previous)
     if not runtime_ready(root):
         raise NeedsPreparation('Project-local Python and locked dependencies need preparation')
-    entries = recorded_installation(root, steam, library, mods)
+    try:
+        entries = recorded_installation(root, steam, library, mods)
+    except InstalledBytesDiffer:
+        entries = reconcile_stale_ledger(root, steam, library, mods, config, registry, reuse_only=reuse_only)
     reused = entries is not None
     adoption = None
     if reuse_only:

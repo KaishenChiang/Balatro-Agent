@@ -211,9 +211,9 @@ function Get-PreparationFailureMessage([string]$Text, [int]$Stage = 0, [string]$
         $key = if ($Text -match 'Original lifecycle receipt is missing') { 'missing_lifecycle' } else { 'pending_lifecycle' }
         return ((Get-BalatroText $key $Language) -f $operationId)
     }
-    if ($Text -match 'checkpoint|Unresolved') { return (Get-BalatroText 'unresolved' $Language) }
+    if ($Text -match 'Unresolved|(?:invalid|unavailable|differs|changed).*checkpoint|checkpoint.*(?:invalid|unavailable|differs|changed)') { return (Get-BalatroText 'unresolved' $Language) }
     if ($Text -match 'Previous registered project is unavailable') { return (Get-BalatroText 'old_project' $Language) }
-    if ($Text -match 'Mod/injector|receipt|differs|existing|Existing|adoption|registration') { return (Get-BalatroText 'conflict' $Language) }
+    if ($Text -match 'Mod/injector|receipt|differ(?:s)?|existing|Existing|adoption|registration') { return (Get-BalatroText 'conflict' $Language) }
     if ($Text -match '\btimed out\b|\btimeout(?:error)?\b|超时|\bstalled\b|HTTPS download|remote server|远程服务器') {
         if ($Stage -eq 4) { return (Get-BalatroText 'local_timeout' $Language) }
         return (Get-BalatroText 'download_timeout' $Language)

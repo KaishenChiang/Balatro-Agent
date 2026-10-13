@@ -98,6 +98,139 @@ def test_automatic_first_install_and_fast_reopen(automatic_layout, monkeypatch):
     assert json.loads((root / '.artifacts/onboarding.local.json').read_text())['preparation_id'] == 'second'
 
 
+@pytest.fixture
+def stale_runtime_layout(automatic_layout):
+    prepare(automatic_layout)
+    root, _, _, _, _ = automatic_layout
+    ledger_path = root / 'runs/checks/current-installation.json'
+    ledger = json.loads(ledger_path.read_text(encoding='utf-8'))
+    ledger['original_metadata'] = {'keep': 'historical installation receipt'}
+    original = (json.dumps(ledger) + '\n').encode()
+    source = root / '.artifacts/built-mod/balatrobot/balatrobot.lua'
+    source.write_bytes(b'-- updated project runtime')
+    manifest_path = root / 'mod/build-manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    next(item for item in manifest['files'] if item['path'] == source.name)['sha256'] = digest(source)
+    manifest_path.write_text(json.dumps(manifest))
+    prepare(automatic_layout)  # A legitimate update publishes a newer independent receipt.
+    ledger_path.write_bytes(original)  # Reproduce an old workspace's retained ledger.
+    for area, value in [('executor', {'pending': None, 'input_pending': None}), ('lifecycle', {'pending': None})]:
+        checkpoint = root / 'runs/live' / area / 'checkpoint.json'
+        checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        checkpoint.write_text(json.dumps(value))
+    return automatic_layout, original
+
+
+@pytest.mark.parametrize('owner', ['same-root', 'missing-old-root'])
+def test_stale_runtime_ledger_is_backed_up_before_recovery_and_path_repair(stale_runtime_layout, owner):
+    layout, original = stale_runtime_layout
+    previous, _, _, mods, config = layout
+    if owner == 'missing-old-root':
+        layout = downloaded_copy(layout)
+        ledger_path = layout[0] / 'runs/checks/current-installation.json'
+        ledger_path.parent.mkdir(parents=True)
+        ledger_path.write_bytes(original)
+        previous.rename(previous.parent / 'retained-old-source')
+    root = layout[0]
+    ledger_path = root / 'runs/checks/current-installation.json'
+    saved = mods.parent / '1/save.jkr'
+    saved.parent.mkdir(parents=True); saved.write_bytes(b'opaque save preserved')
+    protected = {p: p.read_bytes() for p in [saved, *mods.rglob('*')] if p.is_file()}
+    before_config = config.read_bytes()
+    registry = InstallationRegistry(registry_path(config))
+    checkpoints = {area: registry.checkpoint(area, previous) for area in ('executor', 'lifecycle')}
+    with pytest.raises(onboarding.NeedsPreparation, match='stale runtime ledger'):
+        prepare(layout, reuse_only=True)
+    assert ledger_path.read_bytes() == original and config.read_bytes() == before_config
+    assert not list((root / '.artifacts/backups').glob('ledger-reconciliation-*'))
+    assert prepare(layout)['prepared']
+    ledger = json.loads(ledger_path.read_text(encoding='utf-8'))
+    assert ledger['original_metadata'] == {'keep': 'historical installation receipt'}
+    assert ledger['installed_files'] == registry.read()['installed_files']
+    backup = Path(ledger['ledger_reconciliation']['backup'])
+    assert (backup / '0-current-installation.json').read_bytes() == original
+    assert (backup / '1-config.toml').read_bytes() == before_config
+    proof = json.loads((backup / 'manifest.json').read_text())
+    assert proof['verified'] and len(proof['changed_runtime_records']) == 1
+    assert all(digest(backup / item['relative']) == item['sha256'] for item in proof['files'])
+    assert all(p.read_bytes() == data for p, data in protected.items())
+    assert all(registry.checkpoint(area, root) == value for area, value in checkpoints.items())
+    assert prepare(layout, reuse_only=True)['reused_installation']
+    assert len(list((root / '.artifacts/backups').glob('ledger-reconciliation-*'))) == 1
+
+
+@pytest.mark.parametrize('damage', ['installed', 'build', 'profile', 'dependency', 'file-list',
+    'independent-missing', 'independent-paths', 'foreign-client', 'unknown', 'input', 'running', 'partial'])
+def test_stale_ledger_recovery_preserves_untrusted_or_pending_state(stale_runtime_layout, monkeypatch, damage):
+    layout, _ = stale_runtime_layout
+    root, _, _, mods, config = layout
+    registry = InstallationRegistry(registry_path(config))
+    ledger_path = root / 'runs/checks/current-installation.json'
+    ledger = json.loads(ledger_path.read_text())
+    if damage == 'installed':
+        (mods / 'balatrobot/balatrobot.lua').write_bytes(b'personal edit')
+    elif damage == 'build':
+        source = root / '.artifacts/built-mod/balatrobot/balatrobot.lua'
+        source.write_bytes(b'newer uninstalled source')
+        manifest_path = root / 'mod/build-manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        next(item for item in manifest['files'] if item['path'] == source.name)['sha256'] = digest(source)
+        manifest_path.write_text(json.dumps(manifest))
+    elif damage in ('profile', 'dependency'):
+        name = mods / ('balatrobot/reader-profile.json' if damage == 'profile' else 'smods/LICENSE')
+        next(item for item in ledger['installed_files'] if Path(item['path']) == name)['sha256'] = '0' * 64
+        ledger_path.write_text(json.dumps(ledger))
+    elif damage == 'file-list':
+        ledger['installed_files'].pop(); ledger_path.write_text(json.dumps(ledger))
+    elif damage == 'independent-missing':
+        registry.path.unlink()
+    elif damage == 'independent-paths':
+        independent = registry.read(); independent['mods'] = str(root / 'foreign-mods')
+        registry.path.write_text(json.dumps(independent))
+    elif damage == 'foreign-client':
+        config.write_bytes(config.read_bytes().replace(b'codex_config', b'foreign-client'))
+    elif damage in ('unknown', 'input'):
+        value = {'pending': None, 'input_pending': None}
+        value['pending' if damage == 'unknown' else 'input_pending'] = {'action_id': 'keep-original', 'state': 'UNKNOWN'}
+        registry.write_checkpoint('executor', root, value)
+    elif damage == 'running':
+        from types import SimpleNamespace
+        monkeypatch.setattr(onboarding, 'WindowsGame', lambda path: SimpleNamespace(find=lambda: object()))
+    else:
+        path = root / '.artifacts/portable-install.local.json'
+        receipt = json.loads(path.read_text()); receipt['complete'] = False
+        path.write_text(json.dumps(receipt))
+    paths = [ledger_path, config, registry.checkpoint_path('executor'), registry.checkpoint_path('lifecycle'), *mods.rglob('*')]
+    if registry.path.exists(): paths.append(registry.path)
+    protected = {p: p.read_bytes() for p in paths if p.is_file()}
+    with pytest.raises(ValueError): prepare(layout)
+    assert all(p.read_bytes() == data for p, data in protected.items())
+    assert not list((root / '.artifacts/backups').glob('ledger-reconciliation-*'))
+
+
+@pytest.mark.parametrize('change', ['backup', 'installed', 'checkpoint', 'client'])
+def test_stale_ledger_recovery_rechecks_after_backup(stale_runtime_layout, monkeypatch, change):
+    layout, original = stale_runtime_layout
+    root, _, _, mods, config = layout
+    original_write = onboarding.write_atomic
+    def changed(path, data):
+        original_write(path, data)
+        if path.name == 'manifest.json' and path.parent.name.startswith('ledger-reconciliation-'):
+            if change == 'backup':
+                # Corrupt a backup after its write, before the replacement boundary.
+                (path.parent / '0-current-installation.json').write_bytes(b'bad backup')
+            elif change == 'installed':
+                (mods / 'balatrobot/balatrobot.lua').write_bytes(b'concurrent edit')
+            elif change == 'checkpoint':
+                registry = InstallationRegistry(registry_path(config))
+                registry.write_checkpoint('executor', root, {'pending': {'action_id': 'new-UNKNOWN'}, 'input_pending': None})
+            else:
+                config.write_bytes(config.read_bytes() + b'\n# concurrent setting\n')
+    monkeypatch.setattr(onboarding, 'write_atomic', changed)
+    with pytest.raises(ValueError): prepare(layout)
+    assert (root / 'runs/checks/current-installation.json').read_bytes() == original
+
+
 @pytest.mark.parametrize('damage', ['installed', 'partial', 'client', 'paths'])
 def test_reopen_preserves_modified_files_and_incomplete_installation(automatic_layout, damage):
     prepare(automatic_layout)
