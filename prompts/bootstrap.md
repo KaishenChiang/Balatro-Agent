@@ -8,6 +8,7 @@
 2. 收到游玩请求后，首先 `launch_game`，使用唯一 `operation_id` 正常打开或显示游戏；不要先等待 health／observe 连接失败。此工具核验正常启动路径和未决记录，游戏已运行时只显示已有窗口。若已知有未决动作，先查原 ID，不用启动或重启绕过它。
 3. 启动完成后调用 `health`、`observe`，必要时 `wait_until_ready`。核验兼容性、实际档位、ready 和未决动作。使用当前识别的原生档位，不切换或创建档位；未知档位先报告并恢复。
 4. 每局实际 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`；已知相关主题可同次批读，新主题才查索引。同局已完整读过且上下文清楚的修订不重复读取；压缩、修订变化或条件不明时重读。主攻略缺失才读其他心得，没有心得按公开规则决策。只引用完整读过的修订，当前条件与反例优先。
+   注级提升或当前规则增加收入、出牌／弃牌、小丑贴纸等限制时，同次批读高注级心得 `EXP-HIGH-STAKE-ADAPTATION` 与经济 `EXP-MONEY-SCORING`；相关商店、关键期限变化和Boss前按已读规则复查。其余主题的建议和读取时机见[经验目录](../experience/README.md#按需参考)。
 5. 开局前通过原生 options／settings 核验速度，默认设为 4，用户指定值优先；达到目标后正常返回，不循环试探未确认的设置。
 
 通过 `functions.exec` 调用时，首次完整读取并保留 `prompts/mcp-evidence.js`，加载 `callMcp`；正式登记的证据用 `recordMcp`。保留完整返回，先检查 `isError` 再解码 `structuredContent`；没有结构化结果时只解析正常文本中的 JSON 对象。宿主异常不得伪装成游戏反馈。加载与恢复细节见 [网络恢复](../docs/balatro-ai/network-recovery.md)。

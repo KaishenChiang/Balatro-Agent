@@ -6,7 +6,7 @@
 
 ## 读取与本地学习
 
-开局调用 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`，遇到相关机制再按编号读下表主题。日常只读取行动判断、适用条件、反例和可信程度；revision是更新计数，不表示另存完整版本。旧服务应重载后核验single-current-v2与strategy支持。
+开局调用 `read_notes({note_ids:["EXP-GENERAL-GUIDE"],view:"strategy"})`，遇到相关机制再按编号读下表主题。注级提升或当前限制涉及收入减少、出牌／弃牌余量、永恒、易腐、租用时，批读高注级心得与经济预算。日常只读取行动判断、适用条件、反例和可信程度；revision是更新计数，不表示另存完整版本。旧服务应重载后核验single-current-v2与strategy支持。
 
 current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、保存时间和写入凭证另存`.metadata/experience/`，默认游玩读取不返回这些内容。它们用于局后核验、纠错与可靠保存；需要修订时才显式读取content/full审计视图。备份或整合经验时必须同时保留攻略与元数据。
 
@@ -19,21 +19,29 @@ current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、
 
 ## 按需参考
 
-| 编号 | 当前更新计数 | 用途 |
-| --- | --- | --- |
-| EXP-GENERAL-GUIDE | [r7](experience/EXP-GENERAL-GUIDE/current.md) | 主攻略：8条决策清单与12项按需参考 |
-| EXP-SCORE-THRESHOLD | [r6](experience/EXP-SCORE-THRESHOLD/current.md) | 通用补充：缺口、剩余计分能力与动态条件 |
-| EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 通用补充：计分牌、附带牌、留手与强制条件 |
-| EXP-MONEY-SCORING | [r7](experience/EXP-MONEY-SCORING/current.md) | 通用补充：付款后资源、期限预算与成长 |
-| EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 通用补充：触发阶段、顺序与条件冲突 |
-| EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 通用补充：观察更新、拒绝与UNKNOWN |
-| EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/current.md) | 条件参考：同花投入及其失败边界 |
-| EXP-REPEATED-HAND | [r6](experience/EXP-REPEATED-HAND/current.md) | 条件参考：本盲重复、整局累计与Boss限制 |
-| EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/current.md) | 条件参考：首张计分牌与逐次触发 |
-| EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/current.md) | 条件参考：优惠券与星球持有 |
-| EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/current.md) | 条件参考：翻面打乱后的未知顺序 |
-| EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/current.md) | 条件参考：红注规则，不直接套用于白注 |
-| EXP-ORANGE-STAKE-TRANSITION | [r7](experience/EXP-ORANGE-STAKE-TRANSITION/current.md) | 条件参考：商店三条件比较、易腐接替、持续成长与失败边界 |
+| 中文条目／编号 | 当前版本 | 主要建议 | 读取时机 |
+| --- | --- | --- | --- |
+| 通用主攻略 EXP-GENERAL-GUIDE | [r9](experience/EXP-GENERAL-GUIDE/current.md) | 按当前资源判断缺口、成长、经济与Boss；通过多局反馈修订旧经验 | 每局开局必读；压缩后引用不清时重读 |
+| 计分门槛与补分 EXP-SCORE-THRESHOLD | [r6](experience/EXP-SCORE-THRESHOLD/current.md) | 算累计缺口与剩余能力；够分及时出牌，不等最后一手才发现构筑不足 | 临界分数、余手不足、Boss目标提高或资源变化时 |
+| 完整选牌与留手 EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 附带牌可能改变牌型，留手可能破坏条件；核对全部选择及强制牌 | 有强制牌、背面牌、条件牌型、黑板等留手要求时 |
+| 经济与采购 EXP-MONEY-SCORING | [r7](experience/EXP-MONEY-SCORING/current.md) | 比较付款后资源、实际补强、利息与期限；提前准备接替，不固定存款或刷新次数 | 商店买卖、重掷、资金紧张或临时核心将到期时 |
+| 计分阶段与触发顺序 EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 分清计分牌、留手和小丑阶段，再处理同阶段顺序；削弱／出售后重算 | 钢铁、射月、哑剧演员等多阶段组合，或蓝封成长时 |
+| 观察与操作更新 EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 使用最新位置；复用有效完成观察，拒绝后刷新，UNKNOWN只查询原ID | 抽牌、动作拒绝、信息缺失、原生提示或动作未决时 |
+| 同花路线 EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/current.md) | 有花色、计分及升级支持才投入；考虑成牌成本和Boss，允许其他牌型补分 | 准备投入同花、购买花色支持或Boss削弱花色时 |
+| 重复牌型与累计成长 EXP-REPEATED-HAND | [r6](experience/EXP-REPEATED-HAND/current.md) | 区分本盲重复与整局累计；重复收益也需筹码、倍率与替代牌型支持 | 老千、超新星等相关效果出现，或Boss禁止重复时 |
+| 首牌与重触发引擎 EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/current.md) | 确认首牌实际计分、兼容复制和触发次数，再排列；失效后重新核算 | 照片、喜与悲、蓝图及首牌重触发组合出现时 |
+| 星球使用与持有 EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/current.md) | 有对应优惠券时比较即时升级与持有加成，不一律即用或永久保留 | 星球持有加成券生效，需决定使用星球或占用消耗槽时 |
+| 翻面与打乱小丑 EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/current.md) | 能力集合可保留，未知位置和顺序不能猜；按实际反馈保守计分 | Boss长期翻面／打乱小丑时 |
+| 红注经济规则 EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/current.md) | 按实际小盲收入比较跳盲、标签、商店与成长；不把规则误套到白注 | 当前注级适用小盲奖励限制，需要比较跳盲时 |
+| 高注级心得 EXP-HIGH-STAKE-ADAPTATION | [r11](experience/EXP-HIGH-STAKE-ADAPTATION/current.md) | 重评新增限制；比较普通手、易腐到期后和Boss下的能力，计算永恒锁位、租用费用与抽弃冲突 | 注级提升／新增限制时；相关商店、关键倒数变化及Boss前复查 |
+
+读取由聊天模型按当前局面决定，不是程序每步自动注入。主攻略与已知相关主题可一次批读；同局已完整读取且条件仍清楚的同一版本不重复读取。新机制先按表选择主题，不知道编号才查index；索引只是预览，随后须读strategy。修订心得时另读content/full，保存后读回。
+
+## 2026-10-13：本地整合与高注级命名
+
+已将本地主攻略r8与原高注过渡专题r9连同审计资料备份、核验并整合进源码。随后将专题编号从EXP-ORANGE-STAKE-TRANSITION改为EXP-HIGH-STAKE-ADAPTATION，并精简重复措辞至当前r11；主攻略同步引用为r9。该主题关注难度提升后新增限制带来的策略适应，不限定某一注级。两份源码与本地当前正文、元数据均一致，原身份文件保存在本机可恢复备份中。
+
+攻略以改善决策和通关机会为目标：多局实际反馈可以修改、收窄或撤回旧经验；来源缺失、尚无通关或同局对照不作为尝试合理改进的门槛。本次整合与改名不产生新的游玩结果，也不自动提交或推送。
 
 每个主题只有current.md，更新计数及精简写入收据用于冲突检查和重复请求核验。此次迁移前的r文件、HEAD和分支原稿先逐文件核验并压缩归档到本机.artifacts/experience-archive/，不再留在日常读取目录；以后不自动累积完整旧版。首牌早期错误解释已撤回。红注主题置信度low，其余medium；有限对局不能证明稳定胜率或最优策略。
 
