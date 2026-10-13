@@ -18,6 +18,14 @@ If the project link does not open, reopen the launcher and use **Copy play promp
 
 The launcher follows the Windows display language by default; use **Language / 语言** to switch. You can close the launcher after sending the prompt. Keep the project folder.
 
+## Test other models with CC Switch
+
+You can use **[CC Switch](https://github.com/farion1231/cc-switch)** to configure other model providers in Codex, while keeping this project's local MCP tools. **User-reported gameplay:** DeepSeek V4.1 Flash has been successfully connected through CC Switch and used to play this project. This is a report of that setup working, rather than a compatibility guarantee for every model or evidence of a Gold Stake win.
+
+Prepare the project as above, then select your provider and model in CC Switch's Codex configuration. Follow its [Codex provider and DeepSeek guide](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-en.md) for the connection format and any required local routing. After applying the configuration, reload or restart your client as needed and check that `balatro-agent` is still loaded. Send the same play prompt and follow [the play rules](prompts/bootstrap.en.md); keep only one model operating a game instance at a time.
+
+The selected model and connection must support tool calls and continued tool feedback. Verify launch, connection and actual actions before evaluating gameplay; a provider switch alone does not establish compatibility. Accounts, API keys and model charges are managed by your client/provider, not by this project. [Client configuration and checks](docs/balatro-ai/model-client.md)
+
 ## Live play activity
 
 An MCP game launch opens an independent activity window. Its **HH:mm:ss** timeline shows stage changes, short decisions, plan updates, action results, and experience saves. It displays the model's submitted rationale and plans.

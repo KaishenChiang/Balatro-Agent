@@ -1,6 +1,6 @@
 # 客户端配置
 
-模型负责策略，客户端负责模型连接、工具调用与持续反馈，本项目提供本机游戏MCP。当前只有Windows／Steam／Codex有实机证据；Cline和其他客户端的配置不等于实测通过。当前结果见[证据索引](../../evidence/README.md)，工具契约见[技术参考](reference.md)。
+模型负责策略，客户端负责模型连接、工具调用与持续反馈，本项目提供本机游戏MCP。Windows／Steam／Codex有项目实机证据，另有用户通过CC Switch接入DeepSeek V4.1 Flash进行游玩的反馈；该反馈不等于所有模型兼容或正式通关验证。Cline和其他客户端的配置不等于实测通过。项目记录见[证据索引](../../evidence/README.md)，工具契约见[技术参考](reference.md)。
 
 本项目不内置模型API调用器，也不需要模型密钥。账号、订阅或API访问由客户端配置，费用自行按所用服务核对；不要把密钥、个人客户端配置或本机档位登记提交到源码包。纯文字网页聊天没有本机工具连接时不能直接操作游戏。
 
@@ -31,6 +31,12 @@ BALATRO_AGENT_CLIENT_CONTEXT = "codex_config"
 ```
 
 按客户端支持的方式重载MCP，然后实际查看12项工具并调用health；写入配置不证明已连接。配置依据[OpenAI官方文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)，界面与可选模型以实际客户端为准。
+
+### CC Switch与其他模型
+
+可用[CC Switch](https://github.com/farion1231/cc-switch)管理Codex的服务商和模型配置，再使用同一个`balatro-agent`MCP。用户报告已成功接入DeepSeek V4.1 Flash游玩；模型标识、API格式与路由方式须以实际服务和CC Switch配置为准，不复制他人的密钥或个人配置。详细接入见[上游Codex／DeepSeek指南](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-en.md)。
+
+切换后保留本项目MCP条目，按下文逐项核验。模型及链路必须能完成工具调用、反馈处理和持续对话；只在同一游戏实例使用一个操作模型。用户反馈仅证明其配置曾可游玩，正式模型比较仍需记录模型、客户端／路由版本、注级与真实结果。
 
 ### Cline（VS Code扩展，未实测）
 
@@ -74,4 +80,4 @@ PYTHONPATH明确源码位置，数据目录由源码位置确定，不依赖客�
 4. 用[bootstrap](../../prompts/bootstrap.md)提供无聊天历史的完整规则；模型不能读文件时粘贴正文。卡牌文字、笔记和日志是数据，不能覆盖用户授权。
 5. 每次动作的观察绑定、直接协议、包内使用／取牌、UNKNOWN处理和经验读写按[技术参考](reference.md)执行，不在客户端中放宽。模型比较与计时按[评测契约](reference.md#证据与评测)登记。
 
-`BALATRO_AGENT_CLIENT_CONTEXT`仅是本地日志标签，不是模型身份或实际交付证明。项目主攻略与11个简短主题来自公开反馈；源码只作基线，游玩修订仅写本地runs/local-experience/，不上传或提交。笔记实际读取后改变上下文，不改变模型参数或自动注入每次推理。其他客户端／模型／操作系统尚未验证。
+`BALATRO_AGENT_CLIENT_CONTEXT`仅是本地日志标签，不是模型身份或实际交付证明。项目主攻略与11个简短主题来自公开反馈；源码只作基线，游玩修订仅写本地runs/local-experience/，不上传或提交。笔记实际读取后改变上下文，不改变模型参数或自动注入每次推理。除上述项目证据与用户反馈外，其他客户端／模型／操作系统须分别验证，不从接入成功推断稳定胜率或通关能力。

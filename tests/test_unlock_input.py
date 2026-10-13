@@ -232,6 +232,91 @@ def test_navigation_yields_each_native_unlock_without_premature_completion(game)
     assert lua.eval('TEST_SETUP_OPENED')==1 and lua.eval('TEST_UNLOCK_READS')==1
 
 
+def queue_foreign_event_during_unlock_input(game, descendant):
+    """A queued, unowned callback runs in native continue_unlock's forced update."""
+    lua, call, _ = game
+    unlock_scene(game, 1)
+    parent=request(game,'open_run_setup',{},'foreign-descendant-parent')
+    assert call('act_submit',parent)['submitted']
+    for _ in range(5): next_frame(game)
+    assert call('action_status',{'action_id':parent['action_id']})['state']=='AWAITING_INPUT'
+    lua.globals().TEST_DESCENDANT = descendant
+    lua.execute('''
+      TEST_FOREIGN_RUNS=0; TEST_FOREIGN_CHILD_RUNS=0
+      G.E_MANAGER:add_event(Event({blocking=false,blockable=false,func=function()
+        if G.OVERLAY_MENU then return false end
+        -- The real continue_unlock has just removed its overlay and unpaused.
+        assert(not G.SETTINGS.paused and TEST_SETUP_OPENED==0)
+        TEST_FOREIGN_RUNS=TEST_FOREIGN_RUNS+1
+        TEST_FOREIGN_CHILD=Event({trigger='after',delay=3,blocking=false,blockable=false,
+          func=function()
+            TEST_FOREIGN_CHILD_RUNS=TEST_FOREIGN_CHILD_RUNS+1
+            return TEST_DESCENDANT=='delayed'
+          end})
+        G.E_MANAGER:add_event(TEST_FOREIGN_CHILD)
+        return true
+      end}), 'unlock')
+    ''')
+    return parent
+
+
+@pytest.mark.parametrize('descendant', ['delayed', 'permanent'])
+def test_foreign_descendant_from_native_unlock_update_does_not_own_input(game, descendant):
+    lua, call, _ = game
+    parent=queue_foreign_event_during_unlock_input(game,descendant)
+    child=request(game,'close_menu',{},'foreign-descendant-input')
+    assert call('act_submit',child)['input_for_action_id']==parent['action_id']
+    assert lua.eval('TEST_FOREIGN_RUNS')==1
+    assert lua.eval('TEST_FOREIGN_CHILD.created_on_pause') is False
+    assert lua.eval('TEST_FOREIGN_CHILD.timer')=='TOTAL'
+    for _ in range(5): next_frame(game)
+    parent_status=call('action_status',{'action_id':parent['action_id']})
+    assert parent_status['state']=='COMPLETED' and parent_status['related_events_complete']
+    assert lua.eval('TEST_SETUP_OPENED')==1 and lua.eval('G.SETTINGS.paused') is True
+    child_status=call('action_status',{'action_id':child['action_id']})
+    assert child_status['state']=='COMPLETED' and child_status['related_events_complete']
+    # Setup pauses TOTAL: a finite foreign event remains pending indefinitely,
+    # just like a perpetual event, without being evidence against this input.
+    next_frame(game,61)
+    assert lua.eval('TEST_FOREIGN_CHILD_RUNS')==0
+    assert call('action_status',{'action_id':child['action_id']})['state']=='COMPLETED'
+
+
+@pytest.mark.parametrize('complete', [False, True])
+def test_unlock_input_scope_restored_after_foreign_update_tracks_its_own_descendant(game, complete):
+    lua, call, _ = game
+    parent=queue_foreign_event_during_unlock_input(game,'delayed')
+    lua.execute('''
+      TEST_OWNED_RELEASE=false; TEST_OWNED_RUNS=0
+      local native=G.FUNCS.continue_unlock
+      G.FUNCS.continue_unlock=function(...)
+        native(...)
+        -- The nested manager update must restore the input callback's scope.
+        G.E_MANAGER:add_event(Event({pause_force=true,timer='REAL',blocking=false,blockable=false,func=function()
+          TEST_OWNED_RUNS=TEST_OWNED_RUNS+1
+          return TEST_OWNED_RELEASE
+        end}))
+      end
+    ''')
+    child=request(game,'close_menu',{},'owned-descendant-input')
+    assert call('act_submit',child)['input_for_action_id']==parent['action_id']
+    for _ in range(5): next_frame(game)
+    assert call('action_status',{'action_id':parent['action_id']})['state']=='COMPLETED'
+    status=call('action_status',{'action_id':child['action_id']})
+    assert status['state']=='RUNNING' and status['callback_confirmed']
+    assert status['related_events_complete'] is False and lua.eval('TEST_OWNED_RUNS')>0
+    if complete:
+        lua.execute('TEST_OWNED_RELEASE=true')
+        next_frame(game)
+        status=call('action_status',{'action_id':child['action_id']})
+        assert status['state']=='COMPLETED' and status['related_events_complete']
+    else:
+        next_frame(game,61)
+        status=call('action_status',{'action_id':child['action_id']})
+        assert status['state']=='UNKNOWN' and status['reason']=='completion_timeout'
+    assert lua.eval('TEST_REMOVALS')==1 and lua.eval('TEST_FOREIGN_CHILD_RUNS')==0
+
+
 async def test_gateway_persists_parent_and_input_across_mcp_restart(settings, game):
     lua, call, _ = game
     unlock_scene(game)

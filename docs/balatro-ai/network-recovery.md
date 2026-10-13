@@ -2,6 +2,8 @@
 
 短暂网络故障保留已授权任务、游戏窗口、原请求和原编号。当前聊天模型仍决定所有策略；客户端包装只负责调用、分类、查询和严格受限的恢复。
 
+默认按[自主排障规则](maintenance.md#默认自主排障)先诊断、修复、验证，再接续原任务。UNKNOWN限制游戏推进与重放，不禁止本地源码修复、隔离检查或经核验的恢复；不得仅因普通超时或工具错误就停止整个任务。只有重大问题经合理处理仍无法安全恢复时才停止并通知用户。
+
 | 实际反馈 | 恢复方式 |
 | --- | --- |
 | 只读查询返回disconnected、request_timeout，或原编号查询返回transport_uncertain | 每批最多三次，批内退避250／500毫秒；仍失败时模型按10／20／30秒退避保留等待，每次等待最多30秒 |
@@ -9,8 +11,8 @@
 | 上述核验查询也断网 | 保留收据和冻结的原请求；恢复后再次通过callMcp调用完全相同的act请求，只接续核验，核验通过才使用尚未消耗的一次重试 |
 | 原编号已有COMPLETED或提交前REJECTED记录 | 返回实际记录，不重发 |
 | 完整宿主额度耗尽收据明确确认未执行 | 单独记录为NOT_SUBMITTED并保留原请求、完整宿主收据；不自动重试。解决额度故障或收到用户接续指导后，重新观察并按当前原生现场接续 |
-| 已提交RUNNING／UNKNOWN、一般宿主错误或响应丢失 | 只查询原编号和观察，遵守原恢复契约 |
-| 明确审批拒绝、会话／档位／观察冲突、必要持久化失败 | 保留原记录并报告阻塞，不能当作正常败局 |
+| 已提交RUNNING／UNKNOWN、一般宿主错误或响应丢失 | 暂停受影响游戏推进，先查原编号和观察，再自主诊断修复；不重放，恢复仍遵守原契约 |
+| 明确审批拒绝、会话／档位／观察冲突、必要持久化失败 | 保留原记录，停止被拒绝／不安全的操作，先处理可独立修复部分；重大问题仍无法安全解决再报告，不能当作正常败局 |
 
 唯一允许进入提交恢复分支的宿主收据是isError=true、structuredContent缺失或为null、只有一个文本块且全文为：
 
@@ -36,9 +38,9 @@ The action was not executed because automatic approval review could not be compl
 
 客户端误分类可用 `restoreHostNonExecution(originalRequest, originalRaw)` 迁移，但待定记录必须是UNKNOWN，明确未进入审批超时重试、未消耗重试、没有待保存证据，并已保留该次实际调用的完整原请求和原宿主收据。调用参数必须与已保留内容全部一致，动作ID、完整observation_id及原会话均匹配，原收据本身须识别为上述未执行收据。真实服务DTO、RUNNING和缺字段旧状态均拒绝。旧客户端没有保留完整原调用时，先保全现状，从原实际工具交付进行独立人工核验；迁移函数不通过调用者提供的新材料自建证明。禁止合成收据、用新动作的错误解除旧动作或删服务端未决文件。迁移不调用游戏、不重放动作；随后核验原编号和新观察，由模型决定可见原生接续路径，不保证存在Continue。
 
-UNKNOWN期间允许health、observe、wait_until_ready、read_notes和calculate等诊断，以及原编号查询／恢复。launch_game仍由服务端的持久化未决检查决定：可显示已有窗口，真实未决动作不得借此重启。其他写入及游戏推进继续阻塞。
+UNKNOWN期间允许health、observe、wait_until_ready、read_notes和calculate等诊断，以及原编号查询／恢复；本地排障、源码修复和隔离验证继续自主进行。launch_game仍由服务端持久化未决检查决定：可显示已有窗口，不能借此绕过未决记录重启。正常维护重启须先建立并验证恢复路径，保留原UNKNOWN和防重放证据；其他游戏写入与推进继续阻塞。
 
-重试保留action_id、observation_id、参数、依据及经验引用，在调用宿主前先按动作ID消耗一次额度；重试响应丢失时也不能再用首次收据提交。重试后收到额度未执行收据可以解除客户端门禁，但已消耗状态继续保留，手动再次调用同ID也不会恢复自动重试机会。重试仍经过宿主审批、MCP原生UI校验及档位保护。真正的服务UNKNOWN、第二次审批超时、审批明确拒绝和其他异常不会获得额外提交额度。持续网络波动不计为败局；模型保留等待并报告进度。无法按原记录恢复的真实UNKNOWN按原契约停止。
+重试保留action_id、observation_id、参数、依据及经验引用，在调用宿主前先按动作ID消耗一次额度；重试响应丢失时也不能再用首次收据提交。重试后收到额度未执行收据可以解除客户端门禁，但已消耗状态继续保留，手动再次调用同ID也不会恢复自动重试机会。重试仍经过宿主审批、MCP原生UI校验及档位保护。真正的服务UNKNOWN、第二次审批超时、审批明确拒绝和其他异常不会获得额外提交额度。持续网络波动不计为败局；模型保留等待并报告进度。原编号查询不足以恢复时，先自主定位并验证修复／恢复方案；重大问题仍无法安全解决时才停止通知，原UNKNOWN继续保留。
 
 ## 加载客户端包装
 
@@ -75,6 +77,6 @@ Retain the authorized task, window, original request and action ID through trans
 
 Only the exact host error receipt above confirms that this approval invocation did not execute. Missing records or matching snapshots alone do not. callMcp checks the original record and a fresh ready observation in the same session and recognized profile before one identical retry, preserving the complete payload. If preflight queries fail, calling callMcp with the identical original request later resumes only these checks. The retry allowance is consumed before invoking the host, so a lost retry response cannot rearm it. Every retry still passes host approval and all native safeguards.
 
-The separately recognized complete host usage-limit failure explicitly confirms non-execution. Only the captured two-line wording above, apostrophe variants and a valid 12-hour reset clock are accepted; unfamiliar wording remains UNKNOWN. Preserve the original request and raw host receipt as NOT_SUBMITTED, outside service DTOs; do not retry automatically. A consumed approval retry remains consumed for that action ID after a quota receipt. Resolve the quota failure or obtain user guidance, then refresh the native state. Migration requires a client UNKNOWN with a complete retained original request and receipt, an exact content/action/observation/session match, explicit unused retry flags and no pending evidence. Service DTOs, RUNNING and incomplete legacy state are rejected. Missing original delivery requires independent human audit; the migration helper cannot construct proof from replacement inputs. Read-only diagnostics remain available during genuine UNKNOWN. launch_game keeps the server's durable pending-action guard; no unknown action can authorize process restart or replay.
+The separately recognized complete host usage-limit failure explicitly confirms non-execution. Only the captured two-line wording above, apostrophe variants and a valid 12-hour reset clock are accepted; unfamiliar wording remains UNKNOWN. Preserve the original request and raw host receipt as NOT_SUBMITTED, outside service DTOs; do not retry automatically. A consumed approval retry remains consumed for that action ID after a quota receipt. Resolve the quota failure or obtain user guidance, then refresh the native state. Migration requires a client UNKNOWN with a complete retained original request and receipt, an exact content/action/observation/session match, explicit unused retry flags and no pending evidence. Service DTOs, RUNNING and incomplete legacy state are rejected. Missing original delivery requires independent human audit; the migration helper cannot construct proof from replacement inputs. Read-only diagnostics remain available during genuine UNKNOWN. launch_game keeps the server's durable pending-action guard; UNKNOWN alone never permits replay or a restart outside a verified maintenance recovery path.
 
-Submitted RUNNING/UNKNOWN, other host errors, lost responses, explicit denial, changed state or a second approval timeout receive no extra submission allowance. Keep querying the original ID and observing under the normal recovery contract; unresolved genuine UNKNOWN remains protected. Every evidence delivery is recorded separately, including the original UNKNOWN query, and required persistence failure stops further calls. This source change does not establish physical network recovery, client reload or a complete live-game result.
+Submitted RUNNING/UNKNOWN, other host errors, lost responses, explicit denial, changed state or a second approval timeout receive no extra submission allowance. Pause affected gameplay and query the original ID/observations, while autonomously diagnosing, repairing and verifying under [maintenance policy](maintenance.en.md#autonomous-fault-repair-by-default). Ordinary timeouts/tool errors do not end the task. Stop and notify only when a major problem cannot be resolved safely after reasonable work. Genuine UNKNOWN and anti-replay evidence remain protected; maintenance restart requires a verified recovery path, never bypassing pending records. Record every evidence delivery separately; required persistence failure blocks dependent calls, while independent repair can continue. Source checks do not establish live recovery, client reload or gameplay completion.

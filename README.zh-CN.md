@@ -18,6 +18,14 @@
 
 启动器默认跟随Windows显示语言，可通过“Language / 语言”切换。发送提示后可以关闭启动器，保留项目文件夹即可。
 
+## 通过CC Switch测试其他模型
+
+也可以用 **[CC Switch](https://github.com/farion1231/cc-switch)** 在Codex中配置其他模型服务，继续使用本项目的本地MCP工具。**用户游玩反馈：已通过CC Switch成功接入DeepSeek V4.1 Flash并进行本项目游玩。** 这说明该用户配置已可用，不代表所有模型均兼容，也不是金注通关证明。
+
+先按上面的步骤准备项目，再在CC Switch的Codex配置中选择服务商与模型；连接格式、是否需要本地路由按其[Codex与DeepSeek接入说明](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-en.md)处理。应用配置后，按客户端需要重载或重启，确认`balatro-agent`仍已加载。发送同一份游玩提示，遵守[游玩规则](prompts/bootstrap.md)；同一游戏实例只让一个模型操作。
+
+所选模型及接入链路须支持工具调用与持续反馈。测试时先核验启动、连接和真实动作，再评价游玩表现；切换服务商本身不证明兼容。账号、API密钥和模型费用由客户端／服务商管理，本项目不内置模型API调用器。[客户端配置与核验](docs/balatro-ai/model-client.md)
+
 ## 实时游玩状态
 
 MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶段变化、简短决策、计划更新、操作结果和心得保存状态。窗口展示模型已提交的依据与计划。

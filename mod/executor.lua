@@ -544,7 +544,12 @@ function E.install_hooks()
   Event.handle=function(self,results)
     local rec=owner[self]; local previous=scope
     local previous_overlay=G.OVERLAY_MENU
-    if rec then scope=rec; observe_path(rec) end
+    -- continue_unlock synchronously updates the whole native event manager.
+    -- A queued foreign event is not a descendant of the input callback just
+    -- because it runs inside that update; only its own owner may capture the
+    -- events it creates. Restore the caller's scope after handling it.
+    scope=rec
+    if rec then observe_path(rec) end
     local ok,err=pcall(handle,self,results)
     if rec then
       observe_path(rec)

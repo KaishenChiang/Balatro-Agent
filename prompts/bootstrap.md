@@ -27,7 +27,7 @@
 - 每次一个语义动作。`act` 携带最新 `observation_id`、唯一 `action_id`、参数、简短公开依据和实际读过的 `experience_refs`；无适用经验用 `[]`。区域与位置只属于当前观察，提交须保持同一档位与原生资源／容量限制。
 - 最新、非历史且 ready 的 `COMPLETED` 完整观察可直接用于下一动作，无需再 observe／action_status／wait_until_ready。目标缺失、过渡或未决时按对应流程处理。`columns-v1` 按 `$columns` 对应 `$rows` 解读，行号不是 position，null 不是零；`public_changes` 只是复查提示，手牌、资源和位置仍取最新观察。
 - `positions-v1` 支持 play／discard 直接传完整 `{positions:[...]}`，否则先 select；`native-target-v1` 支持 buy／sell／use／buy_and_use／select_pack_card 直接传当前 region＋position。消费品手牌目标先单独 select。包内塔罗／星球／幻灵即用走 `use`，普通／增强牌和小丑取牌走 `select_pack_card`。盲注选择／跳过用 `blind_slot`。
-- `RUNNING` 查 `action_status(原ID)`；`UNKNOWN` 或响应丢失只查原 ID 与观察，不重发、不推进。仅宿主确认未执行的审批超时，可由 `callMcp` 按原记录和同会话／档位／ready观察核验后原样重试一次，详见网络恢复。短暂查询失败退避 10／20／30 秒继续只读恢复；真实无法恢复的 UNKNOWN、明确拒绝或必要持久化失败报告阻塞。
+- `RUNNING` 查 `action_status(原ID)`；`UNKNOWN` 或响应丢失先查原 ID 与观察，不重发、不推进游戏，但继续按[自主排障规则](../docs/balatro-ai/maintenance.md#默认自主排障)诊断、修复、验证并接续原任务。普通超时或可修复缺陷不结束任务；只有重大问题经合理处理仍无法安全恢复时才停止通知。仅宿主确认未执行的审批超时，可由 `callMcp` 按原记录和同会话／档位／ready观察核验后原样重试一次，详见网络恢复；短暂查询失败退避10／20／30秒，保留原记录。
 - `AWAITING_INPUT/native_unlock_input` 先 observe，以新 ID 单次 close_menu 关闭当前自然提示，再查原导航；每张提示分别处理。旧会话确实丢失后才能依契约 recover_lost_session，原结果仍 UNKNOWN。`submitted=false` 的参数拒绝后刷新观察、修正请求，不连续猜测重试。用户暂停或停止时不提交新游戏动作，保留窗口。
 - 宿主完整额度耗尽收据明确确认未执行时，客户端单独保留 `NOT_SUBMITTED`，不自动重试、不当作服务 UNKNOWN；已消耗的同ID重试机会不恢复。故障解决或收到接续指导后核验原编号与最新观察。UNKNOWN 仍允许只读诊断；launch_game 由服务端真实未决检查决定。误分类迁移须与已保留的完整原请求和原收据匹配；真实服务UNKNOWN、RUNNING、缺字段旧状态或待保存证据均拒绝，详见网络恢复。
 
@@ -38,4 +38,4 @@
 - 开局提交前记录最新 observe 的 `server_time.unix_s`；正常终局用最新、非历史且已确认的结算观察交付时钟取终点，缺时钟才补 observe。相减为包含等待的墙钟用时；缺时钟、接续中断或时钟倒退时报告未确认。
 - 有新认识才修订心得。写前核验 health 的 `local-over-baseline-v1`、`local_only`、`single-current-v2`，显式读当前 `content/full`，保留审计字段后提交完整正文、实际 expected_revision 与唯一 write_id，再读回。每主题只保留本地同一 `current.md`，不上传、不改源码基线；事实、解释、条件、反例、置信度与来源分开。
 - 正常胜负后停止操作并保留结算页面／窗口。报告：`第N局｜实际牌组／注级｜胜利或失败｜第X底注／第Y回合｜用时XmYs｜心得：已更新并读回（引用）／未更新（原因）／更新失败（原因）`。未知字段写未确认。支持 `per-run-v1` 时在局后 health 查看并报告 JSONL／TXT 路径或保存失败。
-- 单局到此结束。仅爬塔授权允许报告后导航至下一局；关闭须另外明确请求，走 MCP 正常关窗。源码／合成检查不冒充实机，单局结果不宣称稳定胜率或模型排名。
+- 单局到此结束。仅爬塔授权允许报告后导航至下一局；平时保留结算窗口，关闭须明确请求，必要维护关窗已纳入自主排障授权，仍走MCP及已验证恢复契约。源码／合成检查不冒充实机，单局结果不宣称稳定胜率或模型排名。
