@@ -20,19 +20,15 @@
 
 ## 通过CC Switch测试其他模型
 
-也可以用 **[CC Switch](https://github.com/farion1231/cc-switch)** 在Codex中配置其他模型服务，继续使用本项目的本地MCP工具。**用户游玩反馈：已通过CC Switch成功接入DeepSeek V4.1 Flash并进行本项目游玩。** 这说明该用户配置已可用，不代表所有模型均兼容，也不是金注通关证明。
-
-先按上面的步骤准备项目，再在CC Switch的Codex配置中选择服务商与模型；连接格式、是否需要本地路由按其[Codex与DeepSeek接入说明](https://github.com/farion1231/cc-switch/blob/main/docs/guides/codex-deepseek-routing-guide-en.md)处理。应用配置后，按客户端需要重载或重启，确认`balatro-agent`仍已加载。发送同一份游玩提示，遵守[游玩规则](prompts/bootstrap.md)；同一游戏实例只让一个模型操作。
-
-所选模型及接入链路须支持工具调用与持续反馈。测试时先核验启动、连接和真实动作，再评价游玩表现；切换服务商本身不证明兼容。账号、API密钥和模型费用由客户端／服务商管理，本项目不内置模型API调用器。[客户端配置与核验](docs/balatro-ai/model-client.md)
+使用 [**CC Switch**](https://github.com/farion1231/cc-switch) 在Codex中配置其他模型服务，继续使用本项目的本地MCP工具和 [**Balatro Agent.exe**](https://github.com/KaishenChiang/Balatro-Agent/blob/main/Balatro%20Agent.exe)。**已通过CC Switch成功接入DeepSeek V4.1 Flash并进行本项目游玩。**
 
 ## 实时游玩状态
 
 MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶段变化、简短决策、计划更新、操作结果和心得保存状态。窗口展示模型已提交的依据与计划。
 
-拖动窗口边缘可调整宽高，正文自动换行。窗口可随时关闭，不影响游玩；双击 **[Balatro Status.exe](<Balatro Status.exe>)** 即可重开，也可运行 `Balatro Agent.exe --monitor`。[窗口机制与实测开销](docs/balatro-ai/activity.md)
+窗口可随时关闭，不影响游玩；双击 **[Balatro Status.exe](<Balatro Status.exe>)** 即可重开，也可运行 `Balatro Agent.exe --monitor`。[窗口机制与实测开销](docs/balatro-ai/activity.md)
 
-每局活动自动保存在 `runs/live/activity/by-run/`，每局一份JSONL和一份中文TXT剪辑时间轴。正常结算会记录胜负及到达底注/回合，局后心得更新也保留。点击“记录目录”后进入`by-run`即可查看；时间轴包含实际时间与从记录起点经过时间，剪辑时先与录像对齐一个共同事件。途中接入和断连会明确标记，不冒充完整录像时间码。
+每局活动自动保存在 `runs/live/activity/by-run/`。正常结算会记录胜负及到达底注/回合，局后心得更新也保留。
 
 ## 牌组与注级
 
@@ -44,7 +40,7 @@ MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶
 | 最高注级 | 使用该牌组当前已解锁的最高等级，只尝试一局 |
 | 爬塔模式 | 从该牌组最高已解锁注级开始；正常失败重试，获胜后核验并升一级，直到金注通关或您叫停 |
 
-最高注级忽略未解锁候选（包括匿名锁定项），只比较已解锁且可选的等级。爬塔每局先报告并复盘，再继续下一局。连接故障或结果不明时先恢复，不当作败局重试。
+爬塔每局先报告并复盘，再继续下一局。
 
 ## 结算与心得
 
@@ -52,13 +48,11 @@ MCP启动游戏时同步打开独立状态窗口，以 **时:分:秒** 显示阶
 
 单局结束或爬塔完成后，**停留结算页面，保留游戏窗口**。爬塔在每局报告后继续。
 
-AI开局先读取[主攻略](experience/README.md)，相关主题按需读取。源码基线与本地经验各自每主题只保留一个 `current.md`；本地更新在原正文上增改，再原子替换同一文件。攻略是中文策略、条件、反例与可信程度；来源和保存凭证单独存为审计资料，默认不进入游玩上下文。本地同主题优先，保存在 `runs/local-experience/`，不会自动上传。移动或重新下载项目时，请单独备份和迁移该整个目录，包含`.metadata/`。
+AI开局先读取[主攻略](experience/README.md)，相关主题按需读取。源码基线与本地经验各自每主题只保留一个 `current.md`；本地更新在原正文上增改，再原子替换同一文件。本地同主题优先，保存在 `runs/local-experience/`。
 
 ## 更多说明
 
 [维护与恢复](docs/balatro-ai/maintenance.md) · [英语适配](docs/balatro-ai/english-support.md) · [游玩规则](prompts/bootstrap.md) · [验证证据](evidence/README.md) · [更新记录](CHANGELOG.md)
-
-如果这个项目对您有帮助，欢迎点一个 **Star**；遇到问题请提 [Issue](https://github.com/KaishenChiang/balatro-agent/issues)。
 
 ## 许可
 

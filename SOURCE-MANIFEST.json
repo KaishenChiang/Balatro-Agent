@@ -389,13 +389,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "6022fd6a513f290b5726b8c49904b0bca85b10c5c016c84523ec5c72bc2d1cf2",
-      "bytes": 6527
+      "sha256": "61ff7829be4bc4478e095c7c1117b014684baa006a7a06c867c5a8a9d9fa2760",
+      "bytes": 4536
     },
     {
       "path": "README.zh-CN.md",
-      "sha256": "da3236140bb766028dd5b4258d0397aac8ee48c17248ca6c70e4e23bcb149add",
-      "bytes": 5886
+      "sha256": "3267c65d4343a5334aa7df3f36a35d8a77bd08e148cca8bf47211af1f1ed8314",
+      "bytes": 4111
     },
     {
       "path": "scripts/activity_viewer.ps1",
