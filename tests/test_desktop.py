@@ -162,3 +162,111 @@ def test_installation_failure_with_preservation_advice_is_not_an_unresolved_acti
     result = subprocess.run([PS, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', str(helper)],
         capture_output=True, timeout=20)
     assert result.returncode == 0 and result.stdout.decode('utf-8-sig').strip() == expected
+
+
+def run_launcher_helpers(tmp_path, operation):
+    if not PS: pytest.skip('Windows PowerShell launcher')
+    source = tmp_path / 'launcher-boundary.ps1'
+    source.write_text("$ErrorActionPreference='Stop';Set-StrictMode -Version Latest\n"
+        + '. ' + quote(ROOT / 'scripts/localization.ps1') + '\n'
+        + '$tokens=$null;$errors=$null;$ast=[Management.Automation.Language.Parser]::ParseFile('
+        + quote(ROOT / 'scripts/launcher.ps1') + ',[ref]$tokens,[ref]$errors)\n'
+        + "if($errors.Count){throw ($errors|Out-String)}\n"
+        + '$ast.FindAll({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst]},$true) '
+        + '| ForEach-Object {Invoke-Expression $_.Extent.Text}\n'
+        + "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + operation, encoding='utf-8-sig')
+    return subprocess.run([PS, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', str(source)],
+        capture_output=True, timeout=20)
+
+
+def abandonment_receipt(**changes):
+    value = {'schema': 'abandon-session-1', 'state': 'COMMITTED', 'safe_to_prepare': True,
+        'original_action_state': 'UNKNOWN', 'game_action_submitted': False, 'normal_game_completed': False}
+    return dict(value, **changes)
+
+
+@pytest.mark.parametrize('receipt,exit_code,accepted', [
+    (abandonment_receipt(), 0, True),
+    (abandonment_receipt(), 8, False),
+    (abandonment_receipt(state='PREPARED'), 0, False),
+    (abandonment_receipt(schema='automatic-preparation-1'), 0, False),
+    (abandonment_receipt(safe_to_prepare=False), 0, False),
+    (abandonment_receipt(original_action_state='COMPLETED'), 0, False),
+    (abandonment_receipt(game_action_submitted=True), 0, False),
+    (abandonment_receipt(normal_game_completed=True), 0, False),
+    ({}, 0, False),
+    (None, 0, False),
+])
+def test_launcher_reprepares_only_after_confirmed_abandonment(tmp_path, receipt, exit_code, accepted):
+    path = tmp_path / 'abandon.json'
+    if receipt is not None: path.write_text(json.dumps(receipt))
+    result = run_launcher_helpers(tmp_path,
+        "$script:preparedCalled=$false\nfunction Start-Preparation {$script:preparedCalled=$true}\n"
+        + "$timer=[pscustomobject]@{};$timer|Add-Member ScriptMethod Stop {}\n"
+        + f"$script:process=[pscustomobject]@{{ExitCode={exit_code}}};$script:process|Add-Member ScriptMethod WaitForExit {{}}\n"
+        + '$script:abandonReceiptPath=' + quote(path) + '\n'
+        + 'try {Complete-AbandonSession} catch {}\n$script:preparedCalled|ConvertTo-Json')
+    assert result.returncode == 0, result.stderr.decode('utf-8', errors='replace')
+    assert json.loads(result.stdout.decode('utf-8-sig')) is accepted
+
+
+def launcher_controls():
+    return """
+$script:language='zh-CN';$script:stdoutPath=$null;$script:stderrPath=$null
+$script:abandonId=$null;$script:process=$null;$script:abandonError='';$script:prepared=$false
+$ink=[pscustomobject]@{}
+foreach($name in @('copy','open','retry','restart','deckChoice','stakeChoice')) {
+    Set-Variable $name ([pscustomobject]@{Enabled=$false;Visible=$false})
+}
+$status=[pscustomobject]@{Text='';ForeColor=$null};$detail=[pscustomobject]@{Text=''}
+$progress=[pscustomobject]@{Style='';Visible=$true}
+$timer=[pscustomobject]@{};$timer|Add-Member ScriptMethod Stop {};$timer|Add-Member ScriptMethod Start {}
+"""
+
+
+@pytest.mark.parametrize('failure', [
+    'Unresolved independent checkpoint (executor: lost-action)',
+    'Independent checkpoint is invalid; preserve it',
+    'Original lifecycle receipt is missing',
+    'Preparation stopped.',
+])
+def test_abandon_button_remains_available_for_every_preparation_failure(tmp_path, failure):
+    result = run_launcher_helpers(tmp_path, 'Add-Type -AssemblyName System.Drawing\n' + launcher_controls()
+        + 'try {throw ' + quote(failure) + '} catch {Show-PreparationError}\n'
+        + '@{restart=$restart.Enabled -and $restart.Visible;retry=$retry.Enabled -and $retry.Visible;'
+        + 'oldActionError=$script:desktopError}|ConvertTo-Json')
+    assert result.returncode == 0, result.stderr.decode('utf-8', errors='replace')
+    value = json.loads(result.stdout.decode('utf-8-sig'))
+    assert value == {'restart': True, 'retry': True, 'oldActionError': failure}
+
+
+def test_abandon_retry_reuses_transaction_and_preserves_failure_details(tmp_path):
+    runtime = tmp_path / '.venv/Scripts/python.exe'
+    runtime.parent.mkdir(parents=True);runtime.write_bytes(b'synthetic runtime')
+    result = run_launcher_helpers(tmp_path, 'Add-Type -AssemblyName System.Drawing\n' + launcher_controls()
+        + '$root=' + quote(tmp_path) + '\n'
+        + "$script:workers=@()\nfunction Start-Process {param($FilePath,$ArgumentList,$WorkingDirectory,$WindowStyle,$RedirectStandardOutput,$RedirectStandardError,[switch]$PassThru)\n"
+        + "$script:workers+=@{arguments=$ArgumentList;stdout=$RedirectStandardOutput;stderr=$RedirectStandardError;window=$WindowStyle}\n"
+        + "return [pscustomobject]@{HasExited=$true;Handle=0}}\n"
+        + "Start-AbandonSession;$first=$script:abandonId\n"
+        + "try {throw 'Close Balatro normally; PID 1234 is still running.'} catch {Show-AbandonSessionError}\n"
+        + "$errorKept=$script:abandonError;$canRetry=$restart.Enabled -and $restart.Visible\n"
+        + "Start-AbandonSession\n@{idReused=$first -eq $script:abandonId;workers=$script:workers;errorKept=$errorKept;canRetry=$canRetry}|ConvertTo-Json -Depth 5")
+    assert result.returncode == 0, result.stderr.decode('utf-8', errors='replace')
+    value = json.loads(result.stdout.decode('utf-8-sig'))
+    assert value['idReused'] and value['canRetry']
+    assert value['errorKept'] == 'Close Balatro normally; PID 1234 is still running.'
+    assert len(value['workers']) == 2 and value['workers'][0] == value['workers'][1]
+    worker = value['workers'][0]
+    assert 'abandon-session --apply --output' in worker['arguments'] and worker['window'] == 'Hidden'
+
+
+def test_abandon_does_not_start_a_second_worker_while_preparation_is_running(tmp_path):
+    result = run_launcher_helpers(tmp_path, launcher_controls()
+        + "$script:process=[pscustomobject]@{HasExited=$false};$script:startedSecond=$false\n"
+        + "function Start-Process {$script:startedSecond=$true}\n"
+        + "try {Start-AbandonSession} catch {$message=$_.Exception.Message}\n"
+        + "@{started=$script:startedSecond;message=$message}|ConvertTo-Json")
+    assert result.returncode == 0, result.stderr.decode('utf-8', errors='replace')
+    value = json.loads(result.stdout.decode('utf-8-sig'))
+    assert not value['started'] and 'worker is still running' in value['message']

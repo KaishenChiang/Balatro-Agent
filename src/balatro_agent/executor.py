@@ -61,6 +61,47 @@ class Executor:
                                   expected=self._expected_checkpoint)
         self._expected_checkpoint = json.loads(canonical(checkpoint))
 
+    def refresh_abandonment(self):
+        """Adopt only a committed audited generation, clearing stale memory."""
+        guard = self.registration
+        if guard.store is None:
+            return None
+        from .abandonment import read_fence, generation
+        with guard.store.lock():
+            fence = read_fence(guard.store, guard.root)
+            if fence and fence['state'] != 'COMMITTED':
+                raise OSError('session_abandonment_in_progress')
+            changed = generation(fence) != guard._generation
+            if changed:
+                prior = guard._generation
+                guard._generation = generation(fence)
+                try:
+                    guard._check()
+                    saved = guard.store.checkpoint('executor', guard.root)
+                    pending = ActionRequest.model_validate(saved['pending']).model_dump() if saved['pending'] else None
+                    input_pending = ActionRequest.model_validate(saved['input_pending']).model_dump() if saved['input_pending'] else None
+                except Exception:
+                    guard._generation = prior
+                    raise
+                self.pending, self.input_pending = pending, input_pending
+                self._expected_checkpoint = saved
+                self.last_request = input_pending or pending
+                self.checkpoint_broken = False
+                if hasattr(self.reader, '_observation_profiles'):
+                    self.reader._observation_profiles.clear()
+                self.reader.last_delivered_observation = None
+                if getattr(self.reader, 'public_changes', None):
+                    self.reader.public_changes.reset()
+                plans = getattr(self.reader, 'plans', None)
+                if plans is not None:
+                    plans.scope, plans.cached, plans.progress = None, [], {}
+                    plans.continuity, plans.restored = None, False
+                lifecycle = getattr(self, 'lifecycle', None)
+                if lifecycle:
+                    lifecycle.journal.registration._generation = generation(fence)
+                    lifecycle.journal._expected_checkpoint = guard.store.checkpoint('lifecycle', guard.root)
+            return fence
+
     def _save_local(self, checkpoint):
         self.root.mkdir(parents=True, exist_ok=True)
         temp = self.checkpoint.with_suffix('.'+uuid.uuid4().hex+'.tmp')
@@ -211,10 +252,19 @@ class Executor:
             return self._deliver('act', rejection('action_busy', req['action_id']))
         async with self.reader._tool_lock:
             try:
+                fence = self.refresh_abandonment()
                 self.registration.check()
-            except OSError as exc:
-                return self._deliver('act', {**rejection('checkpoint_unavailable', req['action_id']),
-                                            'io_failure': io_failure(exc, 'registration')})
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                result = rejection('checkpoint_unavailable', req['action_id'])
+                if isinstance(exc, OSError):
+                    result['io_failure'] = io_failure(exc, 'registration')
+                return self._deliver('act', result)
+            if fence and req['action_id'] in fence['blocked_action_ids'] and req['action_id'] not in fence['action_ids']:
+                return self._deliver('act', rejection('retired_action_id', req['action_id']))
+            if fence and (req['action_id'] in fence['action_ids'] or req['observation_id'].split('-')[1] in fence['sessions']):
+                from .abandonment import retired_action
+                result = retired_action(fence, req['action_id']) or {**self._unknown(req, 'session_abandoned'), 'retired': True}
+                return self._deliver('act', result)
             lifecycle = getattr(self, 'lifecycle', None)
             if lifecycle is not None and lifecycle.blocks_actions():
                 return self._deliver('act', rejection('action_busy', req['action_id']))
@@ -266,9 +316,10 @@ class Executor:
             try:
                 transport_wait_ms, poll_count = 0.0, 0
                 transport_started = time.perf_counter()
-                raw = await self.reader.client.action('act_submit', {**req,
-                                                      'expected_profile': {'profile': expected_profile, 'policy': 'current-native-v1'},
-                                                      'game_session': req['observation_id'].split('-')[1]})
+                with self.registration.dispatch():
+                    raw = await self.reader.client.action('act_submit', {**req,
+                                                          'expected_profile': {'profile': expected_profile, 'policy': 'current-native-v1'},
+                                                          'game_session': req['observation_id'].split('-')[1]})
                 transport_wait_ms += (time.perf_counter() - transport_started) * 1000
                 result = self._safe_wire(raw)
                 if result['action_id'] != req['action_id']:
@@ -311,6 +362,14 @@ class Executor:
             return self._deliver('act', result, restore_request=req, restore_input=continuation, view=view)
 
     async def _status_locked(self, action_id, *, deliver=True, view='full'):
+        try:
+            from .abandonment import retired_action
+            retired = retired_action(self.refresh_abandonment(), action_id)
+            if retired:
+                return self._deliver('action_status', retired, view=view) if deliver else retired
+        except (OSError, ValueError):
+            result = {**self._unknown({'action_id': action_id, 'observation_id': None}, 'checkpoint_unavailable'), 'read_only': True}
+            return self._deliver('action_status', result, view=view) if deliver else result
         known = next((r for r in (self.input_pending, self.pending) if r and action_id == r['action_id']), None)
         input_query = known is not None and known is self.input_pending
         io_stage = 'transport'

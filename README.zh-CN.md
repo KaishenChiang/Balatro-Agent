@@ -18,6 +18,8 @@
 
 启动器默认跟随Windows显示语言，可通过“Language / 语言”切换。发送提示后可以关闭启动器，保留项目文件夹即可。
 
+上一会话操作未确认、收据丢失或检查点异常时，正常退出游戏，在启动器错误页点击 **“放弃旧会话并重新准备”**。旧记录保留，旧动作不重放，完成后可重新开始；封存中途退出也可重新打开启动器接续。[恢复说明](docs/balatro-ai/maintenance.md#运行保护与恢复)
+
 ## 通过CC Switch测试其他模型
 
 使用 [**CC Switch**](https://github.com/farion1231/cc-switch) 在Codex中配置其他模型服务，继续使用本项目的本地MCP工具和 [**Balatro Agent.exe**](https://github.com/KaishenChiang/Balatro-Agent/blob/main/Balatro%20Agent.exe)。**已通过CC Switch成功接入DeepSeek V4.1 Flash并进行本项目游玩。**

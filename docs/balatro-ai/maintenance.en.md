@@ -1,5 +1,9 @@
 # Installation, maintenance and recovery
 
+When the user explicitly abandons the previous session, every launcher preparation failure offers **Abandon session and prepare again**. Normally exit Balatro first, then confirm. The audited maintenance entry point is `.venv/Scripts/python.exe scripts/project.py abandon-session --apply --output runs/checks/abandon-session-unique-id.json`; omit `--apply` for a preview. This ends only the old waiting barrier. It neither starts gameplay nor reports a normal loss or successful old action.
+
+Under the shared installation/dispatch lock, the command checks ownership and the stopped process, preserves raw local/independent checkpoints and lifecycle receipts, and writes an archive plus generation fence before releasing the wait. Missing, damaged or mismatched checkpoints remain archival evidence; old results stay UNKNOWN and original IDs/observations can never replay. Interrupted writes resume the same transaction automatically even from a new launcher window. A completed recovery ID never clears later gameplay. Preparation cannot overtake an incomplete recovery. New services refresh their generation and stale observations at the next lifecycle/action/status request; a previously loaded older service still needs one client reload after this update. Archives live in the independent registry's `abandoned-sessions/<project-path-hash>/<recovery-id>/` directory and must be retained.
+
 ## Autonomous fault repair by default
 
 Repair faults autonomously and resume the original objective. Stop and notify the user only when a major problem cannot be resolved safely. Ordinary timeouts, connection failures, unlock-prompt errors and diagnosed executor defects do not themselves end the task. UNKNOWN pauses affected gameplay, while diagnosis, repair and verification continue.

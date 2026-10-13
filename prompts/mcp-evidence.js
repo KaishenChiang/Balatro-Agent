@@ -30,6 +30,12 @@ function resolvedGameAction(dto) {
     dto.state === 'REJECTED' && dto.submitted === false);
 }
 
+function abandonedGameAction(dto) {
+  return dto?.state === 'UNKNOWN' && dto.reason === 'session_abandoned' &&
+    dto.retired === true && dto.original_action_state === 'UNKNOWN' &&
+    dto.normal_game_completed === false && dto.read_only === true;
+}
+
 function hostNonExecution(raw) {
   // Recognize only the complete host envelope and known fail-closed quota receipt.
   // Game text, generic errors, denials and missing service records are not proof.
@@ -142,8 +148,8 @@ async function callMcp(tool, parameters, delivery) {
             profile:previousObservation?.profile},
           approvalReceipt:JSON.parse(JSON.stringify(raw))} : {})});
     } else if (uncertain && name === 'action_status' && dto?.action_id === uncertain.actionId &&
-        (!uncertain.gameSession || dto.game_session === uncertain.gameSession) &&
-        resolvedGameAction(dto)) {
+        (abandonedGameAction(dto) ||
+          (!uncertain.gameSession || dto.game_session === uncertain.gameSession) && resolvedGameAction(dto))) {
       store('balatro_evidence_uncertain', null);
     } else if (uncertain && name === 'recover_lost_session' && dto?.action_id === uncertain.actionId &&
         dto.state === 'RETIRED' && dto.write_state === 'COMMITTED') {

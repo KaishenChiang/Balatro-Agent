@@ -137,6 +137,10 @@ class LifecycleJournal:
             owner = store.read()
             if owner is None or Path(owner['root']) != self.registration.root:
                 raise ValueError('registration_owner_changed')
+            from .abandonment import read_fence
+            fence = read_fence(store, self.registration.root)
+            if fence and fence['state'] == 'COMMITTED' and operation_id in fence['operation_ids']:
+                return True
             path = self._independent_path(operation_id, directory='retired-lifecycle')
             if not path.exists():
                 return False
@@ -333,6 +337,7 @@ class GameLifecycle:
         async with self.reader._tool_lock:
             record = None
             try:
+                self.executor.refresh_abandonment()
                 if self.journal.retired(operation_id):
                     receipt.state, receipt.reason = 'UNKNOWN', 'dispatch_uncertain'
                     receipt.submitted, receipt.read_only = None, True
@@ -364,7 +369,11 @@ class GameLifecycle:
                 if self.executor.checkpoint_broken:
                     receipt.reason = 'checkpoint_unavailable'
                     return self._deliver(receipt)
-                if len(list(self.journal.root.glob('*.json'))) >= 1000:
+                from .abandonment import read_fence
+                store = self.journal.registration.store
+                fence = read_fence(store, self.journal.registration.root) if store else None
+                retired_ids = set(fence['operation_ids'] + fence['history_operation_ids']) if fence else set()
+                if sum(p.stem not in retired_ids for p in self.journal.root.glob('*.json')) >= 1000:
                     receipt.reason = 'receipt_limit'
                     return self._deliver(receipt)
                 process = self.backend.find()
@@ -409,9 +418,11 @@ class GameLifecycle:
                 self.audit.record(tool, 'intent', receipt.model_dump())
                 if tool == 'launch_game':
                     self._show_activity(operation_id)
-                    self.backend.launch()
+                    with self.journal.registration.dispatch():
+                        self.backend.launch()
                 else:
-                    self.backend.close(process)
+                    with self.journal.registration.dispatch():
+                        self.backend.close(process)
                 receipt.submitted = True
                 self.journal.save(record)
                 return await self._wait(record, timeout_s)

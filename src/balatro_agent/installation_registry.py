@@ -103,6 +103,10 @@ class InstallationRegistry:
         return checkpoint
 
     def ensure_idle(self, root):
+        from .abandonment import read_fence
+        fence = read_fence(self, root)
+        if fence and fence['state'] != 'COMMITTED':
+            raise ValueError('Unfinished session abandonment; resume recovery ID: ' + fence['recovery_id'])
         for area in CHECKPOINT_KEYS:
             checkpoint = self.checkpoint(area, root)
             if any(value is not None for value in checkpoint.values()):
@@ -155,11 +159,22 @@ class RegistrationGuard:
         registration = getattr(settings, 'registration_file', None)
         self.store = InstallationRegistry(registration) if registration else None
         self.root = settings.lifecycle_file.absolute().parent.parent if self.store else None
+        self._generation = None
+        if self.store:
+            from .abandonment import read_fence, generation
+            try:
+                self._generation = generation(read_fence(self.store, self.root))
+            except (OSError, ValueError):
+                self._generation = 'unverified'
 
     def _check(self):
         value = self.store.read()
         if value is None or Path(value['root']) != self.root:
             raise ValueError('registration_owner_changed')
+        from .abandonment import read_fence, generation
+        fence = read_fence(self.store, self.root)
+        if (fence and fence['state'] != 'COMMITTED') or generation(fence) != self._generation:
+            raise ValueError('session_generation_changed')
         for area in CHECKPOINT_KEYS:
             mirrored = self.store.checkpoint(area, self.root)
             local_path = self.log_dir / area / 'checkpoint.json'
@@ -173,6 +188,19 @@ class RegistrationGuard:
         try:
             self._check()
         except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise OSError('registration_unavailable') from exc
+
+    @contextmanager
+    def dispatch(self):
+        """Fence check and actual OS/native dispatch share the recovery lock."""
+        if self.store is None:
+            yield
+            return
+        try:
+            with self.store.lock():
+                self._check()
+                yield
+        except (ValueError, KeyError, TypeError) as exc:
             raise OSError('registration_unavailable') from exc
 
     def persist(self, area, checkpoint, write_local, *, expected=None):

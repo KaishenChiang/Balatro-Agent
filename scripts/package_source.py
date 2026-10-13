@@ -17,7 +17,7 @@ SCRIPTS=['setup.ps1','launcher.ps1','activity_viewer.ps1','codex_handoff.ps1','l
          'install_portable.py','update_mod.py','package_source.py','verify_source_candidate.py','verify_offline.py',
          'stdio_smoke.py','export_contract.py','check_notes_persistence.py',
          'audit_experience_mcp_evidence.py','client_evidence.py','project.py','analyze_timings.py',
-         'migrate_experience_current.py','promote_experience.py']
+         'migrate_experience_current.py','promote_experience.py','abandon_session.py']
 DOCS=['reference.md','maintenance.md','maintenance.en.md','model-client.md','model-client.en.md','english-support.md','activity.md','public-changes.md','optimization.md','network-recovery.md',
       'observation-schema.json','action-schema.json','notes-schema.json','calculation-schema.json','run-plan-schema.json']
 

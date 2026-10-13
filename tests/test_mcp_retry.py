@@ -126,6 +126,18 @@ def test_successful_retry_clears_gate_without_replacing_action_identity():
     assert not result['blocked'] and result['uncertain'] is None
 
 
+@pytest.mark.parametrize('change,expected_blocked', [({}, False), ({'retired': False}, True),
+    ({'normal_game_completed': True}, True), ({'action_id': 'wrong-id'}, True),
+    ({'reason': 'record_not_found'}, True)])
+def test_explicit_abandonment_query_releases_only_matching_archived_client_gate(change, expected_blocked):
+    status = {'state': 'UNKNOWN', 'reason': 'session_abandoned', 'action_id': 'original-id',
+              'submitted': None, 'read_only': True, 'retired': True,
+              'original_action_state': 'UNKNOWN', 'normal_game_completed': False, **change}
+    result = run(error={'isError': True}, queryOriginal=True, status=status)
+    assert result['blocked'] is expected_blocked
+    assert result['acts'] == (1 if expected_blocked else 2)
+
+
 @pytest.mark.parametrize('error', [
     {'isError': True},
     {'isError': True, 'content': [{'type': 'text', 'text': 'Connection failed'}]},

@@ -18,6 +18,8 @@ If the project link does not open, reopen the launcher and use **Copy play promp
 
 The launcher follows the Windows display language by default; use **Language / 语言** to switch. You can close the launcher after sending the prompt. Keep the project folder.
 
+If an earlier action is unconfirmed, its receipt is missing, or a checkpoint is damaged, normally close Balatro and click **Abandon session / prepare** on the launcher's error page. Old records stay preserved and old actions are never replayed. You can start again after preparation; reopening the launcher also resumes an interrupted archive. [Recovery details](docs/balatro-ai/maintenance.en.md)
+
 ## Test other models with CC Switch
 
 Use [**CC Switch**](https://github.com/farion1231/cc-switch) to configure other model providers in Codex and continue using this project's local MCP tools and [**Balatro Agent.exe**](https://github.com/KaishenChiang/Balatro-Agent/blob/main/Balatro%20Agent.exe). **DeepSeek V4.1 Flash has been successfully connected through CC Switch and used to play this project.**

@@ -21,6 +21,12 @@ $script:progressPath = $null
 $script:preparationId = $null
 $script:desktopError = ''
 $script:prepared = $false
+$script:workerKind = 'preparation'
+$script:abandonId = $null
+$script:abandonReceiptPath = $null
+$script:abandonStdoutPath = $null
+$script:abandonStderrPath = $null
+$script:abandonError = ''
 $script:started = [DateTime]::UtcNow
 
 function Read-SharedLog([string]$Path) {
@@ -35,6 +41,16 @@ function Read-PreparationReceipt([string]$Path, [string]$Id) {
     if ($value.schema -ne 'automatic-preparation-1' -or $value.preparation_id -ne $Id -or
         $value.prepared -ne $true -or $value.stdio_tools_verified -ne 12 -or $value.game_started -ne $false) {
         throw 'The preparation receipt does not match this launch.'
+    }
+    return $value
+}
+
+function Read-AbandonSessionReceipt([string]$Path) {
+    $value = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($value.schema -ne 'abandon-session-1' -or $value.state -ne 'COMMITTED' -or
+        $value.safe_to_prepare -ne $true -or $value.original_action_state -ne 'UNKNOWN' -or
+        $value.game_action_submitted -ne $false -or $value.normal_game_completed -ne $false) {
+        throw 'The abandonment receipt does not confirm a safe preparation boundary.'
     }
     return $value
 }
@@ -164,6 +180,18 @@ $open.Add_Click({ try { Open-Codex } catch { Set-Detail 'manual_client' } })
 $retry = Add-Button (Get-BalatroText 'retry' $script:language) 25 $true
 $retry.Enabled = $false
 $retry.Add_Click({ try { Start-Preparation } catch { Show-PreparationError } })
+$restart = Add-Button (Get-BalatroText 'restart_session' $script:language) 260 $false
+$restart.Enabled = $false
+$restart.Add_Click({
+    $answer = [Windows.Forms.MessageBox]::Show($form,
+        (Get-BalatroText 'restart_confirm' $script:language),
+        (Get-BalatroText 'restart_title' $script:language),
+        [Windows.Forms.MessageBoxButtons]::YesNo, [Windows.Forms.MessageBoxIcon]::Question,
+        [Windows.Forms.MessageBoxDefaultButton]::Button2)
+    if ($answer -eq [Windows.Forms.DialogResult]::Yes) {
+        try { Start-AbandonSession } catch { Show-AbandonSessionError }
+    }
+})
 
 $path = New-Object Windows.Forms.LinkLabel
 $path.Text = Get-BalatroText 'path' $script:language; $path.Location = New-Object Drawing.Point(25, 395)
@@ -187,7 +215,8 @@ $logLink.Add_LinkClicked({
     $log = New-Object Windows.Forms.TextBox
     $log.Multiline = $true; $log.ReadOnly = $true; $log.ScrollBars = 'Both'; $log.Dock = 'Fill'
     $log.Font = New-Object Drawing.Font('Consolas', 9)
-    $log.Text = (Read-SharedLog $script:stdoutPath) + [Environment]::NewLine + (Read-SharedLog $script:stderrPath) + [Environment]::NewLine + $script:desktopError
+    $log.Text = (Read-SharedLog $script:stdoutPath) + [Environment]::NewLine + (Read-SharedLog $script:stderrPath) + [Environment]::NewLine + $script:desktopError +
+        [Environment]::NewLine + (Read-SharedLog $script:abandonStdoutPath) + [Environment]::NewLine + (Read-SharedLog $script:abandonStderrPath) + [Environment]::NewLine + $script:abandonError
     $dialog.Controls.Add($log); $dialog.ShowDialog($form) | Out-Null; $dialog.Dispose()
 })
 $form.Controls.Add($logLink)
@@ -200,6 +229,7 @@ function Complete-Preparation {
     $copy.Enabled = $true; $open.Enabled = $true; $copy.Visible = $true; $open.Visible = $true
     $deckChoice.Enabled = $true; $stakeChoice.Enabled = $true
     $retry.Enabled = $false; $retry.Visible = $false
+    $restart.Enabled = $false; $restart.Visible = $false
     $form.ActiveControl = $open
 }
 
@@ -231,13 +261,16 @@ function Show-PreparationError {
     $script:detailKey = 'failure_classified'
     $detail.Text = Get-PreparationFailureMessage $errorText $failureStage $script:language
     $retry.Enabled = $true; $retry.Visible = $true
+    $restart.Enabled = $true; $restart.Visible = $true
 }
 
 function Start-Preparation {
+    $script:workerKind = 'preparation'
     $script:prepared = $false
     $copy.Enabled = $false; $open.Enabled = $false; $copy.Visible = $false; $open.Visible = $false
     $deckChoice.Enabled = $false; $stakeChoice.Enabled = $false
     $retry.Enabled = $false; $retry.Visible = $false
+    $restart.Enabled = $false; $restart.Visible = $false
     Set-Status 'checking'; $status.ForeColor = $ink
     Set-Detail 'preparing'
     $progress.Style = 'Marquee'; $progress.Visible = $true
@@ -252,6 +285,47 @@ function Start-Preparation {
     $script:process = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe') -ArgumentList $arguments -WindowStyle Hidden -RedirectStandardOutput $script:stdoutPath -RedirectStandardError $script:stderrPath -PassThru
     $script:process.Handle | Out-Null
     $timer.Start()
+}
+
+function Start-AbandonSession {
+    if ($script:process -and -not $script:process.HasExited) { throw 'A worker is still running. Wait for it to finish.' }
+    $python = Join-Path $root '.venv/Scripts/python.exe'
+    if (-not [IO.File]::Exists($python)) { throw (Get-BalatroText 'restart_no_python' $script:language) }
+    # One recovery transaction per window. Retries reuse its receipt rather than
+    # creating new abandonment history after a lost worker response.
+    if (-not $script:abandonId) { $script:abandonId = [Guid]::NewGuid().ToString('N') }
+    $logs = Join-Path $root 'runs/checks'; [IO.Directory]::CreateDirectory($logs) | Out-Null
+    $script:abandonReceiptPath = Join-Path $logs ('abandon-session-' + $script:abandonId + '.json')
+    $script:abandonStdoutPath = Join-Path $logs ('abandon-session-' + $script:abandonId + '-stdout.log')
+    $script:abandonStderrPath = Join-Path $logs ('abandon-session-' + $script:abandonId + '-stderr.log')
+    $script:abandonError = ''; $script:workerKind = 'abandon'
+    $script:prepared = $false
+    $copy.Enabled = $false; $open.Enabled = $false; $copy.Visible = $false; $open.Visible = $false
+    $deckChoice.Enabled = $false; $stakeChoice.Enabled = $false
+    $retry.Enabled = $false; $retry.Visible = $false; $restart.Enabled = $false
+    Set-Status 'restarting'; $status.ForeColor = $ink; Set-Detail 'restart_wait'
+    $progress.Style = 'Marquee'; $progress.Visible = $true
+    $arguments = '"' + (Join-Path $root 'scripts/project.py') + '" abandon-session --apply --output "' + $script:abandonReceiptPath + '"'
+    $script:process = Start-Process -FilePath $python -ArgumentList $arguments -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $script:abandonStdoutPath -RedirectStandardError $script:abandonStderrPath -PassThru
+    $script:process.Handle | Out-Null
+    $timer.Start()
+}
+
+function Show-AbandonSessionError {
+    $script:abandonError = $_.Exception.Message
+    $timer.Stop(); $progress.Visible = $false
+    Set-Status 'incomplete'; $status.ForeColor = [Drawing.Color]::FromArgb(173, 66, 51)
+    $script:detailKey = 'restart_failed'
+    $detail.Text = Get-BalatroText 'restart_failed' $script:language
+    $retry.Enabled = $true; $retry.Visible = $true
+    $restart.Enabled = $true; $restart.Visible = $true
+}
+
+function Complete-AbandonSession {
+    $timer.Stop(); $script:process.WaitForExit()
+    if ($script:process.ExitCode -ne 0) { throw 'Abandon-session stopped. See its output in Details.' }
+    Read-AbandonSessionReceipt $script:abandonReceiptPath | Out-Null
+    Start-Preparation
 }
 
 function Show-Progress($Value, [int]$Elapsed) {
@@ -284,6 +358,7 @@ function Set-LauncherLanguage([string]$Value) {
     $deckLabel.Text = Get-BalatroText 'deck' $script:language; $stakeLabel.Text = Get-BalatroText 'stake' $script:language
     $open.Text = Get-BalatroText 'start' $script:language; $copy.Text = Get-BalatroText 'copy' $script:language
     $retry.Text = Get-BalatroText 'retry' $script:language; $path.Text = Get-BalatroText 'path' $script:language
+    $restart.Text = Get-BalatroText 'restart_session' $script:language
     $logLink.Text = Get-BalatroText 'details' $script:language; $tooltip.SetToolTip($open, (Get-BalatroText 'open_hint' $script:language))
     $display = if ($script:language -eq 'en') { 'EnglishName' } else { 'Name' }
     $deckChoice.DisplayMember = $display; $stakeChoice.DisplayMember = $display
@@ -308,6 +383,11 @@ $timer = New-Object Windows.Forms.Timer
 $timer.Interval = 300
 $timer.Add_Tick({
     try {
+        if ($script:workerKind -eq 'abandon') {
+            if (-not $script:process.HasExited) { return }
+            Complete-AbandonSession
+            return
+        }
         if (-not $script:process.HasExited) {
             $elapsed = [int]([DateTime]::UtcNow - $script:started).TotalSeconds
             $value = $null
@@ -327,7 +407,10 @@ $timer.Add_Tick({
         if ($script:process.ExitCode -ne 0) { throw 'Preparation stopped.' }
         Read-PreparationReceipt (Join-Path $root '.artifacts/onboarding.local.json') $script:preparationId | Out-Null
         Complete-Preparation
-    } catch { Show-PreparationError }
+    } catch {
+        if ($script:workerKind -eq 'abandon') { Show-AbandonSessionError }
+        else { Show-PreparationError }
+    }
 })
 $form.Add_FormClosing({
     param($sender, $event)
@@ -340,7 +423,7 @@ if ($Preview) {
     switch ($PreviewState) {
         'Ready' { Complete-Preparation }
         'Downloading' { Show-Progress ([pscustomobject]@{stage=1;state='downloading';component='uv';received_bytes=12582912;total_bytes=21540977;bytes_per_second=2097152}) 7 }
-        'Error' { Set-Status 'incomplete'; $status.ForeColor = [Drawing.Color]::FromArgb(173,66,51); Set-Detail 'download_timeout'; $progress.Visible = $false; $retry.Enabled = $true; $retry.Visible = $true }
+        'Error' { Set-Status 'incomplete'; $status.ForeColor = [Drawing.Color]::FromArgb(173,66,51); Set-Detail 'download_timeout'; $progress.Visible = $false; $retry.Enabled = $true; $retry.Visible = $true; $restart.Enabled = $true; $restart.Visible = $true }
     }
     if ($PreviewImage) {
         $form.ShowInTaskbar = $false; $form.Opacity = 0

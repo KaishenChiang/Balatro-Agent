@@ -126,7 +126,7 @@ def check(output, *, source_only=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'status', 'diagnose', 'configure-display', 'check', 'build', 'build-launcher', 'package', 'verify-package', 'verify-offline', 'update-mod', 'timings', 'audit', 'experience-single', 'experience-promote'])
+    parser.add_argument('command', choices=['abandon-session', 'prepare', 'status', 'diagnose', 'configure-display', 'check', 'build', 'build-launcher', 'package', 'verify-package', 'verify-offline', 'update-mod', 'timings', 'audit', 'experience-single', 'experience-promote'])
     parser.add_argument('--output')
     parser.add_argument('--source-only', action='store_true')
     parser.add_argument('--check-report')
@@ -143,6 +143,17 @@ def main():
     parser.add_argument('--reuse-only', action='store_true')
     parser.add_argument('--preparation-id')
     args = parser.parse_args()
+    if args.command == 'abandon-session':
+        if not args.output or any((args.source_only, args.reuse_only, args.preparation_id, args.steam_dir, args.library_dir, args.console, args.loading, args.check_report)):
+            parser.error('abandon-session requires --output and optional --apply/--codex-config only')
+        from abandon_session import run
+        from balatro_agent.windows_game import GameProcessError
+        try:
+            print(json.dumps(run(ROOT, output=args.output, apply=args.apply, config=args.codex_config), ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, GameProcessError) as exc:
+            print('Session abandonment stopped: ' + (exc.code if isinstance(exc, GameProcessError) else str(exc)), file=sys.stderr)
+            return 1
     if args.source_only and args.command != 'check':
         parser.error('--source-only is only valid with check')
     if args.check_report and args.command != 'package':
