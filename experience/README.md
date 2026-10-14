@@ -21,21 +21,29 @@ current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、
 
 | 中文条目／编号 | 当前版本 | 主要建议 | 读取时机 |
 | --- | --- | --- | --- |
-| 通用主攻略 EXP-GENERAL-GUIDE | [r9](experience/EXP-GENERAL-GUIDE/current.md) | 按当前资源判断缺口、成长、经济与Boss；通过多局反馈修订旧经验 | 每局开局必读；压缩后引用不清时重读 |
+| 通用主攻略 EXP-GENERAL-GUIDE | [r12](experience/EXP-GENERAL-GUIDE/current.md) | 比较可行选择的整体收益、兑现条件、机会成本与风险；通过反馈修订评估方法 | 每局开局必读；压缩后引用不清时重读 |
 | 计分门槛与补分 EXP-SCORE-THRESHOLD | [r6](experience/EXP-SCORE-THRESHOLD/current.md) | 算累计缺口与剩余能力；够分及时出牌，不等最后一手才发现构筑不足 | 临界分数、余手不足、Boss目标提高或资源变化时 |
 | 完整选牌与留手 EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 附带牌可能改变牌型，留手可能破坏条件；核对全部选择及强制牌 | 有强制牌、背面牌、条件牌型、黑板等留手要求时 |
-| 经济与采购 EXP-MONEY-SCORING | [r7](experience/EXP-MONEY-SCORING/current.md) | 比较付款后资源、实际补强、利息与期限；提前准备接替，不固定存款或刷新次数 | 商店买卖、重掷、资金紧张或临时核心将到期时 |
+| 经济与采购 EXP-MONEY-SCORING | [r11](experience/EXP-MONEY-SCORING/current.md) | 比较边际补强、现金流与采购选项；跳盲计入战斗净收入、成长和商店机会 | 商店买卖、重掷、跳盲、资金紧张或临时核心将到期时 |
 | 计分阶段与触发顺序 EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 分清计分牌、留手和小丑阶段，再处理同阶段顺序；削弱／出售后重算 | 钢铁、射月、哑剧演员等多阶段组合，或蓝封成长时 |
 | 观察与操作更新 EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 使用最新位置；复用有效完成观察，拒绝后刷新，UNKNOWN只查询原ID | 抽牌、动作拒绝、信息缺失、原生提示或动作未决时 |
-| 同花路线 EXP-FLUSH-SUPPORT | [r7](experience/EXP-FLUSH-SUPPORT/current.md) | 有花色、计分及升级支持才投入；考虑成牌成本和Boss，允许其他牌型补分 | 准备投入同花、购买花色支持或Boss削弱花色时 |
+| 同花路线 EXP-FLUSH-SUPPORT | [r10](experience/EXP-FLUSH-SUPPORT/current.md) | 比较成牌成本、限制范围、组件去留和整轮得分预算，不固定路线 | 准备投入同花、购买花色支持或Boss削弱花色时 |
 | 重复牌型与累计成长 EXP-REPEATED-HAND | [r6](experience/EXP-REPEATED-HAND/current.md) | 区分本盲重复与整局累计；重复收益也需筹码、倍率与替代牌型支持 | 老千、超新星等相关效果出现，或Boss禁止重复时 |
-| 首牌与重触发引擎 EXP-FIRST-CARD-ENGINE | [r5](experience/EXP-FIRST-CARD-ENGINE/current.md) | 确认首牌实际计分、兼容复制和触发次数，再排列；失效后重新核算 | 照片、喜与悲、蓝图及首牌重触发组合出现时 |
+| 首牌与重触发引擎 EXP-FIRST-CARD-ENGINE | [r7](experience/EXP-FIRST-CARD-ENGINE/current.md) | 评估有效触发频度、整套协同、真实容量及限制性质；条件变化后重算 | 首牌条件、重触发组合或影响触发对象的效果出现时 |
 | 星球使用与持有 EXP-PLANET-RESERVE | [r2](experience/EXP-PLANET-RESERVE/current.md) | 有对应优惠券时比较即时升级与持有加成，不一律即用或永久保留 | 星球持有加成券生效，需决定使用星球或占用消耗槽时 |
 | 翻面与打乱小丑 EXP-SHUFFLED-JOKERS | [r2](experience/EXP-SHUFFLED-JOKERS/current.md) | 能力集合可保留，未知位置和顺序不能猜；按实际反馈保守计分 | Boss长期翻面／打乱小丑时 |
 | 红注经济规则 EXP-RED-STAKE-ECON | [r3](experience/EXP-RED-STAKE-ECON/current.md) | 按实际小盲收入比较跳盲、标签、商店与成长；不把规则误套到白注 | 当前注级适用小盲奖励限制，需要比较跳盲时 |
-| 高注级心得 EXP-HIGH-STAKE-ADAPTATION | [r11](experience/EXP-HIGH-STAKE-ADAPTATION/current.md) | 重评新增限制；比较普通手、易腐到期后和Boss下的能力，计算永恒锁位、租用费用与抽弃冲突 | 注级提升／新增限制时；相关商店、关键倒数变化及Boss前复查 |
+| 高注级心得 EXP-HIGH-STAKE-ADAPTATION | [r13](experience/EXP-HIGH-STAKE-ADAPTATION/current.md) | 比较组件边际收益、期限、锁位与限制下的可靠性，复查跳盲机会成本 | 注级提升／新增限制时；相关商店、关键倒数变化及Boss前复查 |
 
 读取由聊天模型按当前局面决定，不是程序每步自动注入。主攻略与已知相关主题可一次批读；同局已完整读取且条件仍清楚的同一版本不重复读取。新机制先按表选择主题，不知道编号才查index；索引只是预览，随后须读strategy。修订心得时另读content/full，保存后读回。
+
+## 2026-10-14：选择收益、风险与跳盲评估
+
+按用户授权，将本地主攻略、高注级、经济、首牌及同花五个主题的当前正文与审计元数据整合到源码，并备份、核验和独立读回。行动判断改为比较整体边际收益、触发可靠性、兑现期限、机会成本与可逆性；具体牌例和单次算式仅保留在审计事实中，不形成某牌必买、必卖或某路线必选的规则。
+
+跳盲同时评估战斗净收入、成长触发、商店的信息与采购机会，以及标签的适配、兑现条件和规避风险。未知商品不算已有补强，商店的选项价值也不默认归零；收入按当前规则与扣费时点估计，不采用固定金额门槛。来源包含蓝色牌组／金注第7底注正常败局及用户纠正，未实测替代完整路线，不据单局推断稳定胜率。
+
+原本地正文与完整审计来源继续保留并优先读取。此次整合不启动游戏、不更新安装或重载客户端；原始活动记录、检查点和本机备份不随源码公开。
 
 ## 2026-10-13：本地整合与高注级命名
 
