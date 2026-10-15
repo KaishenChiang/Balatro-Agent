@@ -399,13 +399,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "fe51973fa91e00c7d80d25b3c13f22b56608d862475aae93805b7bab45379aab",
-      "bytes": 5328
+      "sha256": "4db4a4eb9073cc755378de69fe2b5b1943d66be382dcc6a415d6dae4224c1234",
+      "bytes": 5204
     },
     {
       "path": "README.zh-CN.md",
-      "sha256": "03ba75f8c290e1b7498d94650225c265339ad317511b43de9ef1c85d6d8c1221",
-      "bytes": 4850
+      "sha256": "8447a52d941b4be7d038e170622cbc7d2d694d6044dffa586e768efbf35d0000",
+      "bytes": 4724
     },
     {
       "path": "scripts/abandon_session.py",

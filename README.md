@@ -10,11 +10,9 @@ For **Windows x64 · Steam Balatro · Codex desktop**. The launcher and play act
 
 ## Gold Stake clear
 
-**GPT-6.1 Sol has cleared Blue Deck / Gold Stake using Balatro Agent.** Watch the 26-second gameplay excerpt below (waiting periods sped up).
+**GPT-6.1 Sol has cleared Gold Stake using Balatro Agent.** Watch the 26-second gameplay excerpt below (waiting periods sped up).
 
 https://github.com/user-attachments/assets/fbc3b384-bd33-472a-82f0-dbf9969bc187
-
-[Download the MP4](https://github.com/KaishenChiang/Balatro-Agent/releases/download/v1.4.0/gold-stake-win.mp4)
 
 ## Download and play
 
