@@ -8,9 +8,15 @@
 
 适用于 **Windows x64 · Steam版Balatro · Codex桌面应用**。启动器和游玩状态窗口支持中文、英文。
 
+## 金注通关
+
+**GPT-6.1 Sol 已通过本项目完成蓝色牌组／金注通关。** 点击观看26秒实机节选（等待段已加速）。
+
+[![播放蓝色牌组金注通关短片](docs/media/gold-stake-win.jpg)](docs/media/gold-stake-win.mp4)
+
 ## 下载与开始使用
 
-1. **[下载完整项目ZIP](https://github.com/KaishenChiang/balatro-agent/archive/refs/heads/main.zip)**，解压到可长期保留的目录，保留整个文件夹。先安装Steam版Balatro并登录Codex；首次安装或更新前正常关闭游戏。
+1. **[下载v1.4.0完整项目ZIP](https://github.com/KaishenChiang/Balatro-Agent/releases/download/v1.4.0/balatro-agent-1.4.0-source-candidate.zip)**，解压到可长期保留的目录，保留整个文件夹。先安装Steam版Balatro并登录Codex；首次安装或更新前正常关闭游戏。
 2. 打开 **[Balatro Agent.exe](<Balatro Agent.exe>)**，等待“准备就绪”。程序自动识别项目路径，查找游戏、准备依赖、备份并安装Mod、配置MCP，无须另装Python。
 3. 选择“牌组”和“注级／模式”，点击 **“在 Codex 中开始”**。Codex支持项目链接时，会打开对应项目的新聊天并填好提示；在Codex确认并发送即可开始。启动器成功发出打开请求后自动关闭。
 

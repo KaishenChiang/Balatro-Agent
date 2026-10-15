@@ -1,6 +1,6 @@
 {
   "type": "checked_local_source_candidate_not_published",
-  "version": "1.3.8",
+  "version": "1.4.0",
   "files": [
     {
       "path": ".gitattributes",
@@ -24,23 +24,23 @@
     },
     {
       "path": "Balatro Agent.exe",
-      "sha256": "7820fa99236f5f1ae48a0af047dcff413140b734480e65ec76cb3edc3d297e3a",
+      "sha256": "541e2fc5e2ffa64c48e01b2c46aa77c21b7a034bc12f4e993063a9aaabf3e52a",
       "bytes": 10240
     },
     {
       "path": "Balatro Status.exe",
-      "sha256": "e890ff1df1907f3f90d73b9aa64fcdb255227c824a821f489d707a11adfd236a",
+      "sha256": "cd6821c0fb3ff3876c6fa1e4129b6887eae6b08bf5dd795157836ae5523cb18b",
       "bytes": 10240
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "405c20fc19bc3f004f5ab9d0ab9960dc87d2c1b1d7c3e58381aeca45ed84b3f3",
-      "bytes": 21164
+      "sha256": "fb817113adc180ab06a3cb27fa1d88ea1351494fe03b46a4465fe8aa32a981a8",
+      "bytes": 21789
     },
     {
       "path": "config/dependencies.lock.json",
-      "sha256": "d7c2ce5c9c45da81dc46607e29a6f0ecb8522a5989f6704ad1a7e75839a5fe9f",
-      "bytes": 2010
+      "sha256": "633a2ddf37d7132f82baa7a56261a27d3555c6597a2729632c5f9c0d7bcb804b",
+      "bytes": 1961
     },
     {
       "path": "config/game-lifecycle.example.json",
@@ -54,8 +54,8 @@
     },
     {
       "path": "config/runtime.lock.json",
-      "sha256": "75022ca1ffe085cf8294cc849bc5e75aa8bcfe68b45c64c0e0587854fc7b4f19",
-      "bytes": 22701
+      "sha256": "7138ebac5082bb6c7f5d174a296e437f19cbcb141f394ba44d07bbc5e87e2c6f",
+      "bytes": 22174
     },
     {
       "path": "config/startup-ui.example.json",
@@ -138,6 +138,16 @@
       "bytes": 1779
     },
     {
+      "path": "docs/media/gold-stake-win.jpg",
+      "sha256": "d3dbc2186dadeffcf4d070c2881c70e2ee78c8a71c6936f79b13757e3032dd2b",
+      "bytes": 364397
+    },
+    {
+      "path": "docs/media/gold-stake-win.mp4",
+      "sha256": "5a6f2c62311f487ddfdd93b5c32c630e8a3cc2ae73174bdfdd9efa200f698050",
+      "bytes": 8406611
+    },
+    {
       "path": "evidence/historical-runs.zip",
       "sha256": "df21aba6316f6a436b065bcbf70433c56afc2c5480a20760dff3b99cddc60e4c",
       "bytes": 830227
@@ -149,18 +159,18 @@
     },
     {
       "path": "evidence/README.md",
-      "sha256": "dcf72a05bbc080532bd00e03223f3198cd18a5d05b96d1785b48f75806293583",
-      "bytes": 2527
+      "sha256": "edb1b1cc68bcaeb694023014aa63d6599ffbe5c5bdff49bfbeac1c9f83e1f2cf",
+      "bytes": 3328
     },
     {
       "path": "evidence/validation.json",
-      "sha256": "092c769a5816b101d87116d01363b3419db221009b7f325319b9ad7af10b8455",
+      "sha256": "65aec5d522f641da7293a42bc0483cdae7f7ca670380314ae19a2060a627650a",
       "bytes": 813
     },
     {
       "path": "experience/.metadata/experience/EXP-CONDITIONAL-ENGINE.json",
-      "sha256": "2d5c4c6f6ca9b7578270b068e4d7e1584d87c13b5f2e313733c4d7192c6cc721",
-      "bytes": 4521
+      "sha256": "5b62ed2870cba8e1cee32055eaa68afa7015d9dfcd5ff9a571ccb53d0a8f8d54",
+      "bytes": 5656
     },
     {
       "path": "experience/.metadata/experience/EXP-CONDITIONAL-HANDS.json",
@@ -169,28 +179,28 @@
     },
     {
       "path": "experience/.metadata/experience/EXP-FIRST-CARD-ENGINE.json",
-      "sha256": "ea2ec43da4e64de7b7253e2dca0091f4645add5814bbbaf69b3baa2d38465276",
-      "bytes": 2405
+      "sha256": "75e98970222ad7ef8061bd8c7900f2b985234097b4bcdf12d5ae06731660765b",
+      "bytes": 3457
     },
     {
       "path": "experience/.metadata/experience/EXP-FLUSH-SUPPORT.json",
-      "sha256": "e6cc20784e8cf2de7899e65934aa927a7385630f3f75b4105ca5bb642dd2ada3",
-      "bytes": 2287
+      "sha256": "bf50b59114c0640aed33474874421690778f367d7ad21800e4ad299a187da976",
+      "bytes": 3622
     },
     {
       "path": "experience/.metadata/experience/EXP-GENERAL-GUIDE.json",
-      "sha256": "ebc170f99a2df49f30dc4a3dca8b4623379eb053f78f42f027e2d1d20c740c0c",
-      "bytes": 3925
+      "sha256": "a2405d20aeda84f6b24b6c6aa77cbd8c7a1d68d36c5df51705e3daf7b2590eda",
+      "bytes": 5415
     },
     {
       "path": "experience/.metadata/experience/EXP-HIGH-STAKE-ADAPTATION.json",
-      "sha256": "11f92748f3ead1f1ac5854279c3bb28c32d06400448018f4082f40724a02a54d",
-      "bytes": 4842
+      "sha256": "a521274acf9659c5a008e1ff517d4a2c04d3f6297ead85569abcfc3cd26a70a9",
+      "bytes": 6303
     },
     {
       "path": "experience/.metadata/experience/EXP-MONEY-SCORING.json",
-      "sha256": "48e15c52a10413dcbeac1facc46123f59d3224bccf2d95aaa0d04dc87413e466",
-      "bytes": 2638
+      "sha256": "4dc55bc4a93aa819e9ded8ec9752f41dd77894ac4b5f393e0d6f92e1a9f37a5e",
+      "bytes": 5073
     },
     {
       "path": "experience/.metadata/experience/EXP-PLANET-RESERVE.json",
@@ -224,8 +234,8 @@
     },
     {
       "path": "experience/experience/EXP-CONDITIONAL-ENGINE/current.md",
-      "sha256": "044f347470923ef95dc11041920f6f949d61fc6e94590fefd81a4ad25656647c",
-      "bytes": 1688
+      "sha256": "c7419b398ed6a96a72543f01d8e356798b057f4db944187d9ec26a3ca35388e2",
+      "bytes": 2234
     },
     {
       "path": "experience/experience/EXP-CONDITIONAL-HANDS/current.md",
@@ -234,28 +244,28 @@
     },
     {
       "path": "experience/experience/EXP-FIRST-CARD-ENGINE/current.md",
-      "sha256": "30b6a09413dace260f1335a5e2a1315f2bedbfa65139cbc02895dc13aa554c1c",
-      "bytes": 816
+      "sha256": "9e92fa5f59acc9c1f90e2aa745b1b1c1f7996e6bdb0b3efc230b38cef6969de1",
+      "bytes": 1866
     },
     {
       "path": "experience/experience/EXP-FLUSH-SUPPORT/current.md",
-      "sha256": "9df0d0be2daa607bf7e7907f621afd2f16784494ae578c2bb14ceed4d8234140",
-      "bytes": 550
+      "sha256": "fd5d30090a8fd63f4adaafc4645460ea504cbe7e2ddb1c8d030acbf6889b2c69",
+      "bytes": 1805
     },
     {
       "path": "experience/experience/EXP-GENERAL-GUIDE/current.md",
-      "sha256": "6b999c772e2ed4c5426a522d5e8d33778297e9e83ec27e604d80b4982bdd93b3",
-      "bytes": 3531
+      "sha256": "aabad481b745def1c48772f64679b9f8c5acc87056709e77bd66ab9af5eaba47",
+      "bytes": 3953
     },
     {
       "path": "experience/experience/EXP-HIGH-STAKE-ADAPTATION/current.md",
-      "sha256": "58aa3601e421f715a98c589ea7a7373fafcc122c11459a056678e28804315f2a",
-      "bytes": 2562
+      "sha256": "ed5d8762dbabf360a59098e4695cdf1940dfb9cd29e04365e04b66c1046f6d1e",
+      "bytes": 2875
     },
     {
       "path": "experience/experience/EXP-MONEY-SCORING/current.md",
-      "sha256": "ba8e444e4ce82dba48497eb76f527e96751c3bc7f9418e786426c355f0e1a814",
-      "bytes": 1764
+      "sha256": "d6b54fa99f16b0839fdf2b45a58b84052ce3fc4ef91c2e236405d45aa3b76f27",
+      "bytes": 2139
     },
     {
       "path": "experience/experience/EXP-PLANET-RESERVE/current.md",
@@ -289,8 +299,8 @@
     },
     {
       "path": "experience/README.md",
-      "sha256": "a33e5b7f4ab0ae216f9b147d47dec46327858034caa96c2a68f8ec32eb715f39",
-      "bytes": 15267
+      "sha256": "d1a24eb84cee10857efcc5ad43a338a8f3cff566c815dfc5bcbd629992864d52",
+      "bytes": 17060
     },
     {
       "path": "LICENSE",
@@ -384,18 +394,18 @@
     },
     {
       "path": "pyproject.toml",
-      "sha256": "a8cec0ec7b9a93986b60345fba92cbb264638497a406203c43ea2a5ab08188c4",
+      "sha256": "e79bc22ee758ad2a1c8c316514c03b0799d0e171fd3fd3e6e6d6b6419aeec8d0",
       "bytes": 555
     },
     {
       "path": "README.md",
-      "sha256": "f845a47652e688ce082634b244a9b12cbbcf6388abc4f2194eade9e01c0aa632",
-      "bytes": 4935
+      "sha256": "53fcc37455864ba2d12afe5f7ad5325bc6b05fd54c6674a3a3d9cb16290e618a",
+      "bytes": 5242
     },
     {
       "path": "README.zh-CN.md",
-      "sha256": "18822efa1428bd47055a583e2282300a283ba999987415d6adbe8e25e7966db0",
-      "bytes": 4459
+      "sha256": "226076601fec9d5c7942ee9c8c374d4b4e969122ecd9caf7e3cbd4e19aaec266",
+      "bytes": 4754
     },
     {
       "path": "scripts/abandon_session.py",
@@ -479,8 +489,8 @@
     },
     {
       "path": "scripts/package_source.py",
-      "sha256": "bcdc35ce2dc65f66d2055fe1e0f07df0b5bd35ad9256bc412845e3087507e85b",
-      "bytes": 20846
+      "sha256": "fe955f9bdf6fafaf861273710d290bee1f1e11ea8c80c82eb16824f6d64c871b",
+      "bytes": 21128
     },
     {
       "path": "scripts/project.py",
@@ -919,7 +929,7 @@
     },
     {
       "path": "uv.lock",
-      "sha256": "7aedbb049ffff24400e817dc45d7e70d8aec00cdba9156220b91f46a75561af5",
+      "sha256": "7d223638f836be551d2e57c3b75bc4d8b2c08916a90d97b869e0a4c8a9743ded",
       "bytes": 61065
     },
     {
@@ -954,30 +964,31 @@
     },
     {
       "path": "windows/app.manifest",
-      "sha256": "577d27e10b8634570ffc0ad9c72c764951cb5d37b0be324d4ae9c48a1351d666",
+      "sha256": "1772651d1cd83ccc672500d3ee93bda990e5d0c38820e8bc70d454b19a852b76",
       "bytes": 828
     },
     {
       "path": "windows/launcher-build.json",
-      "sha256": "f181b0dc09fceb1509187596b9269c5eb3db508a2520c7143c149fecdab2049e",
-      "bytes": 809
+      "sha256": "598c7de997d5c7dfd5577242611828fab7286a74141e120d6c288caef7f37166",
+      "bytes": 793
     },
     {
       "path": "windows/Launcher.cs",
-      "sha256": "9d8b1c4965816b13ebc5f391a9f32b777d05b3f8214a09c032f228e19a4ae01c",
+      "sha256": "3e6757c1ae9be99db0497acb63a50a2bfa487d8de0b5f3784a5258d4a445e35f",
       "bytes": 4884
     },
     {
       "path": "windows/status-build.json",
-      "sha256": "a85ab0bf50778a02fd5483d75742d50a95f6320992e0b6a9328396464ca3392b",
-      "bytes": 801
+      "sha256": "b6a10e3f13b6809ce1dcfc2ac044c0fc2957adabe20473417f3bcd7113cb0075",
+      "bytes": 785
     }
   ],
   "license": "MIT_self_authored_only",
   "historical_evidence": "evidence/history.json",
   "current_version_real_game_verified": false,
   "game_or_client_config_changed": false,
-  "excluded": "game binaries/assets/private source/saves/seeds/keys/personal configuration/runtime environments/TEST/backups",
+  "excluded": "game binaries/assets/private source/saves/nonpublic seed data/keys/personal configuration/runtime environments/TEST/backups",
+  "public_media_policy": "User-authorized gameplay clip retains the visible victory-screen seed; saves and hidden state are excluded.",
   "public_transformations": [
     "AGENTS.md local-only block removed"
   ],

@@ -25,7 +25,7 @@ current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、
 | 计分门槛与补分 EXP-SCORE-THRESHOLD | [r6](experience/EXP-SCORE-THRESHOLD/current.md) | 算累计缺口与剩余能力；够分及时出牌，不等最后一手才发现构筑不足 | 临界分数、余手不足、Boss目标提高或资源变化时 |
 | 完整选牌与留手 EXP-CONDITIONAL-HANDS | [r8](experience/EXP-CONDITIONAL-HANDS/current.md) | 附带牌可能改变牌型，留手可能破坏条件；核对全部选择及强制牌 | 有强制牌、背面牌、条件牌型、黑板等留手要求时 |
 | 经济与采购 EXP-MONEY-SCORING | [r11](experience/EXP-MONEY-SCORING/current.md) | 比较边际补强、现金流与采购选项；跳盲计入战斗净收入、成长和商店机会 | 商店买卖、重掷、跳盲、资金紧张或临时核心将到期时 |
-| 计分阶段与触发顺序 EXP-CONDITIONAL-ENGINE | [r13](experience/EXP-CONDITIONAL-ENGINE/current.md) | 分清计分牌、留手和小丑阶段，再处理同阶段顺序；削弱／出售后重算 | 钢铁、射月、哑剧演员等多阶段组合，或蓝封成长时 |
+| 计分阶段与触发顺序 EXP-CONDITIONAL-ENGINE | [r14](experience/EXP-CONDITIONAL-ENGINE/current.md) | 分清计分阶段与乘加顺序，核验复制兼容及阶段切换；削弱／出售后重算 | 多阶段组合、复制目标切换或蓝封成长时 |
 | 观察与操作更新 EXP-PUBLIC-STATE-AFTER-DRAW | [r5](experience/EXP-PUBLIC-STATE-AFTER-DRAW/current.md) | 使用最新位置；复用有效完成观察，拒绝后刷新，UNKNOWN只查询原ID | 抽牌、动作拒绝、信息缺失、原生提示或动作未决时 |
 | 同花路线 EXP-FLUSH-SUPPORT | [r10](experience/EXP-FLUSH-SUPPORT/current.md) | 比较成牌成本、限制范围、组件去留和整轮得分预算，不固定路线 | 准备投入同花、购买花色支持或Boss削弱花色时 |
 | 重复牌型与累计成长 EXP-REPEATED-HAND | [r6](experience/EXP-REPEATED-HAND/current.md) | 区分本盲重复与整局累计；重复收益也需筹码、倍率与替代牌型支持 | 老千、超新星等相关效果出现，或Boss禁止重复时 |
@@ -36,6 +36,12 @@ current.md是中文攻略，不重复嵌入JSON。来源编号、历史案例、
 | 高注级心得 EXP-HIGH-STAKE-ADAPTATION | [r13](experience/EXP-HIGH-STAKE-ADAPTATION/current.md) | 比较组件边际收益、期限、锁位与限制下的可靠性，复查跳盲机会成本 | 注级提升／新增限制时；相关商店、关键倒数变化及Boss前复查 |
 
 读取由聊天模型按当前局面决定，不是程序每步自动注入。主攻略与已知相关主题可一次批读；同局已完整读取且条件仍清楚的同一版本不重复读取。新机制先按表选择主题，不知道编号才查index；索引只是预览，随后须读strategy。修订心得时另读content/full，保存后读回。
+
+## 2026-10-15：金注通关与复制阶段切换
+
+按用户授权，将本地计分阶段主题 EXP-CONDITIONAL-ENGINE r14 的当前正文及审计元数据同步至源码，整合前已备份并核验；其余本地主题与源码一致。新增按成长／计分阶段切换复制目标、核对兼容链及实际乘加顺序的条件规则，原策略、来源、事实与反例保留。
+
+来源为蓝色牌组／金注同一局的接续片段：第8底注蔚蓝之铃、第22回合获胜，末手642330、累计686364，目标400000。[26秒实机节选](../docs/media/gold-stake-win.mp4)压缩了等待时间；完整连续用时未确认，单局结果不代表稳定胜率。原始活动记录与整合备份保留在本机。
 
 ## 2026-10-14：选择收益、风险与跳盲评估
 

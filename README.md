@@ -8,9 +8,15 @@ A tool-capable AI uses local MCP tools to read player-visible information, choos
 
 For **Windows x64 · Steam Balatro · Codex desktop**. The launcher and play activity window support English and Chinese.
 
+## Gold Stake clear
+
+**GPT-6.1 Sol has cleared Blue Deck / Gold Stake using Balatro Agent.** Click to watch a 26-second gameplay excerpt (waiting periods sped up).
+
+[![Play the Blue Deck / Gold Stake clear](docs/media/gold-stake-win.jpg)](docs/media/gold-stake-win.mp4)
+
 ## Download and play
 
-1. **[Download the complete project ZIP](https://github.com/KaishenChiang/balatro-agent/archive/refs/heads/main.zip)** and extract it to a permanent folder. Keep the whole folder. Install the Steam edition of Balatro and sign in to Codex; close the game normally before installation or updates.
+1. **[Download the v1.4.0 project ZIP](https://github.com/KaishenChiang/Balatro-Agent/releases/download/v1.4.0/balatro-agent-1.4.0-source-candidate.zip)** and extract it to a permanent folder. Keep the whole folder. Install the Steam edition of Balatro and sign in to Codex; close the game normally before installation or updates.
 2. Open **[Balatro Agent.exe](<Balatro Agent.exe>)** and wait for **Ready**. It finds the project and game, prepares dependencies, backs up and installs the Mods, and configures MCP. No separate Python installation is needed.
 3. Choose **Deck** and **Stake / mode**, then click **Start in Codex**. When Codex supports the project link, it opens a project chat with the prompt filled in. Review and **send the prompt in Codex** to begin. The launcher closes after successfully dispatching the opening request.
 

@@ -1,6 +1,6 @@
 {
   "evidence_type": "current_source_checks_not_live_game_acceptance",
-  "version": "1.3.8",
+  "version": "1.4.0",
   "synthetic": {
     "tests": 1417,
     "failures": 0,

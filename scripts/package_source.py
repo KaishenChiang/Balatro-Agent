@@ -20,6 +20,7 @@ SCRIPTS=['setup.ps1','launcher.ps1','activity_viewer.ps1','codex_handoff.ps1','l
          'migrate_experience_current.py','promote_experience.py','abandon_session.py']
 DOCS=['reference.md','maintenance.md','maintenance.en.md','model-client.md','model-client.en.md','english-support.md','activity.md','public-changes.md','optimization.md','network-recovery.md',
       'observation-schema.json','action-schema.json','notes-schema.json','calculation-schema.json','run-plan-schema.json']
+README_MEDIA=('gold-stake-win.mp4','gold-stake-win.jpg')
 
 
 def verified_bundles(root=ROOT):
@@ -113,6 +114,7 @@ def selected_files(root=ROOT, *, include_validation=True):
     selected += [root/'windows'/name for name in ('Launcher.cs','app.manifest','launcher-build.json','status-build.json')]
     selected += [root/'scripts'/name for name in SCRIPTS]
     selected += [root/'docs/balatro-ai'/name for name in DOCS]
+    selected += [root/'docs/media'/name for name in README_MEDIA]
     selected += [root/'config'/name for name in ('dependencies.lock.json','game-lifecycle.example.json',
                                                'mcp-client.example.json','startup-ui.example.json')]
     selected += [root/'prompts'/name for name in ('bootstrap.md','bootstrap.en.md','first-use.md','first-use.en.md','mcp-evidence.js')]
@@ -306,7 +308,8 @@ def main(argv=None):
         manifest={'type':'checked_local_source_candidate_not_published','version':version,'files':entries,
             'license':'MIT_self_authored_only','historical_evidence':'evidence/history.json',
             'current_version_real_game_verified':False,'game_or_client_config_changed':False,
-            'excluded':'game binaries/assets/private source/saves/seeds/keys/personal configuration/runtime environments/TEST/backups',
+            'excluded':'game binaries/assets/private source/saves/nonpublic seed data/keys/personal configuration/runtime environments/TEST/backups',
+            'public_media_policy':'User-authorized gameplay clip retains the visible victory-screen seed; saves and hidden state are excluded.',
             'public_transformations':['AGENTS.md local-only block removed'],
             'fresh_source_rebuild_required':True}
         bundle.writestr('SOURCE-MANIFEST.json',json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
