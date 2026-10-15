@@ -399,13 +399,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "53fcc37455864ba2d12afe5f7ad5325bc6b05fd54c6674a3a3d9cb16290e618a",
-      "bytes": 5242
+      "sha256": "fe51973fa91e00c7d80d25b3c13f22b56608d862475aae93805b7bab45379aab",
+      "bytes": 5328
     },
     {
       "path": "README.zh-CN.md",
-      "sha256": "226076601fec9d5c7942ee9c8c374d4b4e969122ecd9caf7e3cbd4e19aaec266",
-      "bytes": 4754
+      "sha256": "03ba75f8c290e1b7498d94650225c265339ad317511b43de9ef1c85d6d8c1221",
+      "bytes": 4850
     },
     {
       "path": "scripts/abandon_session.py",
@@ -992,5 +992,14 @@
   "public_transformations": [
     "AGENTS.md local-only block removed"
   ],
-  "fresh_source_rebuild_required": true
+  "fresh_source_rebuild_required": true,
+  "post_release_documentation_update": {
+    "base_tag": "v1.4.0",
+    "changed_files": [
+      "README.md",
+      "README.zh-CN.md"
+    ],
+    "purpose": "Use the GitHub native video player; retain the original video and the frozen v1.4.0 release assets.",
+    "runtime_files_changed": false
+  }
 }

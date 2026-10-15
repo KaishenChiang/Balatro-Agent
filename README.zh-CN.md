@@ -10,9 +10,11 @@
 
 ## 金注通关
 
-**GPT-6.1 Sol 已通过本项目完成蓝色牌组／金注通关。** 点击观看26秒实机节选（等待段已加速）。
+**GPT-6.1 Sol 已通过本项目完成蓝色牌组／金注通关。** 下方可直接播放26秒实机节选（等待段已加速）。
 
-[![播放蓝色牌组金注通关短片](docs/media/gold-stake-win.jpg)](docs/media/gold-stake-win.mp4)
+https://github.com/user-attachments/assets/fbc3b384-bd33-472a-82f0-dbf9969bc187
+
+[下载MP4原片](https://github.com/KaishenChiang/Balatro-Agent/releases/download/v1.4.0/gold-stake-win.mp4)
 
 ## 下载与开始使用
 
